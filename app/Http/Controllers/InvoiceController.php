@@ -1,0 +1,236 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Client;
+use App\Models\CompanySetting;
+use App\Models\Fabric;
+use App\Models\Invoice;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+class InvoiceController extends Controller
+{
+    public function index(Request $request)
+    {
+        $query = Invoice::with('client:id,name')
+            ->latest('date');
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                  ->orWhereHas('client', fn ($c) => $c->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        if ($type = $request->input('type')) {
+            $query->where('type', $type);
+        }
+
+        $invoices = $query->paginate($request->input('per_page', 15))
+            ->withQueryString();
+
+        return Inertia::render('Invoices/Index', [
+            'invoices' => $invoices,
+            'filters' => $request->only(['search', 'status', 'type', 'per_page']),
+        ]);
+    }
+
+    public function create(Request $request)
+    {
+        $clients = Client::with([
+            'contacts:id,client_id,name',
+            'contacts.measurements:id,contact_id,garment_type,label',
+        ])->select('id', 'name')->orderBy('name')->get();
+
+        $fabrics = Fabric::where('status', 'active')
+            ->select('id', 'name', 'type', 'color', 'price_per_unit')
+            ->orderBy('name')->get();
+        $invoiceNumber = Invoice::generateInvoiceNumber();
+        $quoteNumber = Invoice::generateQuoteNumber();
+
+        // If a client_id is passed (e.g. from client detail page)
+        $selectedClientId = $request->input('client_id');
+        $type = $request->input('type', 'invoice');
+
+        return Inertia::render('Invoices/Create', [
+            'clients' => $clients,
+            'fabrics' => $fabrics,
+            'invoiceNumber' => $invoiceNumber,
+            'quoteNumber' => $quoteNumber,
+            'selectedClientId' => $selectedClientId ? (int) $selectedClientId : null,
+            'defaultType' => $type,
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'type' => 'nullable|in:invoice,quotation',
+            'client_id' => 'required|exists:clients,id',
+            'date' => 'required|date',
+            'due_date' => 'nullable|date|after_or_equal:date',
+            'discount' => 'nullable|numeric|min:0',
+            'discount_type' => 'nullable|in:flat,percentage',
+            'tax' => 'nullable|numeric|min:0',
+            'payment_method' => 'nullable|in:cash,mpesa,bank_transfer,credit',
+            'notes' => 'nullable|string|max:2000',
+            'initial_payment' => 'nullable|numeric|min:0',
+            'line_items' => 'required|array|min:1',
+            'line_items.*.contact_id' => 'required|exists:contacts,id',
+            'line_items.*.measurement_id' => 'nullable|exists:measurements,id',
+            'line_items.*.fabric_id' => 'nullable|exists:fabrics,id',
+            'line_items.*.quantity' => 'required|integer|min:1',
+            'line_items.*.craftsmanship_fee' => 'required|numeric|min:0',
+            'line_items.*.fabric_cost' => 'nullable|numeric|min:0',
+        ]);
+
+        // Calculate subtotal from line items
+        $subtotal = 0;
+        foreach ($validated['line_items'] as &$item) {
+            $item['fabric_cost'] = $item['fabric_cost'] ?? 0;
+            $item['line_total'] = ($item['craftsmanship_fee'] + $item['fabric_cost']) * $item['quantity'];
+            $subtotal += $item['line_total'];
+        }
+
+        // Calculate discount
+        $discount = $validated['discount'] ?? 0;
+        $discountType = $validated['discount_type'] ?? 'flat';
+        $discountAmount = $discountType === 'percentage'
+            ? round($subtotal * $discount / 100, 2)
+            : $discount;
+
+        // Calculate tax and total
+        $taxRate = $validated['tax'] ?? 0;
+        $afterDiscount = $subtotal - $discountAmount;
+        $taxAmount = round($afterDiscount * $taxRate / 100, 2);
+        $total = $afterDiscount + $taxAmount;
+
+        // Initial payment
+        $initialPayment = min($validated['initial_payment'] ?? 0, $total);
+        $balance = $total - $initialPayment;
+
+        // Determine status
+        $status = 'draft';
+        if ($initialPayment > 0 && $balance <= 0) {
+            $status = 'paid';
+        } elseif ($initialPayment > 0) {
+            $status = 'issued';
+        }
+
+        $type = $validated['type'] ?? 'invoice';
+        $docNumber = $type === 'quotation'
+            ? Invoice::generateQuoteNumber()
+            : Invoice::generateInvoiceNumber();
+
+        $invoice = Invoice::create([
+            'client_id' => $validated['client_id'],
+            'invoice_number' => $docNumber,
+            'type' => $type,
+            'date' => $validated['date'],
+            'due_date' => $validated['due_date'],
+            'status' => $status,
+            'subtotal' => $subtotal,
+            'discount' => $discountAmount,
+            'discount_type' => $discountType,
+            'tax' => $taxAmount,
+            'total' => $total,
+            'amount_paid' => $initialPayment,
+            'balance' => $balance,
+            'payment_method' => $validated['payment_method'],
+            'notes' => $validated['notes'],
+        ]);
+
+        // Create line items
+        foreach ($validated['line_items'] as $item) {
+            $invoice->lineItems()->create($item);
+        }
+
+        // Create initial payment record
+        if ($initialPayment > 0) {
+            $invoice->payments()->create([
+                'amount' => $initialPayment,
+                'method' => $validated['payment_method'] ?? 'cash',
+                'date' => $validated['date'],
+                'notes' => 'Initial payment',
+            ]);
+        }
+
+        return redirect()->route('invoices.show', $invoice)
+            ->with('success', 'Invoice created successfully.');
+    }
+
+    public function show(Invoice $invoice)
+    {
+        $invoice->load([
+            'client',
+            'lineItems.contact',
+            'lineItems.measurement',
+            'lineItems.fabric',
+            'payments' => fn ($q) => $q->latest('date'),
+        ]);
+
+        return Inertia::render('Invoices/Show', [
+            'invoice' => $invoice,
+        ]);
+    }
+
+    public function update(Request $request, Invoice $invoice)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:draft,issued,paid,overdue,voided',
+            'convert_to_invoice' => 'nullable|boolean',
+        ]);
+
+        if (!empty($validated['convert_to_invoice']) && $invoice->type === 'quotation') {
+            $invoice->update([
+                'type' => 'invoice',
+                'invoice_number' => Invoice::generateInvoiceNumber(),
+                'status' => $validated['status'],
+            ]);
+            return redirect()->back()
+                ->with('success', 'Quotation converted to invoice.');
+        }
+
+        $invoice->update(['status' => $validated['status']]);
+
+        return redirect()->back()
+            ->with('success', 'Status updated.');
+    }
+
+    public function destroy(Invoice $invoice)
+    {
+        if ($invoice->status === 'paid') {
+            return redirect()->back()
+                ->with('error', 'Cannot delete a paid invoice.');
+        }
+
+        $invoice->delete();
+
+        return redirect()->route('invoices.index')
+            ->with('success', 'Invoice deleted successfully.');
+    }
+
+    public function pdf(Invoice $invoice)
+    {
+        $invoice->load([
+            'client',
+            'lineItems.contact',
+            'lineItems.measurement',
+            'lineItems.fabric',
+            'payments',
+        ]);
+
+        $company = CompanySetting::get();
+
+        $pdf = Pdf::loadView('pdf.receipt', compact('invoice', 'company'));
+
+        $prefix = $invoice->type === 'quotation' ? 'Quotation' : 'Receipt';
+        return $pdf->download("{$prefix}-{$invoice->invoice_number}.pdf");
+    }
+}
