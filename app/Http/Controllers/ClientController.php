@@ -28,7 +28,7 @@ class ClientController extends Controller
             $query->where('status', $status);
         }
 
-        $clients = $query->paginate($request->input('per_page', 10))
+        $clients = $query->paginate(min((int) $request->input('per_page', 10), 100))
             ->withQueryString();
 
         return Inertia::render('Clients/Index', [

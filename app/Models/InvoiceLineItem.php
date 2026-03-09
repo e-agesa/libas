@@ -11,9 +11,13 @@ class InvoiceLineItem extends Model
 
     protected $fillable = [
         'invoice_id',
+        'item_type',
         'contact_id',
         'measurement_id',
         'fabric_id',
+        'collection_id',
+        'description',
+        'unit_price',
         'quantity',
         'craftsmanship_fee',
         'fabric_cost',
@@ -23,6 +27,7 @@ class InvoiceLineItem extends Model
     protected function casts(): array
     {
         return [
+            'unit_price' => 'decimal:2',
             'craftsmanship_fee' => 'decimal:2',
             'fabric_cost' => 'decimal:2',
             'line_total' => 'decimal:2',
@@ -47,5 +52,20 @@ class InvoiceLineItem extends Model
     public function fabric()
     {
         return $this->belongsTo(Fabric::class);
+    }
+
+    public function collection()
+    {
+        return $this->belongsTo(Collection::class);
+    }
+
+    public function isCustom(): bool
+    {
+        return $this->item_type === 'custom';
+    }
+
+    public function isCollection(): bool
+    {
+        return $this->item_type === 'collection';
     }
 }

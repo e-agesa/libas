@@ -6,10 +6,13 @@ const props = defineProps({
     item: Object,
     contacts: Array,
     fabrics: Array,
+    collections: { type: Array, default: () => [] },
     index: Number,
 });
 
 const emit = defineEmits(['update', 'remove']);
+
+const isCollection = computed(() => props.item.item_type === 'collection');
 
 const selectedContact = computed(() =>
     props.contacts?.find(c => c.id === props.item.contact_id)
@@ -19,15 +22,33 @@ const contactMeasurements = computed(() =>
     selectedContact.value?.measurements || []
 );
 
+const selectedCollection = computed(() =>
+    props.collections?.find(c => c.id === parseInt(props.item.collection_id))
+);
+
 const lineTotal = computed(() => {
+    const qty = parseInt(props.item.quantity) || 1;
+    if (isCollection.value) {
+        return (parseFloat(props.item.unit_price) || 0) * qty;
+    }
     const fee = parseFloat(props.item.craftsmanship_fee) || 0;
     const fabric = parseFloat(props.item.fabric_cost) || 0;
-    const qty = parseInt(props.item.quantity) || 1;
     return (fee + fabric) * qty;
 });
 
 function update(field, value) {
     emit('update', props.index, { ...props.item, [field]: value });
+}
+
+function onCollectionChange(collectionId) {
+    const col = props.collections.find(c => c.id === parseInt(collectionId));
+    const updates = {
+        ...props.item,
+        collection_id: collectionId ? parseInt(collectionId) : null,
+        description: col ? `${col.name}${col.size ? ' — ' + col.size : ''}${col.color ? ' (' + col.color + ')' : ''}` : '',
+        unit_price: col ? parseFloat(col.price) : 0,
+    };
+    emit('update', props.index, updates);
 }
 
 function onFabricChange(fabricId) {
@@ -50,16 +71,86 @@ const garmentBadge = computed(() => {
 </script>
 
 <template>
-    <div class="rounded-lg border border-gray-200 p-4 bg-white">
+    <div :class="[
+        'rounded-lg border p-4 bg-white',
+        isCollection ? 'border-blue-200' : 'border-gray-200'
+    ]">
         <div class="flex items-start justify-between mb-3">
-            <span class="text-xs font-medium text-gray-400">Item {{ index + 1 }}</span>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-medium text-gray-400">Item {{ index + 1 }}</span>
+                <span v-if="isCollection" class="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-700 px-2 py-0.5 text-xs font-medium">
+                    <i class="pi pi-shopping-bag text-[10px]"></i> Shelf
+                </span>
+                <span v-else class="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 px-2 py-0.5 text-xs font-medium">
+                    <i class="pi pi-scissors text-[10px]"></i> Custom
+                </span>
+            </div>
             <button type="button" @click="emit('remove', index)" class="p-1 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition-colors">
                 <i class="pi pi-times text-xs"></i>
             </button>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <!-- Contact -->
+        <!-- Collection item fields -->
+        <div v-if="isCollection" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="sm:col-span-2">
+                <label class="text-xs font-medium text-gray-600 mb-1 block">Collection Item *</label>
+                <select
+                    :value="item.collection_id"
+                    @change="onCollectionChange($event.target.value)"
+                    class="w-full rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    required
+                >
+                    <option value="">Select item...</option>
+                    <option v-for="col in collections" :key="col.id" :value="col.id">
+                        {{ col.name }}
+                        <template v-if="col.size"> — {{ col.size }}</template>
+                        <template v-if="col.color"> ({{ col.color }})</template>
+                        · KES {{ Number(col.price).toLocaleString() }}
+                        · Stock: {{ col.stock_qty }}
+                    </option>
+                </select>
+            </div>
+
+            <div>
+                <label class="text-xs font-medium text-gray-600 mb-1 block">Unit Price (KES) *</label>
+                <input
+                    type="number"
+                    :value="item.unit_price"
+                    @input="update('unit_price', parseFloat($event.target.value) || 0)"
+                    min="0"
+                    step="50"
+                    class="w-full rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    required
+                />
+            </div>
+
+            <div>
+                <label class="text-xs font-medium text-gray-600 mb-1 block">Quantity</label>
+                <input
+                    type="number"
+                    :value="item.quantity"
+                    @input="update('quantity', parseInt($event.target.value) || 1)"
+                    min="1"
+                    :max="selectedCollection?.stock_qty || 999"
+                    class="w-full rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+                <p v-if="selectedCollection" class="text-xs text-gray-400 mt-0.5">{{ selectedCollection.stock_qty }} in stock</p>
+            </div>
+
+            <div class="sm:col-span-2">
+                <label class="text-xs font-medium text-gray-600 mb-1 block">Description</label>
+                <input
+                    type="text"
+                    :value="item.description"
+                    @input="update('description', $event.target.value)"
+                    class="w-full rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Auto-filled from selection"
+                />
+            </div>
+        </div>
+
+        <!-- Custom item fields -->
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
                 <label class="text-xs font-medium text-gray-600 mb-1 block">Person *</label>
                 <select
@@ -73,7 +164,6 @@ const garmentBadge = computed(() => {
                 </select>
             </div>
 
-            <!-- Measurement -->
             <div>
                 <label class="text-xs font-medium text-gray-600 mb-1 block">Measurement</label>
                 <select
@@ -89,7 +179,6 @@ const garmentBadge = computed(() => {
                 <span v-if="garmentBadge" :class="garmentBadge.color" class="inline-flex mt-1 rounded-full px-2 py-0.5 text-xs font-medium capitalize">{{ garmentBadge.label }}</span>
             </div>
 
-            <!-- Fabric -->
             <div>
                 <label class="text-xs font-medium text-gray-600 mb-1 block">Fabric</label>
                 <select
@@ -102,7 +191,6 @@ const garmentBadge = computed(() => {
                 </select>
             </div>
 
-            <!-- Quantity -->
             <div>
                 <label class="text-xs font-medium text-gray-600 mb-1 block">Quantity</label>
                 <input
@@ -114,7 +202,6 @@ const garmentBadge = computed(() => {
                 />
             </div>
 
-            <!-- Craftsmanship Fee -->
             <div>
                 <label class="text-xs font-medium text-gray-600 mb-1 block">Craftsmanship Fee (KES) *</label>
                 <input
@@ -128,7 +215,6 @@ const garmentBadge = computed(() => {
                 />
             </div>
 
-            <!-- Fabric Cost -->
             <div>
                 <label class="text-xs font-medium text-gray-600 mb-1 block">Fabric Cost (KES)</label>
                 <input

@@ -7,6 +7,8 @@ import { useGarmentTypes } from '@/composables/useGarmentTypes';
 const props = defineProps({
     filters: Object,
     summary: Object,
+    collectionStats: Object,
+    topCollectionItems: Array,
     monthlyRevenue: Array,
     garmentBreakdown: Array,
     topClients: Array,
@@ -107,6 +109,56 @@ const statusColors = {
                     <div>
                         <p class="text-2xl font-bold text-gray-900">{{ summary.invoiceCount }}</p>
                         <p class="text-xs text-gray-500">Invoices</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue by Source -->
+        <div class="mb-6 rounded-xl bg-white p-6 shadow-sm border border-gray-100">
+            <h3 class="text-sm font-semibold text-gray-700 mb-4">Revenue by Source (Paid)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                <div class="rounded-lg bg-green-50 border border-green-100 p-4">
+                    <div class="flex items-center gap-2 mb-1">
+                        <i class="pi pi-scissors text-green-600 text-xs"></i>
+                        <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Custom Tailoring</p>
+                    </div>
+                    <p class="text-xl font-bold text-green-700">{{ formatCurrency(summary.customRevenue) }}</p>
+                    <div v-if="summary.totalRevenue > 0" class="mt-2 bg-green-200 rounded-full h-2 overflow-hidden">
+                        <div class="bg-green-600 h-full rounded-full" :style="{ width: (summary.customRevenue / summary.totalRevenue * 100) + '%' }"></div>
+                    </div>
+                    <p v-if="summary.totalRevenue > 0" class="text-xs text-green-600 mt-1">{{ Math.round(summary.customRevenue / summary.totalRevenue * 100) }}% of revenue</p>
+                </div>
+                <div class="rounded-lg bg-blue-50 border border-blue-100 p-4">
+                    <div class="flex items-center gap-2 mb-1">
+                        <i class="pi pi-shopping-bag text-blue-600 text-xs"></i>
+                        <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">Off-the-Shelf</p>
+                    </div>
+                    <p class="text-xl font-bold text-blue-700">{{ formatCurrency(summary.collectionRevenue) }}</p>
+                    <div v-if="summary.totalRevenue > 0" class="mt-2 bg-blue-200 rounded-full h-2 overflow-hidden">
+                        <div class="bg-blue-600 h-full rounded-full" :style="{ width: (summary.collectionRevenue / summary.totalRevenue * 100) + '%' }"></div>
+                    </div>
+                    <p v-if="summary.totalRevenue > 0" class="text-xs text-blue-600 mt-1">{{ Math.round(summary.collectionRevenue / summary.totalRevenue * 100) }}% of revenue</p>
+                </div>
+                <div class="rounded-lg bg-gray-50 border border-gray-200 p-4">
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Collection Inventory</p>
+                    <p class="text-xl font-bold text-gray-900">{{ collectionStats?.totalItems || 0 }} items</p>
+                    <p class="text-xs text-gray-500 mt-1">Stock value: {{ formatCurrency(collectionStats?.totalStockValue || 0) }}</p>
+                    <p v-if="collectionStats?.lowStockCount" class="text-xs text-red-600 mt-1"><i class="pi pi-exclamation-triangle text-xs"></i> {{ collectionStats.lowStockCount }} low stock</p>
+                </div>
+            </div>
+
+            <!-- Top selling collection items -->
+            <div v-if="topCollectionItems?.length" class="mt-4">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Top Selling Shelf Items</p>
+                <div class="space-y-2">
+                    <div v-for="(item, i) in topCollectionItems" :key="item.collection_id" class="flex items-center gap-3">
+                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{{ i + 1 }}</span>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">{{ item.collection?.name || 'Item' }}</p>
+                            <p class="text-xs text-gray-400">{{ item.total_qty }} sold</p>
+                        </div>
+                        <span class="text-sm font-semibold text-blue-700">{{ formatCurrency(item.total_revenue) }}</span>
                     </div>
                 </div>
             </div>

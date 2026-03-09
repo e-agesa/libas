@@ -50,11 +50,15 @@ onUnmounted(removeListener);
 
 const navigation = [
     { name: 'Dashboard', href: 'dashboard', icon: 'pi pi-home' },
+    { name: 'POS', href: 'pos.index', icon: 'pi pi-shopping-cart', highlight: true },
     { name: 'Clients', href: 'clients.index', icon: 'pi pi-users' },
     { name: 'Invoices', href: 'invoices.index', icon: 'pi pi-file-edit' },
+    { name: 'Collections', href: 'collections.index', icon: 'pi pi-shopping-bag' },
+    { name: 'Inventory', href: 'inventory.index', icon: 'pi pi-box' },
     { name: 'Fabrics', href: 'fabrics.index', icon: 'pi pi-palette' },
     { name: 'Expenses', href: 'expenses.index', icon: 'pi pi-wallet' },
     { name: 'Reports', href: 'reports.index', icon: 'pi pi-chart-bar' },
+    { name: 'Users', href: 'users.index', icon: 'pi pi-user-edit' },
     { name: 'Settings', href: 'settings.index', icon: 'pi pi-cog' },
 ];
 
@@ -118,9 +122,11 @@ function navHref(routeName) {
                     :key="item.name"
                     :href="navHref(item.href)"
                     :class="[
-                        isActive(item.href)
-                            ? 'bg-gray-800 text-white'
-                            : 'text-gray-300 hover:bg-gray-800 hover:text-white',
+                        item.highlight && !isActive(item.href)
+                            ? 'bg-green-600 text-white hover:bg-green-700'
+                            : isActive(item.href)
+                                ? 'bg-gray-800 text-white'
+                                : 'text-gray-300 hover:bg-gray-800 hover:text-white',
                         'group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                     ]"
                     @click="mobileSidebarOpen = false"
@@ -128,7 +134,7 @@ function navHref(routeName) {
                     <i
                         :class="[
                             item.icon,
-                            isActive(item.href) ? 'text-green-400' : 'text-gray-400 group-hover:text-gray-300',
+                            item.highlight ? 'text-white' : isActive(item.href) ? 'text-green-400' : 'text-gray-400 group-hover:text-gray-300',
                             'shrink-0 text-lg',
                         ]"
                     ></i>
@@ -167,8 +173,14 @@ function navHref(routeName) {
                     <slot name="breadcrumb" />
                 </div>
 
-                <!-- Right side: search + user -->
+                <!-- Right side: POS + search + user -->
                 <div class="flex items-center gap-4">
+                    <!-- POS quick button -->
+                    <Link :href="navHref('pos.index')" class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors shadow-sm">
+                        <i class="pi pi-shopping-cart text-xs"></i>
+                        <span class="hidden sm:inline">POS</span>
+                    </Link>
+
                     <!-- Global search placeholder -->
                     <div class="hidden sm:block">
                         <div class="relative">

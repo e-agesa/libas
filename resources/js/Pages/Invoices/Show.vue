@@ -84,6 +84,10 @@ function convertToInvoice() {
 function shareWhatsApp() {
     const inv = props.invoice;
     const linesSummary = inv.line_items?.map(item => {
+        if (item.item_type === 'collection') {
+            const name = item.collection?.name || item.description || 'Shelf Item';
+            return `  - ${name} x${item.quantity}: ${formatCurrency(item.line_total)}`;
+        }
         const garment = item.measurement?.garment_type || 'Item';
         const person = item.contact?.name || '';
         return `  - ${garment}${person ? ` (${person})` : ''}: ${formatCurrency(item.line_total)}`;
@@ -155,6 +159,9 @@ function shareWhatsApp() {
                         <button v-if="!isPaid && !isQuote" @click="showPaymentModal = true" class="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700">
                             <i class="pi pi-wallet text-xs"></i> Record Payment
                         </button>
+                        <Link v-if="!isPaid && !isQuote" :href="route('pos.index') + '?invoice_id=' + invoice.id" class="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-3 py-2 text-sm font-medium text-white hover:bg-amber-600">
+                            <i class="pi pi-shopping-cart text-xs"></i> Add to POS
+                        </Link>
                     </div>
                 </div>
 
@@ -183,55 +190,79 @@ function shareWhatsApp() {
                 <table class="w-full text-sm">
                     <thead class="bg-gray-50/50">
                         <tr>
-                            <th class="px-6 py-2.5 text-left text-xs font-medium text-gray-500">Person</th>
-                            <th class="px-6 py-2.5 text-left text-xs font-medium text-gray-500">Garment</th>
-                            <th class="px-6 py-2.5 text-left text-xs font-medium text-gray-500 hidden md:table-cell">Fabric</th>
+                            <th class="px-6 py-2.5 text-left text-xs font-medium text-gray-500">Item</th>
+                            <th class="px-6 py-2.5 text-left text-xs font-medium text-gray-500">Details</th>
                             <th class="px-6 py-2.5 text-center text-xs font-medium text-gray-500">Qty</th>
-                            <th class="px-6 py-2.5 text-right text-xs font-medium text-gray-500">Fee</th>
-                            <th class="px-6 py-2.5 text-right text-xs font-medium text-gray-500 hidden sm:table-cell">Fabric</th>
+                            <th class="px-6 py-2.5 text-right text-xs font-medium text-gray-500">Price</th>
                             <th class="px-6 py-2.5 text-right text-xs font-medium text-gray-500">Total</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         <tr v-for="item in invoice.line_items" :key="item.id">
-                            <td class="px-6 py-3 text-gray-900">{{ item.contact?.name || '—' }}</td>
-                            <td class="px-6 py-3">
-                                <span v-if="item.measurement" class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
-                                    :class="{
-                                        'bg-green-100 text-green-700': item.measurement.garment_type === 'kanzu',
-                                        'bg-blue-100 text-blue-700': item.measurement.garment_type === 'shirt',
-                                        'bg-amber-100 text-amber-700': item.measurement.garment_type === 'trouser',
-                                        'bg-purple-100 text-purple-700': item.measurement.garment_type === 'vest',
-                                    }">{{ item.measurement.garment_type }}</span>
-                                <span v-else class="text-gray-400">—</span>
-                            </td>
-                            <td class="px-6 py-3 text-gray-600 hidden md:table-cell">{{ item.fabric?.name || '—' }}</td>
-                            <td class="px-6 py-3 text-center text-gray-600">{{ item.quantity }}</td>
-                            <td class="px-6 py-3 text-right text-gray-900">{{ formatCurrency(item.craftsmanship_fee) }}</td>
-                            <td class="px-6 py-3 text-right text-gray-600 hidden sm:table-cell">{{ formatCurrency(item.fabric_cost) }}</td>
-                            <td class="px-6 py-3 text-right font-medium text-gray-900">{{ formatCurrency(item.line_total) }}</td>
+                            <!-- Collection / shelf item -->
+                            <template v-if="item.item_type === 'collection'">
+                                <td class="px-6 py-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-700 px-2 py-0.5 text-xs font-medium">
+                                            <i class="pi pi-shopping-bag text-[10px]"></i> Shelf
+                                        </span>
+                                        <span class="text-gray-900 font-medium">{{ item.collection?.name || item.description || 'Collection Item' }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-3 text-gray-500 text-xs">
+                                    <span v-if="item.collection?.size">{{ item.collection.size }}</span>
+                                    <span v-if="item.collection?.color"> · {{ item.collection.color }}</span>
+                                </td>
+                                <td class="px-6 py-3 text-center text-gray-600">{{ item.quantity }}</td>
+                                <td class="px-6 py-3 text-right text-gray-900">{{ formatCurrency(item.unit_price) }}</td>
+                                <td class="px-6 py-3 text-right font-medium text-gray-900">{{ formatCurrency(item.line_total) }}</td>
+                            </template>
+                            <!-- Custom tailored item -->
+                            <template v-else>
+                                <td class="px-6 py-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 px-2 py-0.5 text-xs font-medium">
+                                            <i class="pi pi-scissors text-[10px]"></i> Custom
+                                        </span>
+                                        <span class="text-gray-900">{{ item.contact?.name || '—' }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-3">
+                                    <span v-if="item.measurement" class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+                                        :class="{
+                                            'bg-green-100 text-green-700': item.measurement.garment_type === 'kanzu',
+                                            'bg-blue-100 text-blue-700': item.measurement.garment_type === 'shirt',
+                                            'bg-amber-100 text-amber-700': item.measurement.garment_type === 'trouser',
+                                            'bg-purple-100 text-purple-700': item.measurement.garment_type === 'vest',
+                                        }">{{ item.measurement.garment_type }}</span>
+                                    <span v-if="item.fabric" class="text-xs text-gray-500 ml-1">· {{ item.fabric.name }}</span>
+                                    <span v-if="!item.measurement && !item.fabric" class="text-gray-400">—</span>
+                                </td>
+                                <td class="px-6 py-3 text-center text-gray-600">{{ item.quantity }}</td>
+                                <td class="px-6 py-3 text-right text-gray-900 text-xs">
+                                    <div>Fee: {{ formatCurrency(item.craftsmanship_fee) }}</div>
+                                    <div v-if="Number(item.fabric_cost) > 0" class="text-gray-500">Fabric: {{ formatCurrency(item.fabric_cost) }}</div>
+                                </td>
+                                <td class="px-6 py-3 text-right font-medium text-gray-900">{{ formatCurrency(item.line_total) }}</td>
+                            </template>
                         </tr>
                     </tbody>
                     <tfoot class="bg-gray-50">
                         <tr>
-                            <td colspan="5" class="px-6 py-2 text-right text-sm text-gray-600 hidden sm:table-cell">Subtotal</td>
-                            <td class="px-6 py-2 text-right text-sm text-gray-600 sm:hidden" colspan="3">Subtotal</td>
-                            <td class="px-6 py-2 text-right font-medium text-gray-900" colspan="2">{{ formatCurrency(invoice.subtotal) }}</td>
+                            <td colspan="4" class="px-6 py-2 text-right text-sm text-gray-600">Subtotal</td>
+                            <td class="px-6 py-2 text-right font-medium text-gray-900">{{ formatCurrency(invoice.subtotal) }}</td>
                         </tr>
                         <tr v-if="Number(invoice.discount) > 0">
-                            <td colspan="5" class="px-6 py-1 text-right text-sm text-gray-600 hidden sm:table-cell">Discount</td>
-                            <td class="px-6 py-1 text-right text-sm text-gray-600 sm:hidden" colspan="3">Discount</td>
-                            <td class="px-6 py-1 text-right font-medium text-red-600" colspan="2">-{{ formatCurrency(invoice.discount) }}</td>
+                            <td colspan="4" class="px-6 py-1 text-right text-sm text-gray-600">Discount</td>
+                            <td class="px-6 py-1 text-right font-medium text-red-600">-{{ formatCurrency(invoice.discount) }}</td>
                         </tr>
                         <tr v-if="Number(invoice.tax) > 0">
-                            <td colspan="5" class="px-6 py-1 text-right text-sm text-gray-600 hidden sm:table-cell">Tax</td>
-                            <td class="px-6 py-1 text-right text-sm text-gray-600 sm:hidden" colspan="3">Tax</td>
-                            <td class="px-6 py-1 text-right font-medium text-gray-900" colspan="2">{{ formatCurrency(invoice.tax) }}</td>
+                            <td colspan="4" class="px-6 py-1 text-right text-sm text-gray-600">Tax</td>
+                            <td class="px-6 py-1 text-right font-medium text-gray-900">{{ formatCurrency(invoice.tax) }}</td>
                         </tr>
                         <tr class="border-t border-gray-200">
-                            <td colspan="5" class="px-6 py-2 text-right text-sm font-semibold text-gray-900 hidden sm:table-cell">Total</td>
-                            <td class="px-6 py-2 text-right text-sm font-semibold text-gray-900 sm:hidden" colspan="3">Total</td>
-                            <td class="px-6 py-2 text-right font-bold text-green-700 text-base" colspan="2">{{ formatCurrency(invoice.total) }}</td>
+                            <td colspan="4" class="px-6 py-2 text-right text-sm font-semibold text-gray-900">Total</td>
+                            <td class="px-6 py-2 text-right font-bold text-green-700 text-base">{{ formatCurrency(invoice.total) }}</td>
                         </tr>
                     </tfoot>
                 </table>

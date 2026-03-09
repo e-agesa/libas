@@ -67,6 +67,11 @@
         .garment-shirt { background: #dbeafe; color: #1d4ed8; }
         .garment-trouser { background: #fef3c7; color: #92400e; }
         .garment-vest { background: #ede9fe; color: #6d28d9; }
+
+        /* Item type badges */
+        .type-badge { display: inline-block; padding: 1px 8px; border-radius: 8px; font-size: 9px; font-weight: bold; }
+        .type-custom { background: #dcfce7; color: #15803d; }
+        .type-shelf { background: #dbeafe; color: #1d4ed8; }
     </style>
 </head>
 <body>
@@ -119,30 +124,38 @@
         <table>
             <thead>
                 <tr>
-                    <th>Person</th>
-                    <th>Garment</th>
-                    <th>Fabric</th>
+                    <th>Type</th>
+                    <th>Item</th>
+                    <th>Details</th>
                     <th class="text-center">Qty</th>
-                    <th class="text-right">Fee</th>
-                    <th class="text-right">Fabric</th>
+                    <th class="text-right">Price</th>
                     <th class="text-right">Total</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($invoice->lineItems as $item)
                 <tr>
-                    <td>{{ $item->contact->name ?? '—' }}</td>
-                    <td>
-                        @if($item->measurement)
-                            <span class="garment-badge garment-{{ $item->measurement->garment_type }}">{{ $item->measurement->garment_type }}</span>
-                        @else
-                            —
-                        @endif
-                    </td>
-                    <td>{{ $item->fabric->name ?? '—' }}</td>
-                    <td class="text-center">{{ $item->quantity }}</td>
-                    <td class="text-right">{{ number_format($item->craftsmanship_fee, 0) }}</td>
-                    <td class="text-right">{{ number_format($item->fabric_cost, 0) }}</td>
+                    @if($item->item_type === 'collection')
+                        <td><span class="type-badge type-shelf">Shelf</span></td>
+                        <td>{{ $item->collection->name ?? $item->description ?? 'Collection Item' }}</td>
+                        <td>
+                            @if($item->collection?->size) {{ $item->collection->size }} @endif
+                            @if($item->collection?->color) &middot; {{ $item->collection->color }} @endif
+                        </td>
+                        <td class="text-center">{{ $item->quantity }}</td>
+                        <td class="text-right">{{ number_format($item->unit_price, 0) }}</td>
+                    @else
+                        <td><span class="type-badge type-custom">Custom</span></td>
+                        <td>{{ $item->contact->name ?? '—' }}</td>
+                        <td>
+                            @if($item->measurement)
+                                <span class="garment-badge garment-{{ $item->measurement->garment_type }}">{{ $item->measurement->garment_type }}</span>
+                            @endif
+                            @if($item->fabric) {{ $item->fabric->name }} @endif
+                        </td>
+                        <td class="text-center">{{ $item->quantity }}</td>
+                        <td class="text-right">{{ number_format($item->craftsmanship_fee + $item->fabric_cost, 0) }}</td>
+                    @endif
                     <td class="text-right font-bold">{{ number_format($item->line_total, 0) }}</td>
                 </tr>
                 @endforeach

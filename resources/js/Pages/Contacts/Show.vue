@@ -5,6 +5,7 @@ import { ref, computed } from 'vue';
 import ContactForm from '@/Components/Contacts/ContactForm.vue';
 import MeasurementForm from '@/Components/Measurements/MeasurementForm.vue';
 import MeasurementCard from '@/Components/Measurements/MeasurementCard.vue';
+import Modal from '@/Components/Modal.vue';
 import { useGarmentTypes } from '@/composables/useGarmentTypes';
 
 const props = defineProps({
@@ -14,16 +15,45 @@ const props = defineProps({
 const showEditContact = ref(false);
 const showMeasurementModal = ref(false);
 const editingMeasurement = ref(null);
+const revisionParent = ref(null);
+const showHistoryModal = ref(false);
+const historySeries = ref([]);
 
-const { garmentTypes, getColor, getLabel } = useGarmentTypes();
+const { garmentTypes, getColor, getLabel, getFields } = useGarmentTypes();
 
+// Group measurements into revision series, showing only the latest of each series
 const groupedMeasurements = computed(() => {
     const groups = {};
     if (!props.contact.measurements?.length) return groups;
+
+    // Build series map: rootId => [measurements]
+    const seriesMap = {};
     for (const m of props.contact.measurements) {
-        if (!groups[m.garment_type]) groups[m.garment_type] = [];
-        groups[m.garment_type].push(m);
+        const rootId = m.parent_id || m.id;
+        if (!seriesMap[rootId]) seriesMap[rootId] = [];
+        seriesMap[rootId].push(m);
     }
+    // Sort each series by revision desc (latest first)
+    for (const rootId of Object.keys(seriesMap)) {
+        seriesMap[rootId].sort((a, b) => b.revision - a.revision);
+    }
+
+    // Group the latest measurement of each series by garment type
+    for (const [rootId, series] of Object.entries(seriesMap)) {
+        const latest = series[0];
+        if (!groups[latest.garment_type]) groups[latest.garment_type] = [];
+        groups[latest.garment_type].push({
+            ...latest,
+            _seriesCount: series.length,
+            _series: series,
+        });
+    }
+
+    // Sort within each garment type by date_taken desc
+    for (const type of Object.keys(groups)) {
+        groups[type].sort((a, b) => new Date(b.date_taken) - new Date(a.date_taken));
+    }
+
     return groups;
 });
 
@@ -34,6 +64,11 @@ const orderedTypes = computed(() => {
     return [...known, ...unknown];
 });
 
+// Total unique measurement series count
+const seriesCount = computed(() => {
+    return Object.values(groupedMeasurements.value).reduce((sum, arr) => sum + arr.length, 0);
+});
+
 const relationshipLabels = {
     self: 'Self', son: 'Son', daughter: 'Daughter', brother: 'Brother',
     sister: 'Sister', wife: 'Wife', husband: 'Husband', employee: 'Employee', other: 'Other',
@@ -41,23 +76,42 @@ const relationshipLabels = {
 
 function openAddMeasurement() {
     editingMeasurement.value = null;
+    revisionParent.value = null;
     showMeasurementModal.value = true;
 }
 
 function openEditMeasurement(measurement) {
     editingMeasurement.value = measurement;
+    revisionParent.value = null;
+    showMeasurementModal.value = true;
+}
+
+function openNewRevision(measurement) {
+    editingMeasurement.value = null;
+    revisionParent.value = measurement;
     showMeasurementModal.value = true;
 }
 
 function closeMeasurementModal() {
     showMeasurementModal.value = false;
     editingMeasurement.value = null;
+    revisionParent.value = null;
 }
 
 function deleteMeasurement(measurement) {
     if (confirm(`Delete "${measurement.label || measurement.garment_type}" measurement?`)) {
         router.delete(route('measurements.destroy', measurement.id));
     }
+}
+
+function openHistory(measurement) {
+    historySeries.value = measurement._series || [measurement];
+    showHistoryModal.value = true;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 </script>
 
@@ -109,8 +163,8 @@ function deleteMeasurement(measurement) {
             <!-- Stats -->
             <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-gray-100 pt-4">
                 <div class="text-center">
-                    <p class="text-2xl font-bold text-gray-900">{{ contact.measurements?.length || 0 }}</p>
-                    <p class="text-xs text-gray-500">Total</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ seriesCount }}</p>
+                    <p class="text-xs text-gray-500">Profiles</p>
                 </div>
                 <template v-for="type in orderedTypes.slice(0, 3)" :key="type">
                     <div class="text-center">
@@ -133,18 +187,22 @@ function deleteMeasurement(measurement) {
                         <i class="pi pi-bookmark text-xs"></i>
                         {{ getLabel(type) }}
                     </span>
-                    <span class="text-sm text-gray-400">{{ groupedMeasurements[type].length }} record{{ groupedMeasurements[type].length !== 1 ? 's' : '' }}</span>
+                    <span class="text-sm text-gray-400">{{ groupedMeasurements[type].length }} profile{{ groupedMeasurements[type].length !== 1 ? 's' : '' }}</span>
                     <div class="flex-1 border-t border-gray-200"></div>
                 </div>
 
-                <!-- Measurement cards -->
+                <!-- Measurement cards — shows latest revision of each series -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <MeasurementCard
                         v-for="measurement in groupedMeasurements[type]"
                         :key="measurement.id"
                         :measurement="measurement"
+                        :revision-count="measurement._seriesCount"
+                        :is-latest="true"
                         @edit="openEditMeasurement(measurement)"
                         @delete="deleteMeasurement(measurement)"
+                        @new-revision="openNewRevision(measurement)"
+                        @show-history="openHistory(measurement)"
                     />
                 </div>
             </div>
@@ -162,6 +220,79 @@ function deleteMeasurement(measurement) {
 
         <!-- Modals -->
         <ContactForm :show="showEditContact" :client-id="contact.client_id" :contact="contact" @close="showEditContact = false" />
-        <MeasurementForm :show="showMeasurementModal" :contact-id="contact.id" :measurement="editingMeasurement" @close="closeMeasurementModal" />
+        <MeasurementForm
+            :show="showMeasurementModal"
+            :contact-id="contact.id"
+            :measurement="editingMeasurement"
+            :parent-measurement="revisionParent"
+            @close="closeMeasurementModal"
+        />
+
+        <!-- Revision History Modal -->
+        <Modal :show="showHistoryModal" @close="showHistoryModal = false" max-width="3xl">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <i class="pi pi-history mr-2"></i>Revision History
+                    </h3>
+                    <button @click="showHistoryModal = false" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                        <i class="pi pi-times"></i>
+                    </button>
+                </div>
+
+                <div v-if="historySeries.length" class="space-y-4">
+                    <div
+                        v-for="(rev, idx) in historySeries"
+                        :key="rev.id"
+                        :class="[
+                            'rounded-lg border p-4',
+                            idx === 0 ? 'border-green-200 bg-green-50/50' : 'border-gray-200 bg-white',
+                        ]"
+                    >
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span v-if="idx === 0" class="inline-flex rounded-full bg-green-100 text-green-700 px-2 py-0.5 text-xs font-semibold">
+                                    Latest
+                                </span>
+                                <span class="inline-flex rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-xs font-semibold">
+                                    Rev {{ rev.revision }}
+                                </span>
+                                <span class="text-sm font-medium text-gray-900">{{ rev.label || rev.garment_type }}</span>
+                            </div>
+                            <span class="text-xs text-gray-400">{{ formatDate(rev.date_taken) }}</span>
+                        </div>
+
+                        <!-- Values grid -->
+                        <div class="grid grid-cols-3 sm:grid-cols-4 gap-x-4 gap-y-1">
+                            <template v-for="field in getFields(rev.garment_type)" :key="field.slug">
+                                <div v-if="rev.values?.[field.slug] != null" class="flex justify-between items-baseline py-0.5">
+                                    <span class="text-xs text-gray-500">{{ field.name }}</span>
+                                    <span class="text-sm font-medium text-gray-900">
+                                        {{ rev.values[field.slug] }}
+                                        <span class="text-xs text-gray-400">{{ rev.unit }}</span>
+                                        <!-- Show diff from previous revision -->
+                                        <template v-if="idx < historySeries.length - 1">
+                                            <span
+                                                v-if="historySeries[idx + 1]?.values?.[field.slug] != null && rev.values[field.slug] !== historySeries[idx + 1].values[field.slug]"
+                                                :class="[
+                                                    'text-[10px] ml-1',
+                                                    rev.values[field.slug] > historySeries[idx + 1].values[field.slug] ? 'text-red-500' : 'text-blue-500',
+                                                ]"
+                                            >
+                                                {{ rev.values[field.slug] > historySeries[idx + 1].values[field.slug] ? '+' : '' }}{{ Math.round((rev.values[field.slug] - historySeries[idx + 1].values[field.slug]) * 10) / 10 }}
+                                            </span>
+                                        </template>
+                                    </span>
+                                </div>
+                            </template>
+                        </div>
+
+                        <p v-if="rev.notes" class="mt-2 text-xs text-gray-500 border-t border-gray-100 pt-2">
+                            {{ rev.notes }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </Modal>
     </AuthenticatedLayout>
 </template>

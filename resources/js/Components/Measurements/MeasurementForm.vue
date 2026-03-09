@@ -12,7 +12,8 @@ import { useGarmentTypes } from '@/composables/useGarmentTypes';
 const props = defineProps({
     show: Boolean,
     contactId: [Number, String],
-    measurement: Object,
+    measurement: Object,       // For editing an existing measurement
+    parentMeasurement: Object, // For creating a new revision (pre-fills values from parent)
 });
 
 const emit = defineEmits(['close']);
@@ -29,6 +30,7 @@ const form = useForm({
     unit: 'cm',
     values: {},
     notes: '',
+    parent_id: null,
 });
 
 const previousUnit = ref('cm');
@@ -38,18 +40,35 @@ const defaultType = computed(() => garmentTypes.value[0]?.slug || '');
 
 watch(() => props.show, (val) => {
     if (val && props.measurement) {
+        // Editing existing measurement
         form.garment_type = props.measurement.garment_type || defaultType.value;
         form.label = props.measurement.label || '';
         form.date_taken = props.measurement.date_taken?.split('T')[0] || new Date().toISOString().split('T')[0];
         form.unit = props.measurement.unit || 'cm';
         form.values = { ...(props.measurement.values || {}) };
         form.notes = props.measurement.notes || '';
+        form.parent_id = null; // Not a new revision when editing
+        previousUnit.value = form.unit;
+    } else if (val && props.parentMeasurement) {
+        // Creating a new revision — pre-fill from parent
+        const parent = props.parentMeasurement;
+        const now = new Date();
+        const monthName = now.toLocaleString('en', { month: 'long' });
+        form.garment_type = parent.garment_type || defaultType.value;
+        form.label = `${parent.label ? parent.label.replace(/\s*\(Rev\s*\d+\)/, '') : (parent.garment_type || '')} ${monthName} ${now.getFullYear()}`;
+        form.date_taken = now.toISOString().split('T')[0];
+        form.unit = parent.unit || 'cm';
+        form.values = { ...(parent.values || {}) };
+        form.notes = '';
+        form.parent_id = parent.parent_id || parent.id; // Point to root
         previousUnit.value = form.unit;
     } else if (val) {
+        // Brand new measurement
         form.reset();
         form.garment_type = defaultType.value;
         form.date_taken = new Date().toISOString().split('T')[0];
         form.values = {};
+        form.parent_id = null;
         previousUnit.value = 'cm';
     }
 });
@@ -61,9 +80,9 @@ watch(defaultType, (val) => {
     }
 });
 
-// Reset values when garment type changes
+// Reset values when garment type changes (but not for revisions/edits)
 watch(() => form.garment_type, () => {
-    if (!props.measurement) {
+    if (!props.measurement && !props.parentMeasurement) {
         form.values = {};
     }
 });
@@ -120,9 +139,16 @@ function submit() {
         <form @submit.prevent="submit" class="p-6">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-gray-900">
-                    {{ measurement ? 'Edit Measurement' : 'New Measurement' }}
+                    {{ measurement ? 'Edit Measurement' : (parentMeasurement ? 'New Revision' : 'New Measurement') }}
                 </h3>
                 <UnitToggle v-model="form.unit" />
+            </div>
+
+            <!-- Revision banner -->
+            <div v-if="parentMeasurement" class="mb-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-2 text-sm text-amber-800">
+                <i class="pi pi-info-circle mr-1"></i>
+                Creating a new revision based on <strong>{{ parentMeasurement.label || parentMeasurement.garment_type }}</strong>.
+                Previous values are pre-filled — update what has changed.
             </div>
 
             <!-- Garment type tabs -->
@@ -131,10 +157,12 @@ function submit() {
                     v-for="type in garmentTypes"
                     :key="type.slug"
                     type="button"
-                    @click="form.garment_type = type.slug"
+                    @click="!parentMeasurement && (form.garment_type = type.slug)"
+                    :disabled="!!parentMeasurement"
                     :class="[
                         'px-4 py-2 text-sm font-medium -mb-px transition-colors whitespace-nowrap',
                         tabColor(type.slug, form.garment_type === type.slug),
+                        parentMeasurement ? 'cursor-not-allowed opacity-60' : '',
                     ]"
                 >
                     {{ type.name }}
@@ -212,7 +240,7 @@ function submit() {
                     :disabled="form.processing"
                     class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
                 >
-                    {{ form.processing ? 'Saving...' : (measurement ? 'Update Measurement' : 'Save Measurement') }}
+                    {{ form.processing ? 'Saving...' : (measurement ? 'Update Measurement' : (parentMeasurement ? 'Save Revision' : 'Save Measurement')) }}
                 </button>
             </div>
         </form>

@@ -19,9 +19,21 @@ class MeasurementController extends Controller
             'values' => 'required|array',
             'values.*' => 'nullable|numeric|min:0|max:999',
             'notes' => 'nullable|string|max:2000',
+            'parent_id' => 'nullable|exists:measurements,id',
         ]);
 
         $validated['measured_by'] = $request->user()->id;
+
+        // If this is a revision, calculate the revision number
+        if (!empty($validated['parent_id'])) {
+            $parent = Measurement::findOrFail($validated['parent_id']);
+            $rootId = $parent->parent_id ?? $parent->id;
+            $validated['parent_id'] = $rootId;
+            $validated['revision'] = (Measurement::where('parent_id', $rootId)->max('revision') ?? $parent->revision) + 1;
+            $validated['garment_type'] = $parent->garment_type;
+        } else {
+            $validated['revision'] = 1;
+        }
 
         $contact->measurements()->create($validated);
 

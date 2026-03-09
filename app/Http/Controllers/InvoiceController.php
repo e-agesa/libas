@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Collection;
 use App\Models\CompanySetting;
 use App\Models\Fabric;
 use App\Models\Invoice;
@@ -32,7 +33,7 @@ class InvoiceController extends Controller
             $query->where('type', $type);
         }
 
-        $invoices = $query->paginate($request->input('per_page', 15))
+        $invoices = $query->paginate(min((int) $request->input('per_page', 15), 100))
             ->withQueryString();
 
         return Inertia::render('Invoices/Index', [
@@ -51,6 +52,12 @@ class InvoiceController extends Controller
         $fabrics = Fabric::where('status', 'active')
             ->select('id', 'name', 'type', 'color', 'price_per_unit')
             ->orderBy('name')->get();
+
+        $collections = Collection::active()->inStock()
+            ->with('category:id,name')
+            ->select('id', 'category_id', 'name', 'sku', 'size', 'color', 'price', 'stock_qty')
+            ->orderBy('name')->get();
+
         $invoiceNumber = Invoice::generateInvoiceNumber();
         $quoteNumber = Invoice::generateQuoteNumber();
 
@@ -61,6 +68,7 @@ class InvoiceController extends Controller
         return Inertia::render('Invoices/Create', [
             'clients' => $clients,
             'fabrics' => $fabrics,
+            'collections' => $collections,
             'invoiceNumber' => $invoiceNumber,
             'quoteNumber' => $quoteNumber,
             'selectedClientId' => $selectedClientId ? (int) $selectedClientId : null,
@@ -82,19 +90,33 @@ class InvoiceController extends Controller
             'notes' => 'nullable|string|max:2000',
             'initial_payment' => 'nullable|numeric|min:0',
             'line_items' => 'required|array|min:1',
-            'line_items.*.contact_id' => 'required|exists:contacts,id',
+            'line_items.*.item_type' => 'nullable|in:custom,collection',
+            'line_items.*.contact_id' => 'nullable|exists:contacts,id',
             'line_items.*.measurement_id' => 'nullable|exists:measurements,id',
             'line_items.*.fabric_id' => 'nullable|exists:fabrics,id',
+            'line_items.*.collection_id' => 'nullable|exists:collections,id',
+            'line_items.*.description' => 'nullable|string|max:255',
+            'line_items.*.unit_price' => 'nullable|numeric|min:0',
             'line_items.*.quantity' => 'required|integer|min:1',
-            'line_items.*.craftsmanship_fee' => 'required|numeric|min:0',
+            'line_items.*.craftsmanship_fee' => 'nullable|numeric|min:0',
             'line_items.*.fabric_cost' => 'nullable|numeric|min:0',
         ]);
 
         // Calculate subtotal from line items
         $subtotal = 0;
         foreach ($validated['line_items'] as &$item) {
+            $item['item_type'] = $item['item_type'] ?? 'custom';
+            $item['craftsmanship_fee'] = $item['craftsmanship_fee'] ?? 0;
             $item['fabric_cost'] = $item['fabric_cost'] ?? 0;
-            $item['line_total'] = ($item['craftsmanship_fee'] + $item['fabric_cost']) * $item['quantity'];
+            $item['unit_price'] = $item['unit_price'] ?? 0;
+
+            if ($item['item_type'] === 'collection') {
+                // For collection items: unit_price * quantity
+                $item['line_total'] = $item['unit_price'] * $item['quantity'];
+            } else {
+                // For custom items: (craftsmanship + fabric) * quantity
+                $item['line_total'] = ($item['craftsmanship_fee'] + $item['fabric_cost']) * $item['quantity'];
+            }
             $subtotal += $item['line_total'];
         }
 
@@ -146,9 +168,15 @@ class InvoiceController extends Controller
             'notes' => $validated['notes'],
         ]);
 
-        // Create line items
+        // Create line items and deduct collection stock
         foreach ($validated['line_items'] as $item) {
             $invoice->lineItems()->create($item);
+
+            // Deduct stock for collection items
+            if (($item['item_type'] ?? 'custom') === 'collection' && !empty($item['collection_id'])) {
+                Collection::where('id', $item['collection_id'])
+                    ->decrement('stock_qty', $item['quantity']);
+            }
         }
 
         // Create initial payment record
@@ -172,6 +200,7 @@ class InvoiceController extends Controller
             'lineItems.contact',
             'lineItems.measurement',
             'lineItems.fabric',
+            'lineItems.collection',
             'payments' => fn ($q) => $q->latest('date'),
         ]);
 
@@ -223,14 +252,15 @@ class InvoiceController extends Controller
             'lineItems.contact',
             'lineItems.measurement',
             'lineItems.fabric',
+            'lineItems.collection',
             'payments',
         ]);
 
-        $company = CompanySetting::get();
+        $company = CompanySetting::first() ?? new CompanySetting();
 
         $pdf = Pdf::loadView('pdf.receipt', compact('invoice', 'company'));
 
         $prefix = $invoice->type === 'quotation' ? 'Quotation' : 'Receipt';
-        return $pdf->download("{$prefix}-{$invoice->invoice_number}.pdf");
+        return $pdf->stream("{$prefix}-{$invoice->invoice_number}.pdf");
     }
 }

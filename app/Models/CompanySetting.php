@@ -19,6 +19,16 @@ class CompanySetting extends Model
         'tax_number',
         'logo_path',
         'footer_text',
+        'hero_title',
+        'hero_subtitle',
+        'hero_badge',
+        'shop_banner_path',
+        'whatsapp_number',
+        'instagram',
+        'facebook',
+        'tiktok',
+        'about_text',
+        'shop_enabled',
     ];
 
     /**

@@ -31,7 +31,7 @@ class FabricController extends Controller
             $query->where('stock_qty', '<', 10);
         }
 
-        $fabrics = $query->paginate($request->input('per_page', 20))
+        $fabrics = $query->paginate(min((int) $request->input('per_page', 20), 100))
             ->withQueryString();
 
         return Inertia::render('Fabrics/Index', [

@@ -10,6 +10,7 @@ import StepFinalize from '@/Components/Invoices/StepFinalize.vue';
 const props = defineProps({
     clients: Array,
     fabrics: Array,
+    collections: Array,
     invoiceNumber: String,
     quoteNumber: String,
     selectedClientId: [Number, null],
@@ -32,9 +33,13 @@ const form = useForm({
     initial_payment: 0,
     notes: '',
     line_items: [{
+        item_type: 'custom',
         contact_id: '',
         measurement_id: null,
         fabric_id: null,
+        collection_id: null,
+        description: '',
+        unit_price: 0,
         quantity: 1,
         craftsmanship_fee: 0,
         fabric_cost: 0,
@@ -72,9 +77,12 @@ function selectClient(client) {
 
 const subtotal = computed(() => {
     return form.line_items.reduce((sum, item) => {
+        const qty = parseInt(item.quantity) || 1;
+        if (item.item_type === 'collection') {
+            return sum + (parseFloat(item.unit_price) || 0) * qty;
+        }
         const fee = parseFloat(item.craftsmanship_fee) || 0;
         const fabric = parseFloat(item.fabric_cost) || 0;
-        const qty = parseInt(item.quantity) || 1;
         return sum + (fee + fabric) * qty;
     }, 0);
 });
@@ -95,7 +103,10 @@ const total = computed(() => {
 const canNext = computed(() => {
     switch (currentStep.value) {
         case 1: return !!form.client_id;
-        case 2: return form.line_items.length > 0 && form.line_items.every(i => i.contact_id && parseFloat(i.craftsmanship_fee) > 0);
+        case 2: return form.line_items.length > 0 && form.line_items.every(i => {
+            if (i.item_type === 'collection') return i.collection_id && parseFloat(i.unit_price) > 0;
+            return i.contact_id && parseFloat(i.craftsmanship_fee) > 0;
+        });
         case 3: return true;
         case 4: return !!form.date;
         default: return false;
@@ -188,6 +199,7 @@ function submit() {
                     v-model:line-items="form.line_items"
                     :contacts="contacts"
                     :fabrics="fabrics"
+                    :collections="collections"
                 />
 
                 <StepReview

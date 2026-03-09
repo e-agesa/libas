@@ -15,10 +15,16 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Create roles
-        $roles = ['Admin', 'Manager', 'Tailor', 'Secretary'];
+        $roles = ['Admin', 'Manager', 'Tailor', 'Secretary', 'Cashier'];
         foreach ($roles as $roleName) {
             Role::firstOrCreate(['name' => $roleName]);
         }
+
+        // Seed garment types & fields
+        $this->call(GarmentTypeSeeder::class);
+
+        // Seed collections
+        $this->call(CollectionSeeder::class);
 
         // Create users
         $admin = User::firstOrCreate(

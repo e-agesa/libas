@@ -32,7 +32,7 @@ class ExpenseController extends Controller
             $query->whereDate('date', '<=', $to);
         }
 
-        $expenses = $query->paginate($request->input('per_page', 15))->withQueryString();
+        $expenses = $query->paginate(min((int) $request->input('per_page', 15), 100))->withQueryString();
 
         $summary = [
             'total' => Expense::when($from, fn ($q) => $q->whereDate('date', '>=', $from))

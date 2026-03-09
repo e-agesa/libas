@@ -1,0 +1,185 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Client;
+use App\Models\Collection;
+use App\Models\CollectionCategory;
+use App\Models\CompanySetting;
+use App\Models\Invoice;
+use App\Models\InvoiceLineItem;
+use App\Models\StockMovement;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+
+class ShopController extends Controller
+{
+    private function companyData(): array
+    {
+        $company = CompanySetting::first() ?? new CompanySetting();
+        return [
+            'name' => $company->business_name ?? 'Libas TMS',
+            'tagline' => $company->tagline ?? 'Tailoring Management System',
+            'phone' => $company->whatsapp_number ?: $company->phone,
+            'email' => $company->email,
+            'address' => $company->address,
+            'hero_title' => $company->hero_title ?? 'Quality Tailoring & Ready-Made Garments',
+            'hero_subtitle' => $company->hero_subtitle ?? 'Custom-made garments crafted to perfection, plus off-the-shelf items ready to wear.',
+            'hero_badge' => $company->hero_badge ?? 'Premium Quality Tailoring',
+            'instagram' => $company->instagram,
+            'facebook' => $company->facebook,
+            'tiktok' => $company->tiktok,
+            'about_text' => $company->about_text,
+            'logo_url' => $company->logo_url,
+        ];
+    }
+
+    public function index()
+    {
+        return Inertia::render('Shop/Index', [
+            'collections' => Collection::where('status', 'active')
+                ->where('stock_qty', '>', 0)
+                ->where('show_on_shop', true)
+                ->with('category:id,name')
+                ->orderBy('name')
+                ->get(),
+            'categories' => CollectionCategory::where('is_active', true)
+                ->orderBy('sort_order')
+                ->get(['id', 'name', 'description']),
+            'company' => $this->companyData(),
+        ]);
+    }
+
+    public function checkout(Request $request)
+    {
+        // Cart items come as query param (JSON) or we show empty checkout
+        $cartIds = $request->input('items', []);
+
+        $collections = [];
+        if (!empty($cartIds)) {
+            // cartIds is [{id, qty}, ...]
+            $ids = collect($cartIds)->pluck('id');
+            $collections = Collection::whereIn('id', $ids)
+                ->where('status', 'active')
+                ->with('category:id,name')
+                ->get()
+                ->map(function ($item) use ($cartIds) {
+                    $cartItem = collect($cartIds)->firstWhere('id', $item->id);
+                    $item->cart_qty = $cartItem ? min($cartItem['qty'], $item->stock_qty) : 1;
+                    return $item;
+                });
+        }
+
+        return Inertia::render('Shop/Checkout', [
+            'cartItems' => $collections,
+            'company' => $this->companyData(),
+        ]);
+    }
+
+    public function placeOrder(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'required|string|max:20',
+            'notes' => 'nullable|string|max:500',
+            'items' => 'required|array|min:1',
+            'items.*.collection_id' => 'required|exists:collections,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.unit_price' => 'required|numeric|min:0',
+        ]);
+
+        $invoice = DB::transaction(function () use ($validated) {
+            // Find or create client by phone
+            $client = Client::where('phone', $validated['phone'])->first();
+            if (!$client) {
+                $client = Client::create([
+                    'name' => $validated['name'],
+                    'phone' => $validated['phone'],
+                    'email' => $validated['email'],
+                    'type' => 'individual',
+                    'status' => 'active',
+                ]);
+            }
+
+            // Generate order number
+            $prefix = 'WEB';
+            $lastNum = Invoice::where('invoice_number', 'like', $prefix . '-%')
+                ->selectRaw("MAX(CAST(SUBSTRING(invoice_number, 5) AS UNSIGNED)) as last_num")
+                ->value('last_num') ?? 0;
+            $invoiceNumber = $prefix . '-' . str_pad($lastNum + 1, 5, '0', STR_PAD_LEFT);
+
+            $invoice = Invoice::create([
+                'client_id' => $client->id,
+                'invoice_number' => $invoiceNumber,
+                'type' => 'invoice',
+                'date' => now()->toDateString(),
+                'status' => 'issued',
+                'payment_method' => null,
+                'discount' => 0,
+                'discount_type' => 'flat',
+                'tax' => 0,
+                'notes' => "Online order by {$validated['name']}" . ($validated['notes'] ? "\n{$validated['notes']}" : ''),
+            ]);
+
+            $subtotal = 0;
+            foreach ($validated['items'] as $item) {
+                $collection = Collection::findOrFail($item['collection_id']);
+
+                // Ensure stock is available
+                if ($collection->stock_qty < $item['quantity']) {
+                    throw new \Exception("Insufficient stock for {$collection->name}");
+                }
+
+                // Use server-side price — never trust client-submitted price
+                $unitPrice = $collection->price;
+                $lineTotal = $unitPrice * $item['quantity'];
+                $subtotal += $lineTotal;
+
+                InvoiceLineItem::create([
+                    'invoice_id' => $invoice->id,
+                    'item_type' => 'collection',
+                    'collection_id' => $item['collection_id'],
+                    'description' => $collection->name,
+                    'unit_price' => $unitPrice,
+                    'quantity' => $item['quantity'],
+                    'craftsmanship_fee' => 0,
+                    'fabric_cost' => 0,
+                    'line_total' => $lineTotal,
+                ]);
+
+                $collection->decrement('stock_qty', $item['quantity']);
+                $collection->refresh();
+
+                StockMovement::record($collection, 'sale', -$item['quantity'], [
+                    'invoice_id' => $invoice->id,
+                    'reference' => $invoice->invoice_number,
+                    'unit_cost' => $unitPrice,
+                    'notes' => "Web order: {$collection->name} x{$item['quantity']}",
+                ]);
+            }
+
+            $invoice->update([
+                'subtotal' => $subtotal,
+                'total' => $subtotal,
+                'amount_paid' => 0,
+                'balance' => $subtotal,
+            ]);
+
+            return $invoice;
+        });
+
+        return redirect()->route('shop.confirmation', $invoice->id);
+    }
+
+    public function confirmation(Invoice $invoice)
+    {
+        $invoice->load(['client', 'lineItems.collection']);
+
+        return Inertia::render('Shop/Confirmation', [
+            'order' => $invoice,
+            'company' => $this->companyData(),
+        ]);
+    }
+}

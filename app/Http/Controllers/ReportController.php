@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Collection;
 use App\Models\Contact;
 use App\Models\Expense;
 use App\Models\Invoice;
+use App\Models\InvoiceLineItem;
 use App\Models\Measurement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +27,39 @@ class ReportController extends Controller
         $totalOutstanding = (clone $invoicesInRange)->whereIn('status', ['issued', 'overdue'])->sum('balance');
         $invoiceCount = (clone $invoicesInRange)->count();
 
-        // Monthly revenue chart (last 6 months)
+        // Revenue by item source (custom vs collection)
+        $paidInvoiceIds = Invoice::where('status', 'paid')
+            ->whereBetween('date', [$from, $to])
+            ->pluck('id');
+
+        $customRevenue = InvoiceLineItem::whereIn('invoice_id', $paidInvoiceIds)
+            ->where(function ($q) {
+                $q->where('item_type', 'custom')->orWhereNull('item_type');
+            })
+            ->sum('line_total');
+
+        $collectionRevenue = InvoiceLineItem::whereIn('invoice_id', $paidInvoiceIds)
+            ->where('item_type', 'collection')
+            ->sum('line_total');
+
+        // Top selling collection items
+        $topCollectionItems = InvoiceLineItem::where('item_type', 'collection')
+            ->whereIn('invoice_id', $paidInvoiceIds)
+            ->select('collection_id', DB::raw('SUM(quantity) as total_qty'), DB::raw('SUM(line_total) as total_revenue'))
+            ->groupBy('collection_id')
+            ->orderByDesc('total_revenue')
+            ->limit(5)
+            ->with('collection:id,name,sku')
+            ->get();
+
+        // Collection stock summary
+        $collectionStats = [
+            'totalItems' => Collection::count(),
+            'totalStockValue' => (float) Collection::selectRaw('SUM(price * stock_qty) as val')->value('val') ?? 0,
+            'lowStockCount' => Collection::whereColumn('stock_qty', '<=', 'low_stock_threshold')->count(),
+        ];
+
+        // Monthly revenue chart (last 6 months) — split by source
         $monthlyRevenue = Invoice::where('status', 'paid')
             ->where('date', '>=', now()->subMonths(5)->startOfMonth())
             ->select(
@@ -86,12 +120,16 @@ class ReportController extends Controller
                 'totalInvoiced' => (float) $totalInvoiced,
                 'totalOutstanding' => (float) $totalOutstanding,
                 'invoiceCount' => $invoiceCount,
+                'customRevenue' => (float) $customRevenue,
+                'collectionRevenue' => (float) $collectionRevenue,
                 'totalClients' => $totalClients,
                 'totalContacts' => $totalContacts,
                 'totalMeasurements' => $totalMeasurements,
                 'totalExpenses' => (float) $totalExpenses,
                 'netProfit' => $netProfit,
             ],
+            'collectionStats' => $collectionStats,
+            'topCollectionItems' => $topCollectionItems,
             'monthlyRevenue' => $monthlyRevenue,
             'garmentBreakdown' => $garmentBreakdown,
             'topClients' => $topClients,

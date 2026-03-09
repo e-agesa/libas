@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Collection;
 use App\Models\CompanySetting;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -32,10 +33,16 @@ class SettingController extends Controller
         $roles = Role::orderBy('name')->pluck('name');
         $company = CompanySetting::get();
 
+        $shopCollections = Collection::select('id', 'name', 'sku', 'price', 'stock_qty', 'status', 'show_on_shop', 'image_path')
+            ->with('category:id,name')
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('Settings/Index', [
             'users' => $users,
             'roles' => $roles,
             'company' => $company,
+            'shopCollections' => $shopCollections,
         ]);
     }
 
@@ -62,7 +69,7 @@ class SettingController extends Controller
     public function uploadLogo(Request $request)
     {
         $request->validate([
-            'logo' => 'required|image|mimes:jpeg,png,jpg,svg|max:2048',
+            'logo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         $company = CompanySetting::get();
@@ -91,6 +98,50 @@ class SettingController extends Controller
 
         return redirect()->back()
             ->with('success', 'Logo removed.');
+    }
+
+    // ── Website / Shop Settings ────────────────────────────────────────────────
+
+    public function updateWebsite(Request $request)
+    {
+        $validated = $request->validate([
+            'hero_title' => 'nullable|string|max:255',
+            'hero_subtitle' => 'nullable|string|max:500',
+            'hero_badge' => 'nullable|string|max:100',
+            'whatsapp_number' => 'nullable|string|max:30',
+            'instagram' => 'nullable|string|max:255',
+            'facebook' => 'nullable|string|max:255',
+            'tiktok' => 'nullable|string|max:255',
+            'about_text' => 'nullable|string|max:2000',
+            'shop_enabled' => 'boolean',
+        ]);
+
+        CompanySetting::get()->update($validated);
+
+        return redirect()->back()->with('success', 'Website settings updated.');
+    }
+
+    public function toggleShopItem(Request $request, Collection $collection)
+    {
+        $collection->update(['show_on_shop' => !$collection->show_on_shop]);
+
+        return redirect()->back()->with('success',
+            $collection->show_on_shop ? "{$collection->name} is now visible on shop." : "{$collection->name} hidden from shop."
+        );
+    }
+
+    public function bulkToggleShop(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:collections,id',
+            'show' => 'required|boolean',
+        ]);
+
+        Collection::whereIn('id', $validated['ids'])->update(['show_on_shop' => $validated['show']]);
+
+        $action = $validated['show'] ? 'shown on' : 'hidden from';
+        return redirect()->back()->with('success', count($validated['ids']) . " items {$action} shop.");
     }
 
     // ── Users ─────────────────────────────────────────────────────────────────

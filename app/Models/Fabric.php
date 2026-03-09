@@ -15,6 +15,8 @@ class Fabric extends Model
         'color',
         'price_per_unit',
         'stock_qty',
+        'reserved_qty',
+        'low_stock_threshold',
         'supplier',
         'notes',
         'status',
@@ -32,8 +34,18 @@ class Fabric extends Model
         return $this->hasMany(InvoiceLineItem::class);
     }
 
-    public function isLowStock(int $threshold = 10): bool
+    public function stockMovements()
     {
-        return $this->stock_qty < $threshold;
+        return $this->morphMany(StockMovement::class, 'movable');
+    }
+
+    public function getAvailableQtyAttribute(): int
+    {
+        return max(0, $this->stock_qty - $this->reserved_qty);
+    }
+
+    public function isLowStock(int $threshold = null): bool
+    {
+        return $this->stock_qty <= ($threshold ?? $this->low_stock_threshold ?? 10);
     }
 }
