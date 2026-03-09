@@ -256,31 +256,70 @@ status("All storage directories ready", 'ok');
 echo "<h2>[5/8] Install Composer dependencies</h2>";
 chdir($projectRoot);
 
+// Set HOME and COMPOSER_HOME — required on shared hosting
+$homeDir = dirname($projectRoot); // /home/saifyposorg
+putenv("HOME=$homeDir");
+putenv("COMPOSER_HOME=$projectRoot/.composer");
+if (!is_dir($projectRoot . '/.composer')) {
+    mkdir($projectRoot . '/.composer', 0775, true);
+}
+
+$envPrefix = "HOME=$homeDir COMPOSER_HOME=" . escapeshellarg($projectRoot . '/.composer');
+
 if (!is_dir($projectRoot . '/vendor')) {
+    // Try downloading composer.phar directly (faster than installer)
     if (!file_exists($projectRoot . '/composer.phar')) {
         status("Downloading composer.phar...");
-        $installerUrl = 'https://getcomposer.org/installer';
-        $installer = @file_get_contents($installerUrl);
-        if (!$installer) {
-            $ch = curl_init($installerUrl);
-            curl_setopt_array($ch, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_SSL_VERIFYPEER => false,
-            ]);
-            $installer = curl_exec($ch);
-            curl_close($ch);
+
+        $composerUrl = 'https://getcomposer.org/download/latest-stable/composer.phar';
+        $ch = curl_init($composerUrl);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_TIMEOUT => 60,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_USERAGENT => 'PHP/Libas-Deploy',
+        ]);
+        $pharData = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode === 200 && $pharData) {
+            file_put_contents($projectRoot . '/composer.phar', $pharData);
+            chmod($projectRoot . '/composer.phar', 0755);
+            status("composer.phar downloaded (" . round(strlen($pharData)/1024) . " KB)", 'ok');
+            unset($pharData);
+        } else {
+            // Fallback: use installer
+            status("Direct download failed (HTTP $httpCode), trying installer...", 'warn');
+            $installerUrl = 'https://getcomposer.org/installer';
+            $installer = @file_get_contents($installerUrl);
+            if (!$installer) {
+                $ch = curl_init($installerUrl);
+                curl_setopt_array($ch, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_SSL_VERIFYPEER => false,
+                ]);
+                $installer = curl_exec($ch);
+                curl_close($ch);
+            }
+            file_put_contents($projectRoot . '/composer-setup.php', $installer);
+            $out = runCmd("cd " . escapeshellarg($projectRoot) . " && $envPrefix php composer-setup.php");
+            echo "<pre>$out</pre>";
+            @unlink($projectRoot . '/composer-setup.php');
         }
-        file_put_contents($projectRoot . '/composer-setup.php', $installer);
-        $out = runCmd("cd " . escapeshellarg($projectRoot) . " && php composer-setup.php");
-        echo "<pre>$out</pre>";
-        @unlink($projectRoot . '/composer-setup.php');
     }
 
-    status("Running composer install (this may take 2-3 minutes)...");
-    ob_flush(); flush();
-    $out = runCmd("cd " . escapeshellarg($projectRoot) . " && php composer.phar install --no-dev --optimize-autoloader --no-interaction");
-    echo "<pre>" . htmlspecialchars(substr($out, -3000)) . "</pre>";
+    $pharPath = escapeshellarg($projectRoot . '/composer.phar');
+    if (file_exists($projectRoot . '/composer.phar')) {
+        status("Running composer install (this may take 2-3 minutes)...");
+        ob_flush(); flush();
+        $out = runCmd("cd " . escapeshellarg($projectRoot) . " && $envPrefix php $pharPath install --no-dev --optimize-autoloader --no-interaction 2>&1");
+        echo "<pre>" . htmlspecialchars(substr($out, -3000)) . "</pre>";
+    } else {
+        status("composer.phar not found!", 'err');
+    }
 
     if (!is_dir($projectRoot . '/vendor')) {
         status("composer install may have failed — vendor/ still missing", 'err');
