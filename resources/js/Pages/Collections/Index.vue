@@ -73,8 +73,10 @@ function submitStockAdjust() {
 }
 
 function stockBadge(item) {
-    if (item.stock_qty <= 0) return { class: 'bg-red-100 text-red-700', label: 'Out' };
-    if (item.stock_qty <= item.low_stock_threshold) return { class: 'bg-amber-100 text-amber-700', label: 'Low' };
+    const qty = Number(item.stock_qty);
+    const threshold = Number(item.low_stock_threshold);
+    if (qty <= 0) return { class: 'bg-red-100 text-red-700', label: 'Out' };
+    if (qty <= threshold) return { class: 'bg-amber-100 text-amber-700', label: 'Low' };
     return { class: 'bg-green-100 text-green-700', label: 'OK' };
 }
 

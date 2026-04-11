@@ -37,6 +37,8 @@ class Collection extends Model
         return [
             'price' => 'decimal:2',
             'cost_price' => 'decimal:2',
+            'stock_qty' => 'integer',
+            'low_stock_threshold' => 'integer',
         ];
     }
 
