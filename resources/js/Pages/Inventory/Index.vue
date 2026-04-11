@@ -1,8 +1,11 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, useForm, router } from '@inertiajs/vue3';
+import { Head, useForm, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import Modal from '@/Components/Modal.vue';
+
+const roles = computed(() => usePage().props.auth?.roles || []);
+const canDelete = computed(() => roles.value.includes('Admin') || roles.value.includes('Manager'));
 
 const props = defineProps({
     fabrics: Array,
@@ -86,6 +89,13 @@ function submitReserve() {
         },
         preserveScroll: true,
     });
+}
+
+function deleteItem(item, type) {
+    const label = type === 'fabric' ? 'fabric' : 'collection item';
+    if (!confirm(`Delete "${item.name}"? This cannot be undone.`)) return;
+    const routeName = type === 'fabric' ? 'fabrics.destroy' : 'collections.destroy';
+    router.delete(route(routeName, item.id), { preserveScroll: true });
 }
 
 function releaseFabric(fabric) {
@@ -278,6 +288,9 @@ const filteredCollections = computed(() => {
                                         <button @click="viewMovements(f, 'fabric')" class="w-7 h-7 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 flex items-center justify-center" title="View History">
                                             <i class="pi pi-history text-xs"></i>
                                         </button>
+                                        <button v-if="canDelete" @click="deleteItem(f, 'fabric')" class="w-7 h-7 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center" title="Delete">
+                                            <i class="pi pi-trash text-xs"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -345,6 +358,9 @@ const filteredCollections = computed(() => {
                                         </button>
                                         <button @click="viewMovements(c, 'collection')" class="w-7 h-7 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 flex items-center justify-center" title="View History">
                                             <i class="pi pi-history text-xs"></i>
+                                        </button>
+                                        <button v-if="canDelete" @click="deleteItem(c, 'collection')" class="w-7 h-7 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center" title="Delete">
+                                            <i class="pi pi-trash text-xs"></i>
                                         </button>
                                     </div>
                                 </td>
