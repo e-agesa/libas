@@ -14,6 +14,8 @@ class GarmentTypeController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'color' => 'required|string|max:7',
+            'base_price' => 'nullable|numeric|min:0',
+            'default_fabric_qty' => 'nullable|numeric|min:0',
         ]);
 
         $validated['slug'] = GarmentType::generateSlug($validated['name']);
@@ -32,6 +34,8 @@ class GarmentTypeController extends Controller
             'color' => 'required|string|max:7',
             'is_active' => 'required|boolean',
             'sort_order' => 'nullable|integer|min:0',
+            'base_price' => 'nullable|numeric|min:0',
+            'default_fabric_qty' => 'nullable|numeric|min:0',
         ]);
 
         $garmentType->update($validated);

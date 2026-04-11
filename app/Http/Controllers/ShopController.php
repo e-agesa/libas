@@ -6,8 +6,12 @@ use App\Models\Client;
 use App\Models\Collection;
 use App\Models\CollectionCategory;
 use App\Models\CompanySetting;
+use App\Models\Contact;
+use App\Models\Fabric;
+use App\Models\GarmentType;
 use App\Models\Invoice;
 use App\Models\InvoiceLineItem;
+use App\Models\Measurement;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -47,18 +51,24 @@ class ShopController extends Controller
             'categories' => CollectionCategory::where('is_active', true)
                 ->orderBy('sort_order')
                 ->get(['id', 'name', 'description']),
+            'garmentTypes' => GarmentType::where('is_active', true)
+                ->with('fields:id,garment_type_id,name,slug,sort_order')
+                ->orderBy('sort_order')
+                ->get(['id', 'name', 'slug', 'color', 'base_price', 'default_fabric_qty']),
+            'fabrics' => Fabric::where('status', 'active')
+                ->where('stock_qty', '>', 0)
+                ->orderBy('name')
+                ->get(['id', 'name', 'type', 'color', 'price_per_unit', 'stock_qty']),
             'company' => $this->companyData(),
         ]);
     }
 
     public function checkout(Request $request)
     {
-        // Cart items come as query param (JSON) or we show empty checkout
         $cartIds = $request->input('items', []);
 
         $collections = [];
         if (!empty($cartIds)) {
-            // cartIds is [{id, qty}, ...]
             $ids = collect($cartIds)->pluck('id');
             $collections = Collection::whereIn('id', $ids)
                 ->where('status', 'active')
@@ -73,6 +83,10 @@ class ShopController extends Controller
 
         return Inertia::render('Shop/Checkout', [
             'cartItems' => $collections,
+            'garmentTypes' => GarmentType::where('is_active', true)
+                ->get(['id', 'name', 'slug', 'color', 'base_price']),
+            'fabrics' => Fabric::where('status', 'active')
+                ->get(['id', 'name', 'type', 'color', 'price_per_unit']),
             'company' => $this->companyData(),
         ]);
     }
@@ -84,13 +98,28 @@ class ShopController extends Controller
             'email' => 'nullable|email|max:255',
             'phone' => 'required|string|max:20',
             'notes' => 'nullable|string|max:500',
-            'items' => 'required|array|min:1',
+            'preferred_date' => 'nullable|date|after_or_equal:today',
+            'items' => 'nullable|array',
             'items.*.collection_id' => 'required|exists:collections,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'custom_items' => 'nullable|array',
+            'custom_items.*.garment_type_slug' => 'required|string|exists:garment_types,slug',
+            'custom_items.*.fabric_id' => 'required|exists:fabrics,id',
+            'custom_items.*.fabric_qty' => 'required|numeric|min:0.1',
+            'custom_items.*.measurements' => 'required|array',
+            'custom_items.*.unit' => 'required|in:cm,inches',
+            'custom_items.*.notes' => 'nullable|string|max:500',
         ]);
 
-        $invoice = DB::transaction(function () use ($validated) {
+        $items = $validated['items'] ?? [];
+        $customItems = $validated['custom_items'] ?? [];
+
+        if (empty($items) && empty($customItems)) {
+            return back()->withErrors(['items' => 'At least one item is required.']);
+        }
+
+        $invoice = DB::transaction(function () use ($validated, $items, $customItems) {
             // Find or create client by phone
             $client = Client::where('phone', $validated['phone'])->first();
             if (!$client) {
@@ -103,6 +132,22 @@ class ShopController extends Controller
                 ]);
             }
 
+            // Create contact for custom items (reuse if exists)
+            $contact = null;
+            if (!empty($customItems)) {
+                $contact = Contact::where('client_id', $client->id)
+                    ->where('name', $validated['name'])
+                    ->first();
+                if (!$contact) {
+                    $contact = Contact::create([
+                        'client_id' => $client->id,
+                        'name' => $validated['name'],
+                        'relationship' => 'self',
+                        'phone' => $validated['phone'],
+                    ]);
+                }
+            }
+
             // Generate order number
             $prefix = 'WEB';
             $lastNum = Invoice::where('invoice_number', 'like', $prefix . '-%')
@@ -110,29 +155,38 @@ class ShopController extends Controller
                 ->value('last_num') ?? 0;
             $invoiceNumber = $prefix . '-' . str_pad($lastNum + 1, 5, '0', STR_PAD_LEFT);
 
+            $orderNotes = "Online order by {$validated['name']}";
+            if ($validated['preferred_date'] ?? null) {
+                $orderNotes .= "\nPreferred date: {$validated['preferred_date']}";
+            }
+            if ($validated['notes'] ?? null) {
+                $orderNotes .= "\n{$validated['notes']}";
+            }
+
             $invoice = Invoice::create([
                 'client_id' => $client->id,
                 'invoice_number' => $invoiceNumber,
                 'type' => 'invoice',
                 'date' => now()->toDateString(),
+                'due_date' => $validated['preferred_date'] ?? null,
                 'status' => 'issued',
                 'payment_method' => null,
                 'discount' => 0,
                 'discount_type' => 'flat',
                 'tax' => 0,
-                'notes' => "Online order by {$validated['name']}" . ($validated['notes'] ? "\n{$validated['notes']}" : ''),
+                'notes' => $orderNotes,
             ]);
 
             $subtotal = 0;
-            foreach ($validated['items'] as $item) {
+
+            // --- Collection (off-the-shelf) items ---
+            foreach ($items as $item) {
                 $collection = Collection::findOrFail($item['collection_id']);
 
-                // Ensure stock is available
                 if ($collection->stock_qty < $item['quantity']) {
                     throw new \Exception("Insufficient stock for {$collection->name}");
                 }
 
-                // Use server-side price — never trust client-submitted price
                 $unitPrice = $collection->price;
                 $lineTotal = $unitPrice * $item['quantity'];
                 $subtotal += $lineTotal;
@@ -160,6 +214,51 @@ class ShopController extends Controller
                 ]);
             }
 
+            // --- Custom tailored items ---
+            foreach ($customItems as $customItem) {
+                $garmentType = GarmentType::where('slug', $customItem['garment_type_slug'])->firstOrFail();
+                $fabric = Fabric::findOrFail($customItem['fabric_id']);
+
+                $fabricQty = $customItem['fabric_qty'];
+                if ($fabric->stock_qty < $fabricQty) {
+                    throw new \Exception("Insufficient fabric stock for {$fabric->name}");
+                }
+
+                // Create measurement record
+                $measurement = Measurement::create([
+                    'contact_id' => $contact->id,
+                    'garment_type' => $garmentType->slug,
+                    'label' => "Web order - {$garmentType->name}",
+                    'date_taken' => now()->toDateString(),
+                    'unit' => $customItem['unit'],
+                    'values' => $customItem['measurements'],
+                    'notes' => $customItem['notes'] ?? null,
+                ]);
+
+                // Server-side pricing
+                $craftsmanshipFee = (float) $garmentType->base_price;
+                $fabricCost = (float) $fabric->price_per_unit * $fabricQty;
+                $lineTotal = $craftsmanshipFee + $fabricCost;
+                $subtotal += $lineTotal;
+
+                InvoiceLineItem::create([
+                    'invoice_id' => $invoice->id,
+                    'item_type' => 'custom',
+                    'contact_id' => $contact->id,
+                    'measurement_id' => $measurement->id,
+                    'fabric_id' => $fabric->id,
+                    'description' => "{$garmentType->name} (Custom Tailored)",
+                    'unit_price' => $lineTotal,
+                    'quantity' => 1,
+                    'craftsmanship_fee' => $craftsmanshipFee,
+                    'fabric_cost' => $fabricCost,
+                    'line_total' => $lineTotal,
+                ]);
+
+                // Decrement fabric stock
+                $fabric->decrement('stock_qty', $fabricQty);
+            }
+
             $invoice->update([
                 'subtotal' => $subtotal,
                 'total' => $subtotal,
@@ -175,7 +274,7 @@ class ShopController extends Controller
 
     public function confirmation(Invoice $invoice)
     {
-        $invoice->load(['client', 'lineItems.collection']);
+        $invoice->load(['client', 'lineItems.collection', 'lineItems.measurement', 'lineItems.fabric']);
 
         return Inertia::render('Shop/Confirmation', [
             'order' => $invoice,

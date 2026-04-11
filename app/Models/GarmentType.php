@@ -14,6 +14,8 @@ class GarmentType extends Model
         'name',
         'slug',
         'color',
+        'base_price',
+        'default_fabric_qty',
         'sort_order',
         'is_active',
     ];
@@ -23,6 +25,8 @@ class GarmentType extends Model
         return [
             'is_active' => 'boolean',
             'sort_order' => 'integer',
+            'base_price' => 'decimal:2',
+            'default_fabric_qty' => 'decimal:2',
         ];
     }
 
@@ -48,10 +52,10 @@ class GarmentType extends Model
      */
     public function getTailwindClassesAttribute(): array
     {
-        return self::hexToTailwind($this->color);
+        return self::hexToTailwind($this->color ?? '');
     }
 
-    public static function hexToTailwind(string $hex): array
+    public static function hexToTailwind(?string $hex): array
     {
         return match ($hex) {
             '#22c55e' => ['bg' => 'bg-green-100', 'text' => 'text-green-800', 'border' => 'border-green-200', 'dot' => 'bg-green-500'],
