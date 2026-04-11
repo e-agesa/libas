@@ -105,6 +105,8 @@ const typeForm = useForm({
     name: '',
     color: '#22c55e',
     is_active: true,
+    base_price: 0,
+    default_fabric_qty: 2,
 });
 
 const fieldForm = useForm({
@@ -117,6 +119,8 @@ function openAddType() {
     typeForm.name = '';
     typeForm.color = '#22c55e';
     typeForm.is_active = true;
+    typeForm.base_price = 0;
+    typeForm.default_fabric_qty = 2;
     showTypeModal.value = true;
 }
 
@@ -125,6 +129,8 @@ function openEditType(type) {
     typeForm.name = type.name;
     typeForm.color = type.color;
     typeForm.is_active = type.is_active;
+    typeForm.base_price = Number(type.base_price) || 0;
+    typeForm.default_fabric_qty = Number(type.default_fabric_qty) || 2;
     showTypeModal.value = true;
 }
 
@@ -269,25 +275,25 @@ function removeLogo() {
         <div class="mb-4 flex gap-1 border-b border-gray-200 overflow-x-auto">
             <button
                 @click="activeTab = 'users'"
-                :class="['px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap', activeTab === 'users' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700']"
+                :class="['px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap', activeTab === 'users' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700']"
             >
                 <i class="pi pi-users mr-1.5"></i> Users & Roles
             </button>
             <button
                 @click="activeTab = 'garments'"
-                :class="['px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap', activeTab === 'garments' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700']"
+                :class="['px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap', activeTab === 'garments' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700']"
             >
                 <i class="pi pi-sliders-h mr-1.5"></i> Garment Types
             </button>
             <button
                 @click="activeTab = 'business'"
-                :class="['px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap', activeTab === 'business' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700']"
+                :class="['px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap', activeTab === 'business' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700']"
             >
                 <i class="pi pi-building mr-1.5"></i> Business Info
             </button>
             <button
                 @click="activeTab = 'invoice'"
-                :class="['px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap', activeTab === 'invoice' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700']"
+                :class="['px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap', activeTab === 'invoice' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700']"
             >
                 <i class="pi pi-file-edit mr-1.5"></i> Invoice Settings
             </button>
@@ -297,7 +303,7 @@ function removeLogo() {
         <div v-if="activeTab === 'users'">
             <div class="flex items-center justify-between mb-4">
                 <p class="text-sm text-gray-500">Manage staff accounts and their roles.</p>
-                <button @click="openAddUser" class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors">
+                <button @click="openAddUser" class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors">
                     <i class="pi pi-plus text-xs"></i> Add User
                 </button>
             </div>
@@ -319,7 +325,7 @@ function removeLogo() {
                         <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50">
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
-                                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 text-xs font-bold">
                                         {{ user.name.charAt(0).toUpperCase() }}
                                     </div>
                                     <span class="font-medium text-gray-900">{{ user.name }}</span>
@@ -354,7 +360,7 @@ function removeLogo() {
                         <p class="text-sm text-gray-500">Define garment types for your tailoring.</p>
                         <button
                             @click="openAddType"
-                            class="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
+                            class="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700 transition-colors"
                         >
                             <i class="pi pi-plus text-xs"></i> Add Type
                         </button>
@@ -368,8 +374,8 @@ function removeLogo() {
                             :class="[
                                 'flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-all',
                                 workingType?.id === type.id
-                                    ? 'border-green-400 bg-green-50 shadow-sm'
-                                    : 'border-gray-200 bg-white hover:border-green-200 hover:shadow-sm'
+                                    ? 'border-brand-400 bg-brand-50 shadow-sm'
+                                    : 'border-gray-200 bg-white hover:border-brand-200 hover:shadow-sm'
                             ]"
                         >
                             <!-- Color dot -->
@@ -380,7 +386,10 @@ function removeLogo() {
 
                             <div class="flex-1 min-w-0">
                                 <p class="font-medium text-gray-900 text-sm">{{ type.name }}</p>
-                                <p class="text-xs text-gray-400">{{ type.fields?.length || 0 }} field{{ (type.fields?.length || 0) !== 1 ? 's' : '' }}</p>
+                                <p class="text-xs text-gray-400">
+                                    {{ type.fields?.length || 0 }} field{{ (type.fields?.length || 0) !== 1 ? 's' : '' }}
+                                    <span v-if="Number(type.base_price) > 0" class="ml-1">· KES {{ Number(type.base_price).toLocaleString() }}</span>
+                                </p>
                             </div>
 
                             <!-- Active toggle -->
@@ -410,7 +419,7 @@ function removeLogo() {
                         <div v-if="!garmentTypes.length" class="rounded-xl border border-dashed border-gray-300 p-8 text-center">
                             <i class="pi pi-sliders-h text-3xl text-gray-300 mb-3 block"></i>
                             <p class="text-sm text-gray-500">No garment types yet.</p>
-                            <button @click="openAddType" class="mt-3 text-sm text-green-600 hover:text-green-700 font-medium">Add your first type</button>
+                            <button @click="openAddType" class="mt-3 text-sm text-brand-600 hover:text-brand-700 font-medium">Add your first type</button>
                         </div>
                     </div>
                 </div>
@@ -426,7 +435,7 @@ function removeLogo() {
                             </div>
                             <button
                                 @click="openAddField"
-                                class="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
+                                class="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700 transition-colors"
                             >
                                 <i class="pi pi-plus text-xs"></i> Add Field
                             </button>
@@ -461,7 +470,7 @@ function removeLogo() {
                             <div v-else class="rounded-lg border border-dashed border-gray-300 p-8 text-center">
                                 <i class="pi pi-list text-3xl text-gray-300 mb-3 block"></i>
                                 <p class="text-sm text-gray-500">No fields defined yet.</p>
-                                <button @click="openAddField" class="mt-3 text-sm text-green-600 hover:text-green-700 font-medium">Add the first field</button>
+                                <button @click="openAddField" class="mt-3 text-sm text-brand-600 hover:text-brand-700 font-medium">Add the first field</button>
                             </div>
                         </div>
                     </div>
@@ -490,7 +499,7 @@ function removeLogo() {
                         <button type="button" @click="pickLogo" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                             <i class="pi pi-upload mr-1.5 text-xs"></i> Choose Logo
                         </button>
-                        <button v-if="logoFile" type="button" @click="uploadLogo" class="w-full rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700">
+                        <button v-if="logoFile" type="button" @click="uploadLogo" class="w-full rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700">
                             <i class="pi pi-check mr-1.5 text-xs"></i> Upload
                         </button>
                         <button v-if="company?.logo_path" type="button" @click="removeLogo" class="w-full rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
@@ -528,7 +537,7 @@ function removeLogo() {
                     </div>
                     <div>
                         <InputLabel for="c_address" value="Address" />
-                        <textarea id="c_address" v-model="companyForm.address" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm" placeholder="Full business address"></textarea>
+                        <textarea id="c_address" v-model="companyForm.address" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm" placeholder="Full business address"></textarea>
                     </div>
                     <div>
                         <InputLabel for="c_tax" value="Tax / PIN Number" />
@@ -536,11 +545,11 @@ function removeLogo() {
                     </div>
                     <div>
                         <InputLabel for="c_footer" value="Invoice Footer Text" />
-                        <textarea id="c_footer" v-model="companyForm.footer_text" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm" placeholder="Thank you for your business!"></textarea>
+                        <textarea id="c_footer" v-model="companyForm.footer_text" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm" placeholder="Thank you for your business!"></textarea>
                         <p class="mt-1 text-xs text-gray-400">This text appears at the bottom of every invoice and quotation PDF.</p>
                     </div>
                     <div class="flex justify-end pt-2">
-                        <button type="submit" :disabled="companyForm.processing" class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">
+                        <button type="submit" :disabled="companyForm.processing" class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
                             <i class="pi pi-save text-xs"></i>
                             {{ companyForm.processing ? 'Saving...' : 'Save Details' }}
                         </button>
@@ -576,7 +585,7 @@ function removeLogo() {
                     </div>
                     <div>
                         <InputLabel value="Receipt Footer Text" />
-                        <textarea rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm" placeholder="Thank you for your business!"></textarea>
+                        <textarea rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm" placeholder="Thank you for your business!"></textarea>
                     </div>
                 </div>
                 <div class="mt-6 pt-4 border-t border-gray-100">
@@ -620,7 +629,7 @@ function removeLogo() {
                         </div>
                         <div>
                             <InputLabel for="u_role" value="Role *" />
-                            <select id="u_role" v-model="userForm.role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm" required>
+                            <select id="u_role" v-model="userForm.role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm" required>
                                 <option v-for="role in roles" :key="role" :value="role">{{ role }}</option>
                             </select>
                             <InputError :message="userForm.errors.role" class="mt-1" />
@@ -629,7 +638,7 @@ function removeLogo() {
 
                     <div v-if="editingUser">
                         <InputLabel for="u_status" value="Status" />
-                        <select id="u_status" v-model="userForm.status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm">
+                        <select id="u_status" v-model="userForm.status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm">
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
@@ -638,7 +647,7 @@ function removeLogo() {
 
                 <div class="mt-6 flex justify-end gap-3">
                     <button type="button" @click="closeUserModal" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                    <button type="submit" :disabled="userForm.processing" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors">
+                    <button type="submit" :disabled="userForm.processing" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 transition-colors">
                         {{ userForm.processing ? 'Saving...' : (editingUser ? 'Update User' : 'Create User') }}
                     </button>
                 </div>
@@ -678,6 +687,21 @@ function removeLogo() {
                         <InputError :message="typeForm.errors.color" class="mt-1" />
                     </div>
 
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <InputLabel for="gt_base_price" value="Base Price (KES)" />
+                            <TextInput id="gt_base_price" v-model="typeForm.base_price" type="number" step="0.01" min="0" class="mt-1 block w-full" placeholder="e.g. 3000" />
+                            <p class="text-xs text-gray-400 mt-1">Craftsmanship fee shown on shop</p>
+                            <InputError :message="typeForm.errors.base_price" class="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel for="gt_fabric_qty" value="Default Fabric (meters)" />
+                            <TextInput id="gt_fabric_qty" v-model="typeForm.default_fabric_qty" type="number" step="0.5" min="0" class="mt-1 block w-full" placeholder="e.g. 2" />
+                            <p class="text-xs text-gray-400 mt-1">Pre-filled for shop customers</p>
+                            <InputError :message="typeForm.errors.default_fabric_qty" class="mt-1" />
+                        </div>
+                    </div>
+
                     <div v-if="selectedType" class="flex items-center gap-3">
                         <InputLabel value="Active" class="!mb-0" />
                         <button
@@ -696,7 +720,7 @@ function removeLogo() {
 
                 <div class="mt-6 flex justify-end gap-3">
                     <button type="button" @click="closeTypeModal" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                    <button type="submit" :disabled="typeForm.processing" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">
+                    <button type="submit" :disabled="typeForm.processing" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
                         {{ typeForm.processing ? 'Saving...' : (selectedType ? 'Update Type' : 'Create Type') }}
                     </button>
                 </div>
@@ -720,7 +744,7 @@ function removeLogo() {
 
                 <div class="mt-6 flex justify-end gap-3">
                     <button type="button" @click="closeFieldModal" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                    <button type="submit" :disabled="fieldForm.processing" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">
+                    <button type="submit" :disabled="fieldForm.processing" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
                         {{ fieldForm.processing ? 'Saving...' : (editingField ? 'Update Field' : 'Add Field') }}
                     </button>
                 </div>

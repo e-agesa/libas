@@ -38,7 +38,7 @@ function formatLabel(name) {
                 step="0.1"
                 min="0"
                 max="999"
-                class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500"
+                class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-brand-600 focus:ring-brand-600"
                 :value="modelValue[field.slug] ?? ''"
                 @input="updateField(field.slug, $event.target.value)"
                 :placeholder="field.name"

@@ -100,9 +100,7 @@ function navHref(routeName) {
             <!-- Logo -->
             <div class="flex h-16 items-center justify-between px-4">
                 <Link :href="route('dashboard')" class="flex items-center gap-3">
-                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-600 text-white font-bold text-lg">
-                        L
-                    </div>
+                    <img src="/logo.jpeg" alt="Libas" class="h-10 w-10 shrink-0 rounded-lg object-cover" />
                     <span v-if="sidebarOpen" class="text-white font-semibold text-lg whitespace-nowrap">
                         Libas TMS
                     </span>
@@ -123,7 +121,7 @@ function navHref(routeName) {
                     :href="navHref(item.href)"
                     :class="[
                         item.highlight && !isActive(item.href)
-                            ? 'bg-green-600 text-white hover:bg-green-700'
+                            ? 'bg-brand-600 text-white hover:bg-brand-700'
                             : isActive(item.href)
                                 ? 'bg-gray-800 text-white'
                                 : 'text-gray-300 hover:bg-gray-800 hover:text-white',
@@ -134,7 +132,7 @@ function navHref(routeName) {
                     <i
                         :class="[
                             item.icon,
-                            item.highlight ? 'text-white' : isActive(item.href) ? 'text-green-400' : 'text-gray-400 group-hover:text-gray-300',
+                            item.highlight ? 'text-white' : isActive(item.href) ? 'text-brand-400' : 'text-gray-400 group-hover:text-gray-300',
                             'shrink-0 text-lg',
                         ]"
                     ></i>
@@ -145,7 +143,7 @@ function navHref(routeName) {
             <!-- User section at bottom -->
             <div class="border-t border-gray-700 p-3">
                 <div :class="['flex items-center', sidebarOpen ? 'gap-3' : 'justify-center']">
-                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-700 text-white text-sm font-medium">
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-700 text-white text-sm font-medium">
                         {{ user.name?.charAt(0).toUpperCase() }}
                     </div>
                     <div v-if="sidebarOpen" class="min-w-0 flex-1">
@@ -176,7 +174,7 @@ function navHref(routeName) {
                 <!-- Right side: POS + search + user -->
                 <div class="flex items-center gap-4">
                     <!-- POS quick button -->
-                    <Link :href="navHref('pos.index')" class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors shadow-sm">
+                    <Link :href="navHref('pos.index')" class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors shadow-sm">
                         <i class="pi pi-shopping-cart text-xs"></i>
                         <span class="hidden sm:inline">POS</span>
                     </Link>
@@ -188,7 +186,7 @@ function navHref(routeName) {
                             <input
                                 type="text"
                                 placeholder="Search clients..."
-                                class="w-64 rounded-lg border border-gray-300 bg-gray-50 py-2 pl-9 pr-4 text-sm focus:border-green-500 focus:ring-green-500"
+                                class="w-64 rounded-lg border border-gray-300 bg-gray-50 py-2 pl-9 pr-4 text-sm focus:border-brand-500 focus:ring-brand-500"
                             />
                         </div>
                     </div>
@@ -202,7 +200,7 @@ function navHref(routeName) {
                     <Dropdown align="right" width="48">
                         <template #trigger>
                             <button class="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800">
-                                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-700 text-sm font-medium">
+                                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-brand-700 text-sm font-medium">
                                     {{ user.name?.charAt(0).toUpperCase() }}
                                 </div>
                                 <span class="hidden sm:inline font-medium">{{ user.name }}</span>

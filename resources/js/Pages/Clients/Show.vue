@@ -44,7 +44,7 @@ function deleteContact(contact) {
     <AuthenticatedLayout>
         <template #breadcrumb>
             <nav class="flex items-center gap-2 text-sm text-gray-500">
-                <Link :href="route('clients.index')" class="hover:text-green-600">Clients</Link>
+                <Link :href="route('clients.index')" class="hover:text-brand-600">Clients</Link>
                 <i class="pi pi-angle-right text-xs"></i>
                 <span class="text-gray-900 font-medium">{{ client.name }}</span>
             </nav>
@@ -54,7 +54,7 @@ function deleteContact(contact) {
         <div class="mb-6 rounded-xl bg-white p-6 shadow-sm border border-gray-100">
             <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div class="flex items-start gap-4">
-                    <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-700 text-xl font-bold">
+                    <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-700 text-xl font-bold">
                         {{ client.name.charAt(0).toUpperCase() }}
                     </div>
                     <div>
@@ -73,7 +73,7 @@ function deleteContact(contact) {
                     <button @click="showEditClient = true" class="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                         <i class="pi pi-pencil text-xs"></i> Edit
                     </button>
-                    <button @click="showAddContact = true" class="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700">
+                    <button @click="showAddContact = true" class="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700">
                         <i class="pi pi-plus text-xs"></i> Add Contact
                     </button>
                 </div>
@@ -98,10 +98,10 @@ function deleteContact(contact) {
 
         <!-- Tabs -->
         <div class="mb-4 flex gap-1 border-b border-gray-200">
-            <button @click="activeTab = 'contacts'" :class="['px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors', activeTab === 'contacts' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700']">
+            <button @click="activeTab = 'contacts'" :class="['px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors', activeTab === 'contacts' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700']">
                 <i class="pi pi-users mr-1.5"></i> Contacts ({{ client.contacts?.length || 0 }})
             </button>
-            <button @click="activeTab = 'invoices'" :class="['px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors', activeTab === 'invoices' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700']">
+            <button @click="activeTab = 'invoices'" :class="['px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors', activeTab === 'invoices' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700']">
                 <i class="pi pi-file-edit mr-1.5"></i> Invoices ({{ client.invoices?.length || 0 }})
             </button>
         </div>

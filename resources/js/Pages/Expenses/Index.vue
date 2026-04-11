@@ -122,7 +122,7 @@ const paymentMethods = ['Cash', 'M-Pesa', 'Bank Transfer', 'Cheque', 'Card', 'Ot
                 <h1 class="text-2xl font-bold text-gray-900">Expenses</h1>
                 <p class="text-sm text-gray-500 mt-0.5">Track all business expenditures</p>
             </div>
-            <button @click="openCreate" class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-700 shadow-sm">
+            <button @click="openCreate" class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 shadow-sm">
                 <i class="pi pi-plus text-sm"></i>
                 Record Expense
             </button>
@@ -148,15 +148,15 @@ const paymentMethods = ['Cash', 'M-Pesa', 'Bank Transfer', 'Cheque', 'Card', 'Ot
                     v-model="search"
                     type="text"
                     placeholder="Search expenses..."
-                    class="pl-8 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 w-56"
+                    class="pl-8 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-600 w-56"
                 />
             </div>
-            <select v-model="categoryFilter" class="py-2 pl-3 pr-8 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            <select v-model="categoryFilter" class="py-2 pl-3 pr-8 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-600">
                 <option value="">All Categories</option>
                 <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
             </select>
-            <input v-model="fromDate" type="date" class="py-2 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="From" />
-            <input v-model="toDate" type="date" class="py-2 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="To" />
+            <input v-model="fromDate" type="date" class="py-2 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-600" placeholder="From" />
+            <input v-model="toDate" type="date" class="py-2 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-600" placeholder="To" />
         </div>
 
         <!-- Table -->
@@ -164,7 +164,7 @@ const paymentMethods = ['Cash', 'M-Pesa', 'Bank Transfer', 'Cheque', 'Card', 'Ot
             <div v-if="expenses.data.length === 0" class="px-6 py-16 text-center">
                 <i class="pi pi-wallet text-4xl text-gray-300 mb-3"></i>
                 <p class="text-sm text-gray-400">No expenses found</p>
-                <button @click="openCreate" class="mt-3 text-sm text-green-600 hover:underline">Record your first expense</button>
+                <button @click="openCreate" class="mt-3 text-sm text-brand-600 hover:underline">Record your first expense</button>
             </div>
 
             <table v-else class="min-w-full divide-y divide-gray-100">
@@ -191,7 +191,7 @@ const paymentMethods = ['Cash', 'M-Pesa', 'Bank Transfer', 'Cheque', 'Card', 'Ot
                         <td class="px-5 py-3 text-sm font-semibold text-right text-red-600">{{ fmt(expense.amount) }}</td>
                         <td class="px-5 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <button @click="openEdit(expense)" class="text-gray-400 hover:text-green-600 transition-colors">
+                                <button @click="openEdit(expense)" class="text-gray-400 hover:text-brand-600 transition-colors">
                                     <i class="pi pi-pencil text-xs"></i>
                                 </button>
                                 <button @click="deleteExpense(expense)" class="text-gray-400 hover:text-red-500 transition-colors">
@@ -216,7 +216,7 @@ const paymentMethods = ['Cash', 'M-Pesa', 'Bank Transfer', 'Cheque', 'Card', 'Ot
                             v-html="link.label"
                             @click.prevent="link.url && router.get(link.url, {}, { preserveState: true })"
                             class="px-2.5 py-1 rounded text-xs border cursor-pointer"
-                            :class="link.active ? 'bg-green-600 text-white border-green-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50'"
+                            :class="link.active ? 'bg-brand-600 text-white border-brand-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50'"
                         />
                     </template>
                 </div>
@@ -237,32 +237,32 @@ const paymentMethods = ['Cash', 'M-Pesa', 'Bank Transfer', 'Cheque', 'Card', 'Ot
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Category *</label>
-                                <select v-model="form.category" required class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <select v-model="form.category" required class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600">
                                     <option value="">Select category</option>
                                     <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Date *</label>
-                                <input v-model="form.date" type="date" required class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                                <input v-model="form.date" type="date" required class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600" />
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Description *</label>
-                            <input v-model="form.description" type="text" required maxlength="500" placeholder="What was this expense for?" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                            <input v-model="form.description" type="text" required maxlength="500" placeholder="What was this expense for?" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600" />
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Amount (KES) *</label>
-                            <input v-model="form.amount" type="number" required min="0.01" step="0.01" placeholder="0.00" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                            <input v-model="form.amount" type="number" required min="0.01" step="0.01" placeholder="0.00" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600" />
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Paid To</label>
-                                <input v-model="form.paid_to" type="text" maxlength="255" placeholder="Vendor / person name" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                                <input v-model="form.paid_to" type="text" maxlength="255" placeholder="Vendor / person name" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600" />
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 mb-1">Payment Method</label>
-                                <select v-model="form.payment_method" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <select v-model="form.payment_method" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600">
                                     <option value="">Select method</option>
                                     <option v-for="m in paymentMethods" :key="m" :value="m">{{ m }}</option>
                                 </select>
@@ -270,17 +270,17 @@ const paymentMethods = ['Cash', 'M-Pesa', 'Bank Transfer', 'Cheque', 'Card', 'Ot
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Reference / Receipt #</label>
-                            <input v-model="form.reference" type="text" maxlength="255" placeholder="Optional reference number" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                            <input v-model="form.reference" type="text" maxlength="255" placeholder="Optional reference number" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600" />
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Notes</label>
-                            <textarea v-model="form.notes" rows="2" maxlength="2000" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"></textarea>
+                            <textarea v-model="form.notes" rows="2" maxlength="2000" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600 resize-none"></textarea>
                         </div>
                         <div class="flex justify-end gap-3 pt-2">
                             <button type="button" @click="closeModal" class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                                 Cancel
                             </button>
-                            <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+                            <button type="submit" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
                                 {{ editing ? 'Update' : 'Record' }}
                             </button>
                         </div>

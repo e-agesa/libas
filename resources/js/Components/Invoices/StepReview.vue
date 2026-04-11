@@ -59,7 +59,7 @@ function formatCurrency(amount) {
 
         <!-- Client info -->
         <div class="rounded-lg bg-gray-50 p-3 mb-4 flex items-center gap-3">
-            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700 font-bold text-sm">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 font-bold text-sm">
                 {{ client?.name?.charAt(0)?.toUpperCase() }}
             </div>
             <div>
@@ -105,13 +105,13 @@ function formatCurrency(amount) {
                         @input="emit('update:discount', parseFloat($event.target.value) || 0)"
                         min="0"
                         step="1"
-                        class="flex-1 rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500"
+                        class="flex-1 rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                         placeholder="0"
                     />
                     <select
                         :value="discountType"
                         @change="emit('update:discountType', $event.target.value)"
-                        class="rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500"
+                        class="rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                     >
                         <option value="flat">KES</option>
                         <option value="percentage">%</option>
@@ -127,7 +127,7 @@ function formatCurrency(amount) {
                     min="0"
                     max="100"
                     step="1"
-                    class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500"
+                    class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                     placeholder="0"
                 />
             </div>
@@ -149,7 +149,7 @@ function formatCurrency(amount) {
             </div>
             <div class="flex justify-between text-base border-t border-gray-200 pt-2">
                 <span class="font-semibold text-gray-900">Total</span>
-                <span class="font-bold text-green-700 text-lg">{{ formatCurrency(total) }}</span>
+                <span class="font-bold text-brand-700 text-lg">{{ formatCurrency(total) }}</span>
             </div>
         </div>
     </div>

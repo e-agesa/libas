@@ -62,13 +62,13 @@ const statusColors = {
             <div class="flex flex-col sm:flex-row items-end gap-3">
                 <div class="flex-1">
                     <label class="text-xs font-medium text-gray-600 mb-1 block">From</label>
-                    <input v-model="from" type="date" class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" />
+                    <input v-model="from" type="date" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" />
                 </div>
                 <div class="flex-1">
                     <label class="text-xs font-medium text-gray-600 mb-1 block">To</label>
-                    <input v-model="to" type="date" class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" />
+                    <input v-model="to" type="date" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" />
                 </div>
-                <button @click="applyFilter" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors">
+                <button @click="applyFilter" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors">
                     <i class="pi pi-filter text-xs mr-1"></i> Apply
                 </button>
             </div>
@@ -78,7 +78,7 @@ const statusColors = {
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div class="rounded-xl bg-white p-5 shadow-sm border border-gray-100">
                 <div class="flex items-center gap-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-600"><i class="pi pi-wallet"></i></div>
+                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-100 text-brand-600"><i class="pi pi-wallet"></i></div>
                     <div>
                         <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(summary.totalRevenue) }}</p>
                         <p class="text-xs text-gray-500">Revenue (Paid)</p>
@@ -118,16 +118,16 @@ const statusColors = {
         <div class="mb-6 rounded-xl bg-white p-6 shadow-sm border border-gray-100">
             <h3 class="text-sm font-semibold text-gray-700 mb-4">Revenue by Source (Paid)</h3>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                <div class="rounded-lg bg-green-50 border border-green-100 p-4">
+                <div class="rounded-lg bg-brand-50 border border-brand-100 p-4">
                     <div class="flex items-center gap-2 mb-1">
-                        <i class="pi pi-scissors text-green-600 text-xs"></i>
-                        <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Custom Tailoring</p>
+                        <i class="pi pi-scissors text-brand-600 text-xs"></i>
+                        <p class="text-xs font-medium text-brand-600 uppercase tracking-wide">Custom Tailoring</p>
                     </div>
-                    <p class="text-xl font-bold text-green-700">{{ formatCurrency(summary.customRevenue) }}</p>
-                    <div v-if="summary.totalRevenue > 0" class="mt-2 bg-green-200 rounded-full h-2 overflow-hidden">
-                        <div class="bg-green-600 h-full rounded-full" :style="{ width: (summary.customRevenue / summary.totalRevenue * 100) + '%' }"></div>
+                    <p class="text-xl font-bold text-brand-700">{{ formatCurrency(summary.customRevenue) }}</p>
+                    <div v-if="summary.totalRevenue > 0" class="mt-2 bg-brand-200 rounded-full h-2 overflow-hidden">
+                        <div class="bg-brand-600 h-full rounded-full" :style="{ width: (summary.customRevenue / summary.totalRevenue * 100) + '%' }"></div>
                     </div>
-                    <p v-if="summary.totalRevenue > 0" class="text-xs text-green-600 mt-1">{{ Math.round(summary.customRevenue / summary.totalRevenue * 100) }}% of revenue</p>
+                    <p v-if="summary.totalRevenue > 0" class="text-xs text-brand-600 mt-1">{{ Math.round(summary.customRevenue / summary.totalRevenue * 100) }}% of revenue</p>
                 </div>
                 <div class="rounded-lg bg-blue-50 border border-blue-100 p-4">
                     <div class="flex items-center gap-2 mb-1">
@@ -168,9 +168,9 @@ const statusColors = {
         <div class="mb-6 rounded-xl bg-white p-6 shadow-sm border border-gray-100">
             <h3 class="text-sm font-semibold text-gray-700 mb-4">Profit &amp; Loss (Selected Period)</h3>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                <div class="rounded-lg bg-green-50 border border-green-100 p-4">
-                    <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Revenue (Paid)</p>
-                    <p class="mt-1 text-xl font-bold text-green-700">{{ formatCurrency(summary.totalRevenue) }}</p>
+                <div class="rounded-lg bg-brand-50 border border-brand-100 p-4">
+                    <p class="text-xs font-medium text-brand-600 uppercase tracking-wide">Revenue (Paid)</p>
+                    <p class="mt-1 text-xl font-bold text-brand-700">{{ formatCurrency(summary.totalRevenue) }}</p>
                 </div>
                 <div class="rounded-lg bg-red-50 border border-red-100 p-4">
                     <p class="text-xs font-medium text-red-600 uppercase tracking-wide">Total Expenses</p>
@@ -202,7 +202,7 @@ const statusColors = {
                         <span class="text-xs text-gray-500 w-16 shrink-0">{{ m.month }}</span>
                         <div class="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
                             <div
-                                class="bg-green-500 h-full rounded-full flex items-center justify-end pr-2 transition-all"
+                                class="bg-brand-600 h-full rounded-full flex items-center justify-end pr-2 transition-all"
                                 :style="{ width: Math.max((m.revenue / maxRevenue) * 100, 2) + '%' }"
                             >
                                 <span v-if="m.revenue > 0" class="text-xs text-white font-medium whitespace-nowrap">{{ formatCurrency(m.revenue) }}</span>
@@ -248,11 +248,11 @@ const statusColors = {
                 <h3 class="text-sm font-semibold text-gray-700 mb-4">Top Clients by Revenue</h3>
                 <div v-if="topClients?.length" class="space-y-3">
                     <div v-for="(client, i) in topClients" :key="client.id" class="flex items-center gap-3">
-                        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700 text-xs font-bold">{{ i + 1 }}</span>
+                        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 text-xs font-bold">{{ i + 1 }}</span>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-gray-900 truncate">{{ client.name }}</p>
                         </div>
-                        <span class="text-sm font-semibold text-green-700">{{ formatCurrency(client.total_spent) }}</span>
+                        <span class="text-sm font-semibold text-brand-700">{{ formatCurrency(client.total_spent) }}</span>
                     </div>
                 </div>
                 <div v-else class="text-center py-8 text-gray-400">

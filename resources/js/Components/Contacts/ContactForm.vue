@@ -41,7 +41,7 @@ watch(() => props.show, (val) => {
 function submit(openMeasurement = false) {
     form.open_measurement = openMeasurement;
 
-    if (props.contact) {
+    if (props.contact?.id) {
         form.put(route('contacts.update', props.contact.id), {
             onSuccess: () => emit('close'),
             preserveScroll: true,
@@ -97,7 +97,7 @@ const ageGroups = [
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <InputLabel for="relationship" value="Relationship" />
-                        <select id="relationship" v-model="form.relationship" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm">
+                        <select id="relationship" v-model="form.relationship" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm">
                             <option v-for="r in relationships" :key="r.value" :value="r.value">{{ r.label }}</option>
                         </select>
                         <InputError :message="form.errors.relationship" class="mt-1" />
@@ -113,14 +113,14 @@ const ageGroups = [
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <InputLabel for="gender" value="Gender" />
-                        <select id="gender" v-model="form.gender" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm">
+                        <select id="gender" v-model="form.gender" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm">
                             <option v-for="g in genders" :key="g.value" :value="g.value">{{ g.label }}</option>
                         </select>
                         <InputError :message="form.errors.gender" class="mt-1" />
                     </div>
                     <div>
                         <InputLabel for="age_group" value="Age Group" />
-                        <select id="age_group" v-model="form.age_group" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm">
+                        <select id="age_group" v-model="form.age_group" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm">
                             <option v-for="a in ageGroups" :key="a.value" :value="a.value">{{ a.label }}</option>
                         </select>
                         <InputError :message="form.errors.age_group" class="mt-1" />
@@ -130,7 +130,7 @@ const ageGroups = [
                 <!-- Notes -->
                 <div>
                     <InputLabel for="contact_notes" value="Notes" />
-                    <textarea id="contact_notes" v-model="form.notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm" placeholder="Any notes about this person"></textarea>
+                    <textarea id="contact_notes" v-model="form.notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm" placeholder="Any notes about this person"></textarea>
                     <InputError :message="form.errors.notes" class="mt-1" />
                 </div>
             </div>
@@ -140,10 +140,10 @@ const ageGroups = [
                 <button type="button" @click="emit('close')" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                     Cancel
                 </button>
-                <button v-if="!contact" type="button" @click="submit(true)" :disabled="form.processing" class="rounded-lg border border-green-600 px-4 py-2 text-sm font-medium text-green-600 hover:bg-green-50 disabled:opacity-50 transition-colors">
+                <button v-if="!contact" type="button" @click="submit(true)" :disabled="form.processing" class="rounded-lg border border-brand-600 px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 disabled:opacity-50 transition-colors">
                     <i class="pi pi-sliders-h text-xs mr-1"></i> Save & Add Measurement
                 </button>
-                <button type="submit" :disabled="form.processing" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors">
+                <button type="submit" :disabled="form.processing" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 transition-colors">
                     {{ form.processing ? 'Saving...' : (contact ? 'Update Contact' : 'Save Contact') }}
                 </button>
             </div>

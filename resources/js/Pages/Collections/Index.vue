@@ -109,7 +109,7 @@ function deleteCategory(cat) {
                     <button @click="showCategoryModal = true" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                         <i class="pi pi-tag text-xs"></i> Categories
                     </button>
-                    <button @click="showModal = true" class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors">
+                    <button @click="showModal = true" class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors">
                         <i class="pi pi-plus text-xs"></i> Add Item
                     </button>
                 </div>
@@ -121,13 +121,13 @@ function deleteCategory(cat) {
             <div class="flex flex-1 gap-3">
                 <div class="relative flex-1 max-w-md">
                     <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                    <input v-model="search" type="text" placeholder="Search by name, SKU, description..." class="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-4 text-sm focus:border-green-500 focus:ring-green-500" />
+                    <input v-model="search" type="text" placeholder="Search by name, SKU, description..." class="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-4 text-sm focus:border-brand-600 focus:ring-brand-600" />
                 </div>
-                <select v-model="categoryFilter" class="rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-green-500 focus:ring-green-500">
+                <select v-model="categoryFilter" class="rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-brand-600 focus:ring-brand-600">
                     <option value="">All Categories</option>
                     <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
                 </select>
-                <select v-model="statusFilter" class="rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-green-500 focus:ring-green-500">
+                <select v-model="statusFilter" class="rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-brand-600 focus:ring-brand-600">
                     <option value="">All Status</option>
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
@@ -195,7 +195,7 @@ function deleteCategory(cat) {
             <div v-if="collections.last_page > 1" class="border-t border-gray-100 px-6 py-3 flex items-center justify-between">
                 <div class="text-sm text-gray-500">Showing {{ collections.from }} to {{ collections.to }} of {{ collections.total }}</div>
                 <div class="flex gap-1">
-                    <Link v-for="link in collections.links" :key="link.label" :href="link.url || '#'" v-html="link.label" :class="['px-3 py-1 rounded text-sm', link.active ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-100', !link.url ? 'opacity-50 cursor-not-allowed' : '']" />
+                    <Link v-for="link in collections.links" :key="link.label" :href="link.url || '#'" v-html="link.label" :class="['px-3 py-1 rounded text-sm', link.active ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-100', !link.url ? 'opacity-50 cursor-not-allowed' : '']" />
                 </div>
             </div>
         </div>
@@ -208,18 +208,18 @@ function deleteCategory(cat) {
                     <p class="text-sm text-gray-500 mb-3">Current: <strong>{{ stockItem?.stock_qty }}</strong></p>
                     <div class="mb-3">
                         <label class="text-xs font-medium text-gray-600 mb-1 block">Adjustment (+/-)</label>
-                        <input v-model.number="stockAdjustment" type="number" class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" placeholder="e.g. +5 or -2" />
+                        <input v-model.number="stockAdjustment" type="number" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" placeholder="e.g. +5 or -2" />
                     </div>
                     <div class="mb-4">
                         <label class="text-xs font-medium text-gray-600 mb-1 block">Reason</label>
-                        <input v-model="stockReason" type="text" class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" placeholder="e.g. New shipment, Damaged, etc." />
+                        <input v-model="stockReason" type="text" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" placeholder="e.g. New shipment, Damaged, etc." />
                     </div>
                     <p class="text-sm mb-4">
                         New stock: <strong :class="(stockItem?.stock_qty || 0) + stockAdjustment < 0 ? 'text-red-600' : 'text-green-600'">{{ (stockItem?.stock_qty || 0) + stockAdjustment }}</strong>
                     </p>
                     <div class="flex justify-end gap-3">
                         <button @click="showStockModal = false" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                        <button @click="submitStockAdjust" :disabled="stockAdjustment === 0" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">Adjust</button>
+                        <button @click="submitStockAdjust" :disabled="stockAdjustment === 0" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">Adjust</button>
                     </div>
                 </div>
             </div>

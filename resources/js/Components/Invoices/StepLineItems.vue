@@ -66,7 +66,7 @@ function removeItem(index) {
                 <button
                     type="button"
                     @click="addCustomItem"
-                    class="inline-flex items-center gap-1 rounded-lg border border-green-600 px-3 py-1.5 text-sm font-medium text-green-600 hover:bg-green-50 transition-colors"
+                    class="inline-flex items-center gap-1 rounded-lg border border-brand-600 px-3 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50 transition-colors"
                 >
                     <i class="pi pi-plus text-xs"></i> Custom
                 </button>
@@ -99,7 +99,7 @@ function removeItem(index) {
             <i class="pi pi-plus-circle text-3xl mb-2 block"></i>
             <p class="text-sm">No line items yet. Add at least one.</p>
             <div class="mt-2 flex justify-center gap-3">
-                <button type="button" @click="addCustomItem" class="text-sm text-green-600 hover:underline">Add custom garment</button>
+                <button type="button" @click="addCustomItem" class="text-sm text-brand-600 hover:underline">Add custom garment</button>
                 <button v-if="collections?.length" type="button" @click="addCollectionItem" class="text-sm text-blue-600 hover:underline">Add shelf item</button>
             </div>
         </div>

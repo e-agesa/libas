@@ -118,7 +118,7 @@ function shareWhatsApp() {
     <AuthenticatedLayout>
         <template #breadcrumb>
             <nav class="flex items-center gap-2 text-sm text-gray-500">
-                <Link :href="route('invoices.index')" class="hover:text-green-600">Invoices</Link>
+                <Link :href="route('invoices.index')" class="hover:text-brand-600">Invoices</Link>
                 <i class="pi pi-angle-right text-xs"></i>
                 <span class="text-gray-900 font-medium">{{ invoice.invoice_number }}</span>
             </nav>
@@ -137,7 +137,7 @@ function shareWhatsApp() {
                         <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500">
                             <span class="flex items-center gap-1">
                                 <i class="pi pi-user text-xs"></i>
-                                <Link :href="route('clients.show', invoice.client.id)" class="text-green-600 hover:underline">{{ invoice.client.name }}</Link>
+                                <Link :href="route('clients.show', invoice.client.id)" class="text-brand-600 hover:underline">{{ invoice.client.name }}</Link>
                             </span>
                             <span class="flex items-center gap-1"><i class="pi pi-calendar text-xs"></i> {{ formatDate(invoice.date) }}</span>
                             <span v-if="invoice.due_date" class="flex items-center gap-1"><i class="pi pi-clock text-xs"></i> Due {{ formatDate(invoice.due_date) }}</span>
@@ -156,7 +156,7 @@ function shareWhatsApp() {
                         <button v-if="isQuote" @click="convertToInvoice" class="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">
                             <i class="pi pi-arrow-right-arrow-left text-xs"></i> Convert to Invoice
                         </button>
-                        <button v-if="!isPaid && !isQuote" @click="showPaymentModal = true" class="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700">
+                        <button v-if="!isPaid && !isQuote" @click="showPaymentModal = true" class="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700">
                             <i class="pi pi-wallet text-xs"></i> Record Payment
                         </button>
                         <Link v-if="!isPaid && !isQuote" :href="route('pos.index') + '?invoice_id=' + invoice.id" class="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-3 py-2 text-sm font-medium text-white hover:bg-amber-600">
@@ -308,7 +308,7 @@ function shareWhatsApp() {
 
             <!-- Footer branding -->
             <div class="text-center py-4">
-                <p class="text-xs text-gray-400">Powered by <a href="https://twinfusion.com" target="_blank" class="text-green-600 hover:text-green-700 font-medium">TwinFusion</a></p>
+                <p class="text-xs text-gray-400">Powered by <a href="https://twinfusion.com" target="_blank" class="text-brand-600 hover:text-brand-700 font-medium">TwinFusion</a></p>
             </div>
         </div>
 
@@ -319,13 +319,13 @@ function shareWhatsApp() {
                 <div class="space-y-4">
                     <div>
                         <label class="text-sm font-medium text-gray-700 mb-1 block">Amount (KES) *</label>
-                        <input v-model="paymentForm.amount" type="number" min="0.01" :max="invoice.balance" step="100" required class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" :placeholder="`Max: ${Number(invoice.balance).toLocaleString()}`" />
+                        <input v-model="paymentForm.amount" type="number" min="0.01" :max="invoice.balance" step="100" required class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" :placeholder="`Max: ${Number(invoice.balance).toLocaleString()}`" />
                         <InputError :message="paymentForm.errors.amount" class="mt-1" />
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium text-gray-700 mb-1 block">Method *</label>
-                            <select v-model="paymentForm.method" class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500">
+                            <select v-model="paymentForm.method" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600">
                                 <option value="cash">Cash</option>
                                 <option value="mpesa">M-Pesa</option>
                                 <option value="bank_transfer">Bank Transfer</option>
@@ -334,21 +334,21 @@ function shareWhatsApp() {
                         </div>
                         <div>
                             <label class="text-sm font-medium text-gray-700 mb-1 block">Date *</label>
-                            <input v-model="paymentForm.date" type="date" required class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" />
+                            <input v-model="paymentForm.date" type="date" required class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" />
                         </div>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700 mb-1 block">Reference</label>
-                        <input v-model="paymentForm.reference" type="text" class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" placeholder="M-Pesa code, receipt #, etc." />
+                        <input v-model="paymentForm.reference" type="text" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" placeholder="M-Pesa code, receipt #, etc." />
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700 mb-1 block">Notes</label>
-                        <textarea v-model="paymentForm.notes" rows="2" class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" placeholder="Optional notes"></textarea>
+                        <textarea v-model="paymentForm.notes" rows="2" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" placeholder="Optional notes"></textarea>
                     </div>
                 </div>
                 <div class="mt-6 flex justify-end gap-3">
                     <button type="button" @click="showPaymentModal = false" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                    <button type="submit" :disabled="paymentForm.processing" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">
+                    <button type="submit" :disabled="paymentForm.processing" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
                         {{ paymentForm.processing ? 'Saving...' : 'Record Payment' }}
                     </button>
                 </div>
@@ -359,7 +359,7 @@ function shareWhatsApp() {
         <Modal :show="showStatusModal" @close="showStatusModal = false" max-width="sm">
             <form @submit.prevent="submitStatus" class="p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Update Status</h3>
-                <select v-model="statusForm.status" class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500 mb-4">
+                <select v-model="statusForm.status" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600 mb-4">
                     <option value="draft">Draft</option>
                     <option value="issued">Issued</option>
                     <option value="paid">Paid</option>
@@ -368,7 +368,7 @@ function shareWhatsApp() {
                 </select>
                 <div class="flex justify-end gap-3">
                     <button type="button" @click="showStatusModal = false" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                    <button type="submit" :disabled="statusForm.processing" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">Update</button>
+                    <button type="submit" :disabled="statusForm.processing" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">Update</button>
                 </div>
             </form>
         </Modal>

@@ -29,7 +29,7 @@ watch(() => props.show, (val) => {
 });
 
 function submit() {
-    if (props.category) {
+    if (props.category?.id) {
         form.put(route('collection-categories.update', props.category.id), {
             onSuccess: () => { form.reset(); emit('close'); },
             preserveScroll: true,
@@ -80,7 +80,7 @@ function submit() {
                 </div>
                 <div class="flex justify-end gap-3 pt-2">
                     <button type="button" @click="emit('close')" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Close</button>
-                    <button type="submit" :disabled="form.processing" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">
+                    <button type="submit" :disabled="form.processing" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
                         {{ form.processing ? 'Saving...' : (category ? 'Update' : 'Add Category') }}
                     </button>
                 </div>

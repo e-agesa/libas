@@ -43,7 +43,7 @@ watch(() => props.client, (val) => {
 });
 
 function submit() {
-    if (props.client) {
+    if (props.client?.id) {
         form.put(route('clients.update', props.client.id), {
             onSuccess: () => emit('close'),
             preserveScroll: true,
@@ -101,7 +101,7 @@ const clientTypes = [
                     </div>
                     <div>
                         <InputLabel for="type" value="Client Type" />
-                        <select id="type" v-model="form.type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm">
+                        <select id="type" v-model="form.type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm">
                             <option v-for="t in clientTypes" :key="t.value" :value="t.value">{{ t.label }}</option>
                         </select>
                         <InputError :message="form.errors.type" class="mt-1" />
@@ -111,14 +111,14 @@ const clientTypes = [
                 <!-- Address -->
                 <div>
                     <InputLabel for="address" value="Address" />
-                    <textarea id="address" v-model="form.address" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm" placeholder="Physical or delivery address"></textarea>
+                    <textarea id="address" v-model="form.address" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm" placeholder="Physical or delivery address"></textarea>
                     <InputError :message="form.errors.address" class="mt-1" />
                 </div>
 
                 <!-- Notes -->
                 <div>
                     <InputLabel for="notes" value="Notes" />
-                    <textarea id="notes" v-model="form.notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm" placeholder="General notes about this client"></textarea>
+                    <textarea id="notes" v-model="form.notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm" placeholder="General notes about this client"></textarea>
                     <InputError :message="form.errors.notes" class="mt-1" />
                 </div>
             </div>
@@ -128,7 +128,7 @@ const clientTypes = [
                 <button type="button" @click="emit('close')" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                     Cancel
                 </button>
-                <button type="submit" :disabled="form.processing" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors">
+                <button type="submit" :disabled="form.processing" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 transition-colors">
                     {{ form.processing ? 'Saving...' : (client ? 'Update Client' : 'Save Client') }}
                 </button>
             </div>

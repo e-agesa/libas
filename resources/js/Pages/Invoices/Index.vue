@@ -63,7 +63,7 @@ function deleteInvoice(invoice) {
                     <Link :href="route('invoices.create', { type: 'quotation' })" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
                         <i class="pi pi-plus text-xs"></i> New Quote
                     </Link>
-                    <Link :href="route('invoices.create')" class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors">
+                    <Link :href="route('invoices.create')" class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors">
                         <i class="pi pi-plus text-xs"></i> New Invoice
                     </Link>
                 </div>
@@ -75,14 +75,14 @@ function deleteInvoice(invoice) {
             <div class="flex flex-1 gap-3">
                 <div class="relative flex-1 max-w-md">
                     <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                    <input v-model="search" type="text" placeholder="Search by invoice # or client..." class="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-4 text-sm focus:border-green-500 focus:ring-green-500" />
+                    <input v-model="search" type="text" placeholder="Search by invoice # or client..." class="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-4 text-sm focus:border-brand-600 focus:ring-brand-600" />
                 </div>
-                <select v-model="typeFilter" class="rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-green-500 focus:ring-green-500">
+                <select v-model="typeFilter" class="rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-brand-600 focus:ring-brand-600">
                     <option value="">All Types</option>
                     <option value="invoice">Invoices</option>
                     <option value="quotation">Quotations</option>
                 </select>
-                <select v-model="status" class="rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-green-500 focus:ring-green-500">
+                <select v-model="status" class="rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-brand-600 focus:ring-brand-600">
                     <option value="">All Status</option>
                     <option value="draft">Draft</option>
                     <option value="issued">Issued</option>
@@ -130,7 +130,7 @@ function deleteInvoice(invoice) {
                                 {{ formatCurrency(inv.balance) }}
                             </td>
                             <td class="px-6 py-4 text-right" @click.stop>
-                                <Link :href="route('invoices.show', inv.id)" class="text-gray-400 hover:text-green-600 mr-2" title="View"><i class="pi pi-eye"></i></Link>
+                                <Link :href="route('invoices.show', inv.id)" class="text-gray-400 hover:text-brand-600 mr-2" title="View"><i class="pi pi-eye"></i></Link>
                                 <button v-if="inv.status !== 'paid'" @click="deleteInvoice(inv)" class="text-gray-400 hover:text-red-600" title="Delete"><i class="pi pi-trash"></i></button>
                             </td>
                         </tr>
@@ -148,7 +148,7 @@ function deleteInvoice(invoice) {
             <div v-if="invoices.last_page > 1" class="border-t border-gray-100 px-6 py-3 flex items-center justify-between">
                 <div class="text-sm text-gray-500">Showing {{ invoices.from }} to {{ invoices.to }} of {{ invoices.total }}</div>
                 <div class="flex gap-1">
-                    <Link v-for="link in invoices.links" :key="link.label" :href="link.url || '#'" v-html="link.label" :class="['px-3 py-1 rounded text-sm', link.active ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-100', !link.url ? 'opacity-50 cursor-not-allowed' : '']" />
+                    <Link v-for="link in invoices.links" :key="link.label" :href="link.url || '#'" v-html="link.label" :class="['px-3 py-1 rounded text-sm', link.active ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-100', !link.url ? 'opacity-50 cursor-not-allowed' : '']" />
                 </div>
             </div>
         </div>

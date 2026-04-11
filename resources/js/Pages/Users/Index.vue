@@ -134,7 +134,7 @@ const roleColors = ['bg-blue-100 text-blue-700', 'bg-purple-100 text-purple-700'
                     <button @click="openNewRole" class="inline-flex items-center gap-1 rounded-lg border border-purple-600 px-3 py-2 text-sm font-medium text-purple-600 hover:bg-purple-50 transition-colors">
                         <i class="pi pi-shield text-xs"></i> New Role
                     </button>
-                    <button @click="openNewUser" class="inline-flex items-center gap-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors">
+                    <button @click="openNewUser" class="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors">
                         <i class="pi pi-user-plus text-xs"></i> New User
                     </button>
                 </div>
@@ -174,7 +174,7 @@ const roleColors = ['bg-blue-100 text-blue-700', 'bg-purple-100 text-purple-700'
                     <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50">
                         <td class="px-6 py-3">
                             <div class="flex items-center gap-3">
-                                <div class="flex h-9 w-9 items-center justify-center rounded-full bg-green-100 text-green-700 text-sm font-bold shrink-0">
+                                <div class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-brand-700 text-sm font-bold shrink-0">
                                     {{ user.name?.charAt(0).toUpperCase() }}
                                 </div>
                                 <span class="font-medium text-gray-900">{{ user.name }}</span>
@@ -258,7 +258,7 @@ const roleColors = ['bg-blue-100 text-blue-700', 'bg-purple-100 text-purple-700'
                                 @click="toggleRole(role.name)"
                                 :class="[
                                     'rounded-lg border px-4 py-2 text-sm font-medium transition-colors',
-                                    userForm.roles.includes(role.name) ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                                    userForm.roles.includes(role.name) ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-500 hover:bg-gray-50'
                                 ]"
                             >
                                 <i class="pi pi-shield text-xs mr-1"></i> {{ role.name }}
@@ -268,7 +268,7 @@ const roleColors = ['bg-blue-100 text-blue-700', 'bg-purple-100 text-purple-700'
                 </div>
                 <div class="mt-6 flex justify-end gap-3">
                     <button type="button" @click="showUserModal = false" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                    <button type="submit" :disabled="userForm.processing" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">
+                    <button type="submit" :disabled="userForm.processing" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
                         {{ userForm.processing ? 'Saving...' : (editingUser ? 'Update User' : 'Create User') }}
                     </button>
                 </div>

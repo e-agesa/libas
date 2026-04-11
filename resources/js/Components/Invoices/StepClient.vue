@@ -37,7 +37,7 @@ function selectClient(client) {
                 v-model="search"
                 type="text"
                 placeholder="Search clients by name, phone, or email..."
-                class="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-4 text-sm focus:border-green-500 focus:ring-green-500"
+                class="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-4 text-sm focus:border-brand-600 focus:ring-brand-600"
                 autofocus
             />
         </div>
@@ -51,17 +51,17 @@ function selectClient(client) {
                 @click="selectClient(client)"
                 :class="[
                     'w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-colors',
-                    selectedClientId === client.id ? 'border-green-500 bg-green-50 ring-1 ring-green-500' : 'border-gray-200 hover:border-green-300 hover:bg-green-50/50'
+                    selectedClientId === client.id ? 'border-brand-600 bg-brand-50 ring-1 ring-brand-600' : 'border-gray-200 hover:border-brand-400 hover:bg-brand-50/50'
                 ]"
             >
-                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700 font-bold text-sm">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 font-bold text-sm">
                     {{ client.name.charAt(0).toUpperCase() }}
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="font-medium text-gray-900 text-sm truncate">{{ client.name }}</p>
                     <p class="text-xs text-gray-500">{{ client.phone }} <span v-if="client.contacts?.length" class="ml-2 text-gray-400">&middot; {{ client.contacts.length }} contacts</span></p>
                 </div>
-                <i v-if="selectedClientId === client.id" class="pi pi-check-circle text-green-600"></i>
+                <i v-if="selectedClientId === client.id" class="pi pi-check-circle text-brand-600"></i>
             </button>
             <div v-if="filteredClients.length === 0" class="text-center py-8 text-gray-400">
                 <i class="pi pi-search text-3xl mb-2 block"></i>

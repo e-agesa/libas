@@ -29,9 +29,9 @@ function fmt(n) {
     <AuthenticatedLayout>
         <template #breadcrumb>
             <nav class="flex items-center gap-2 text-sm text-gray-500">
-                <Link :href="route('clients.index')" class="hover:text-green-600">Clients</Link>
+                <Link :href="route('clients.index')" class="hover:text-brand-600">Clients</Link>
                 <i class="pi pi-angle-right text-xs"></i>
-                <Link :href="route('clients.show', client.id)" class="hover:text-green-600">{{ client.name }}</Link>
+                <Link :href="route('clients.show', client.id)" class="hover:text-brand-600">{{ client.name }}</Link>
                 <i class="pi pi-angle-right text-xs"></i>
                 <span class="text-gray-900 font-medium">Statement</span>
             </nav>
@@ -46,7 +46,7 @@ function fmt(n) {
             <a
                 :href="route('clients.statement.pdf', client.id)"
                 target="_blank"
-                class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-700 shadow-sm"
+                class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 shadow-sm"
             >
                 <i class="pi pi-download text-sm"></i>
                 Download PDF
@@ -108,7 +108,7 @@ function fmt(n) {
                             {{ fmt(inv.balance) }}
                         </td>
                         <td class="px-6 py-3 text-right">
-                            <Link :href="route('invoices.show', inv.id)" class="text-xs text-green-600 hover:underline">View</Link>
+                            <Link :href="route('invoices.show', inv.id)" class="text-xs text-brand-600 hover:underline">View</Link>
                         </td>
                     </tr>
                 </tbody>

@@ -135,7 +135,7 @@ function submit() {
     <AuthenticatedLayout>
         <template #breadcrumb>
             <nav class="flex items-center gap-2 text-sm text-gray-500">
-                <Link :href="route('invoices.index')" class="hover:text-green-600">Invoices</Link>
+                <Link :href="route('invoices.index')" class="hover:text-brand-600">Invoices</Link>
                 <i class="pi pi-angle-right text-xs"></i>
                 <span class="text-gray-900 font-medium">New {{ docType === 'quotation' ? 'Quotation' : 'Invoice' }}</span>
             </nav>
@@ -149,7 +149,7 @@ function submit() {
                     @click="docType = 'invoice'; form.type = 'invoice'"
                     :class="[
                         'rounded-lg px-4 py-2 text-sm font-medium transition-colors',
-                        docType === 'invoice' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        docType === 'invoice' ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     ]"
                 >
                     <i class="pi pi-file-edit text-xs mr-1"></i> Invoice
@@ -173,15 +173,15 @@ function submit() {
                         @click="step.num < currentStep ? currentStep = step.num : null"
                         :class="[
                             'flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
-                            currentStep === step.num ? 'bg-green-600 text-white' :
-                            currentStep > step.num ? 'bg-green-100 text-green-700 cursor-pointer hover:bg-green-200' :
+                            currentStep === step.num ? 'bg-brand-600 text-white' :
+                            currentStep > step.num ? 'bg-brand-100 text-brand-700 cursor-pointer hover:bg-brand-200' :
                             'bg-gray-100 text-gray-400'
                         ]"
                     >
                         <i :class="['pi text-xs', step.icon]"></i>
                         <span class="hidden sm:inline">{{ step.label }}</span>
                     </button>
-                    <div v-if="step.num < 4" :class="['flex-1 h-0.5 mx-2', currentStep > step.num ? 'bg-green-400' : 'bg-gray-200']"></div>
+                    <div v-if="step.num < 4" :class="['flex-1 h-0.5 mx-2', currentStep > step.num ? 'bg-brand-400' : 'bg-gray-200']"></div>
                 </div>
             </div>
 
@@ -240,7 +240,7 @@ function submit() {
                         type="button"
                         @click="nextStep"
                         :disabled="!canNext"
-                        class="inline-flex items-center gap-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        class="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         Next <i class="pi pi-arrow-right text-xs"></i>
                     </button>
@@ -250,7 +250,7 @@ function submit() {
                         type="button"
                         @click="submit"
                         :disabled="form.processing || !canNext"
-                        class="inline-flex items-center gap-1 rounded-lg bg-green-600 px-5 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+                        class="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
                     >
                         <i class="pi pi-check text-xs"></i>
                         {{ form.processing ? 'Creating...' : (docType === 'quotation' ? 'Create Quotation' : 'Create Invoice') }}

@@ -121,7 +121,7 @@ function submit() {
     }
     form.values = cleanValues;
 
-    if (props.measurement) {
+    if (props.measurement?.id) {
         form.put(route('measurements.update', props.measurement.id), {
             onSuccess: () => emit('close'),
             preserveScroll: true,
@@ -220,7 +220,7 @@ function submit() {
                     id="m_notes"
                     v-model="form.notes"
                     rows="2"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm"
                     placeholder="Style preferences, fit notes, etc."
                 ></textarea>
                 <InputError :message="form.errors.notes" class="mt-1" />
@@ -238,7 +238,7 @@ function submit() {
                 <button
                     type="submit"
                     :disabled="form.processing"
-                    class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+                    class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
                 >
                     {{ form.processing ? 'Saving...' : (measurement ? 'Update Measurement' : (parentMeasurement ? 'Save Revision' : 'Save Measurement')) }}
                 </button>

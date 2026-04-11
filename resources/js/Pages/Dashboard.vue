@@ -46,7 +46,7 @@ function formatCurrency(value) {
             <div class="flex items-center justify-between">
                 <h2 class="text-xl font-semibold leading-tight text-gray-800">Dashboard</h2>
                 <div class="flex gap-2">
-                    <Link :href="route('clients.index')" class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors">
+                    <Link :href="route('clients.index')" class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors">
                         <i class="pi pi-plus text-xs"></i> New Client
                     </Link>
                     <Link :href="route('invoices.create')" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
@@ -79,14 +79,14 @@ function formatCurrency(value) {
             <div class="lg:col-span-2 rounded-xl bg-white shadow-sm border border-gray-100">
                 <div class="border-b border-gray-100 px-6 py-4 flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-900">Recent Invoices</h3>
-                    <Link :href="route('invoices.index')" class="text-sm text-green-600 hover:text-green-700 font-medium">View All</Link>
+                    <Link :href="route('invoices.index')" class="text-sm text-brand-600 hover:text-brand-700 font-medium">View All</Link>
                 </div>
                 <div class="p-6">
                     <div v-if="recentOrders.length === 0" class="text-center py-12 text-gray-400">
                         <i class="pi pi-inbox text-5xl mb-4 block"></i>
                         <p class="text-lg font-medium">No invoices yet</p>
                         <p class="text-sm mt-1">Create your first invoice to get started.</p>
-                        <Link :href="route('invoices.create')" class="mt-3 inline-flex items-center gap-1 text-sm text-green-600 hover:text-green-700 font-medium">
+                        <Link :href="route('invoices.create')" class="mt-3 inline-flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700 font-medium">
                             <i class="pi pi-plus text-xs"></i> Create Invoice
                         </Link>
                     </div>
@@ -122,7 +122,7 @@ function formatCurrency(value) {
                 </div>
                 <div class="p-6 space-y-3">
                     <Link :href="route('clients.index')" class="flex w-full items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 text-left hover:bg-gray-50 transition-colors">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-600">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-100 text-brand-600">
                             <i class="pi pi-user-plus"></i>
                         </div>
                         <div>

@@ -38,11 +38,11 @@ function garmentSlugs(contact) {
         <div class="p-5">
             <div class="flex items-start justify-between">
                 <Link :href="route('contacts.show', contact.id)" class="flex items-start gap-3 group flex-1 min-w-0">
-                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700 font-bold text-sm">
+                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 font-bold text-sm">
                         {{ contact.name.charAt(0).toUpperCase() }}
                     </div>
                     <div class="min-w-0">
-                        <h3 class="font-semibold text-gray-900 group-hover:text-green-600 transition-colors truncate">{{ contact.name }}</h3>
+                        <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors truncate">{{ contact.name }}</h3>
                         <div class="flex items-center gap-2 mt-0.5">
                             <span v-if="contact.relationship" class="text-xs text-gray-500 capitalize">{{ relationshipLabels[contact.relationship] || contact.relationship }}</span>
                             <i v-if="contact.gender" :class="['pi text-xs text-gray-400', genderIcons[contact.gender]]"></i>

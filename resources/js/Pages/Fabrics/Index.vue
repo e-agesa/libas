@@ -63,7 +63,7 @@ function formatCurrency(amount) {
         <template #header>
             <div class="flex items-center justify-between">
                 <h2 class="text-xl font-semibold leading-tight text-gray-800">Fabrics & Materials</h2>
-                <button @click="showModal = true" class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors">
+                <button @click="showModal = true" class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors">
                     <i class="pi pi-plus text-xs"></i> Add Fabric
                 </button>
             </div>
@@ -74,9 +74,9 @@ function formatCurrency(amount) {
             <div class="flex flex-1 gap-3">
                 <div class="relative flex-1 max-w-md">
                     <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                    <input v-model="search" type="text" placeholder="Search by name, type, color, supplier..." class="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-4 text-sm focus:border-green-500 focus:ring-green-500" />
+                    <input v-model="search" type="text" placeholder="Search by name, type, color, supplier..." class="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-4 text-sm focus:border-brand-600 focus:ring-brand-600" />
                 </div>
-                <select v-model="status" class="rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-green-500 focus:ring-green-500">
+                <select v-model="status" class="rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-brand-600 focus:ring-brand-600">
                     <option value="">All Status</option>
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
@@ -144,7 +144,7 @@ function formatCurrency(amount) {
             <div v-if="fabrics.last_page > 1" class="border-t border-gray-100 px-6 py-3 flex items-center justify-between">
                 <div class="text-sm text-gray-500">Showing {{ fabrics.from }} to {{ fabrics.to }} of {{ fabrics.total }}</div>
                 <div class="flex gap-1">
-                    <Link v-for="link in fabrics.links" :key="link.label" :href="link.url || '#'" v-html="link.label" :class="['px-3 py-1 rounded text-sm', link.active ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-100', !link.url ? 'opacity-50 cursor-not-allowed' : '']" />
+                    <Link v-for="link in fabrics.links" :key="link.label" :href="link.url || '#'" v-html="link.label" :class="['px-3 py-1 rounded text-sm', link.active ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-100', !link.url ? 'opacity-50 cursor-not-allowed' : '']" />
                 </div>
             </div>
         </div>

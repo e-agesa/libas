@@ -225,7 +225,7 @@ function formatCurrency(v) {
         <template #header>
             <div class="flex items-center justify-between">
                 <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                    <i class="pi pi-shopping-cart text-green-600 mr-2"></i> Point of Sale
+                    <i class="pi pi-shopping-cart text-brand-600 mr-2"></i> Point of Sale
                 </h2>
                 <button v-if="lastReceiptId" @click="printReceipt" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                     <i class="pi pi-print text-xs"></i> Print Last Receipt
@@ -244,10 +244,10 @@ function formatCurrency(v) {
                             v-model="searchTerm"
                             type="text"
                             placeholder="Search items by name, SKU..."
-                            class="w-full rounded-lg border-gray-300 py-2.5 pl-9 pr-4 text-sm focus:border-green-500 focus:ring-green-500"
+                            class="w-full rounded-lg border-gray-300 py-2.5 pl-9 pr-4 text-sm focus:border-brand-600 focus:ring-brand-600"
                         />
                     </div>
-                    <select v-model="selectedCategory" class="rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500">
+                    <select v-model="selectedCategory" class="rounded-lg border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600">
                         <option value="">All Categories</option>
                         <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
                     </select>
@@ -259,13 +259,13 @@ function formatCurrency(v) {
                         v-for="item in filteredCollections"
                         :key="item.id"
                         @click="addToCart(item)"
-                        class="rounded-xl border border-gray-200 bg-white p-3 text-left hover:border-green-300 hover:shadow-md transition-all group"
+                        class="rounded-xl border border-gray-200 bg-white p-3 text-left hover:border-brand-300 hover:shadow-md transition-all group"
                         :class="{ 'opacity-50 cursor-not-allowed': item.stock_qty <= 0 }"
                         :disabled="item.stock_qty <= 0"
                     >
                         <div class="aspect-square rounded-lg bg-gray-100 mb-2 flex items-center justify-center overflow-hidden">
                             <img v-if="item.image_url" :src="item.image_url" :alt="item.name" class="w-full h-full object-cover rounded-lg" />
-                            <i v-else class="pi pi-image text-3xl text-gray-300 group-hover:text-green-400 transition-colors"></i>
+                            <i v-else class="pi pi-image text-3xl text-gray-300 group-hover:text-brand-400 transition-colors"></i>
                         </div>
                         <p class="text-sm font-medium text-gray-900 truncate">{{ item.name }}</p>
                         <div class="flex items-center gap-1 mt-0.5">
@@ -273,7 +273,7 @@ function formatCurrency(v) {
                             <span v-if="item.color" class="text-xs text-gray-400">· {{ item.color }}</span>
                         </div>
                         <div class="flex items-center justify-between mt-2">
-                            <span class="text-sm font-bold text-green-700">{{ formatCurrency(item.price) }}</span>
+                            <span class="text-sm font-bold text-brand-700">{{ formatCurrency(item.price) }}</span>
                             <span class="text-xs text-gray-400">{{ item.stock_qty }} left</span>
                         </div>
                     </button>
@@ -292,7 +292,7 @@ function formatCurrency(v) {
                     <div class="px-4 py-3 bg-gray-50 rounded-t-xl border-b border-gray-100 flex items-center justify-between">
                         <h3 class="text-sm font-semibold text-gray-700">
                             <i class="pi pi-shopping-cart text-xs mr-1"></i> Cart
-                            <span v-if="cartCount" class="ml-1 rounded-full bg-green-600 text-white text-xs px-2 py-0.5">{{ cartCount }}</span>
+                            <span v-if="cartCount" class="ml-1 rounded-full bg-brand-600 text-white text-xs px-2 py-0.5">{{ cartCount }}</span>
                         </h3>
                     </div>
 
@@ -338,13 +338,13 @@ function formatCurrency(v) {
                         <!-- Customer (optional) -->
                         <div>
                             <label class="text-xs font-medium text-gray-600 mb-1 block">Customer (optional)</label>
-                            <select v-model="clientId" class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500">
+                            <select v-model="clientId" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600">
                                 <option :value="null">Walk-in customer</option>
                                 <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.name }}</option>
                             </select>
                         </div>
                         <div v-if="!clientId">
-                            <input v-model="walkInName" type="text" placeholder="Walk-in customer name (optional)" class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" />
+                            <input v-model="walkInName" type="text" placeholder="Walk-in customer name (optional)" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" />
                         </div>
 
                         <!-- Client pending orders with INCLUDE toggle -->
@@ -355,7 +355,7 @@ function formatCurrency(v) {
                                 <div v-for="order in clientOrders" :key="order.id"
                                     class="rounded-lg border p-2 transition-all"
                                     :class="isOrderIncluded(order.id)
-                                        ? 'border-green-400 bg-green-50'
+                                        ? 'border-brand-400 bg-brand-50'
                                         : 'border-amber-100 bg-white/50'"
                                 >
                                     <div class="flex items-center gap-2">
@@ -363,7 +363,7 @@ function formatCurrency(v) {
                                         <button @click="toggleOrderInclusion(order)"
                                             :class="['w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all',
                                                 isOrderIncluded(order.id)
-                                                    ? 'bg-green-600 border-green-600 text-white'
+                                                    ? 'bg-brand-600 border-brand-600 text-white'
                                                     : 'border-gray-300 bg-white hover:border-amber-400']"
                                         >
                                             <i v-if="isOrderIncluded(order.id)" class="pi pi-check text-[10px]"></i>
@@ -371,7 +371,7 @@ function formatCurrency(v) {
                                         <div class="flex-1 min-w-0">
                                             <div class="flex items-center justify-between text-xs">
                                                 <span class="font-semibold text-gray-900">{{ order.invoice_number }}</span>
-                                                <span class="font-bold" :class="isOrderIncluded(order.id) ? 'text-green-700' : 'text-amber-700'">
+                                                <span class="font-bold" :class="isOrderIncluded(order.id) ? 'text-brand-700' : 'text-amber-700'">
                                                     {{ formatCurrency(order.balance) }}
                                                 </span>
                                             </div>
@@ -397,7 +397,7 @@ function formatCurrency(v) {
                                         </div>
                                     </div>
                                     <div v-else class="mt-1 pl-7">
-                                        <span class="text-[10px] text-green-600 font-medium"><i class="pi pi-check-circle text-[8px] mr-0.5"></i> Bill included in this sale</span>
+                                        <span class="text-[10px] text-brand-600 font-medium"><i class="pi pi-check-circle text-[8px] mr-0.5"></i> Bill included in this sale</span>
                                     </div>
                                 </div>
                             </div>
@@ -411,7 +411,7 @@ function formatCurrency(v) {
                                 <button v-for="m in [{v:'cash',l:'Cash',i:'pi-wallet'},{v:'mpesa',l:'M-Pesa',i:'pi-mobile'},{v:'bank_transfer',l:'Bank',i:'pi-building'},{v:'credit',l:'Credit',i:'pi-credit-card'}]"
                                     :key="m.v" type="button" @click="paymentMethod = m.v"
                                     :class="['rounded-lg border px-3 py-2 text-xs font-medium transition-colors flex items-center gap-1',
-                                        paymentMethod === m.v ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50']"
+                                        paymentMethod === m.v ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50']"
                                 >
                                     <i :class="['pi text-xs', m.i]"></i> {{ m.l }}
                                 </button>
@@ -422,7 +422,7 @@ function formatCurrency(v) {
                         <div class="flex gap-3">
                             <div class="flex-1">
                                 <label class="text-xs font-medium text-gray-600 mb-1 block">Discount (KES)</label>
-                                <input v-model="discount" type="number" min="0" step="50" class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" />
+                                <input v-model="discount" type="number" min="0" step="50" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" />
                             </div>
                         </div>
 
@@ -442,18 +442,18 @@ function formatCurrency(v) {
                             </div>
                             <div class="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-200 pt-2">
                                 <span>Total</span>
-                                <span class="text-green-700">{{ formatCurrency(total) }}</span>
+                                <span class="text-brand-700">{{ formatCurrency(total) }}</span>
                             </div>
                         </div>
 
                         <!-- Notes -->
-                        <textarea v-model="notes" rows="2" placeholder="Notes (optional)" class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500"></textarea>
+                        <textarea v-model="notes" rows="2" placeholder="Notes (optional)" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"></textarea>
 
                         <!-- Complete sale -->
                         <button
                             @click="completeSale"
                             :disabled="form.processing || !canComplete"
-                            class="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+                            class="w-full rounded-lg bg-brand-600 px-4 py-3 text-sm font-bold text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
                         >
                             <i class="pi pi-check mr-1"></i>
                             {{ form.processing ? 'Processing...' : `Complete Sale — ${formatCurrency(total)}` }}

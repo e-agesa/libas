@@ -64,7 +64,7 @@ watch(() => props.show, (val) => {
 });
 
 function submit() {
-    if (props.item) {
+    if (props.item?.id) {
         form.transform(data => ({ ...data, _method: 'PUT' }))
             .post(route('collections.update', props.item.id), {
                 onSuccess: () => emit('close'),
@@ -102,7 +102,7 @@ function submit() {
 
                 <div>
                     <InputLabel for="c_category" value="Category" />
-                    <select id="c_category" v-model="form.category_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500">
+                    <select id="c_category" v-model="form.category_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600">
                         <option value="">Uncategorized</option>
                         <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
                     </select>
@@ -111,7 +111,7 @@ function submit() {
 
                 <div class="sm:col-span-2">
                     <InputLabel for="c_desc" value="Description" />
-                    <textarea id="c_desc" v-model="form.description" rows="2" class="mt-1 block w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" placeholder="Brief description of the item"></textarea>
+                    <textarea id="c_desc" v-model="form.description" rows="2" class="mt-1 block w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" placeholder="Brief description of the item"></textarea>
                     <InputError :message="form.errors.description" class="mt-1" />
                 </div>
 
@@ -123,7 +123,7 @@ function submit() {
                             <i v-else class="pi pi-image text-2xl text-gray-300"></i>
                         </div>
                         <div class="flex-1">
-                            <input id="c_image" type="file" accept="image/*" @change="onImageChange" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100" />
+                            <input id="c_image" type="file" accept="image/*" @change="onImageChange" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100" />
                             <p class="text-xs text-gray-400 mt-1">JPG, PNG up to 2MB</p>
                         </div>
                     </div>
@@ -164,7 +164,7 @@ function submit() {
 
                 <div>
                     <InputLabel for="c_status" value="Status" />
-                    <select id="c_status" v-model="form.status" class="mt-1 block w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500">
+                    <select id="c_status" v-model="form.status" class="mt-1 block w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600">
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                     </select>
@@ -173,7 +173,7 @@ function submit() {
 
             <div class="mt-6 flex justify-end gap-3">
                 <button type="button" @click="emit('close')" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button type="submit" :disabled="form.processing" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">
+                <button type="submit" :disabled="form.processing" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
                     {{ form.processing ? 'Saving...' : (item ? 'Update' : 'Save') }}
                 </button>
             </div>

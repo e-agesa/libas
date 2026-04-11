@@ -156,7 +156,7 @@ const garmentBadge = computed(() => {
                 <select
                     :value="item.contact_id"
                     @change="update('contact_id', parseInt($event.target.value))"
-                    class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500"
+                    class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                     required
                 >
                     <option value="">Select person...</option>
@@ -169,7 +169,7 @@ const garmentBadge = computed(() => {
                 <select
                     :value="item.measurement_id"
                     @change="update('measurement_id', $event.target.value ? parseInt($event.target.value) : null)"
-                    class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500"
+                    class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                 >
                     <option value="">None</option>
                     <option v-for="m in contactMeasurements" :key="m.id" :value="m.id">
@@ -184,7 +184,7 @@ const garmentBadge = computed(() => {
                 <select
                     :value="item.fabric_id"
                     @change="onFabricChange($event.target.value)"
-                    class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500"
+                    class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                 >
                     <option value="">No fabric</option>
                     <option v-for="f in fabrics" :key="f.id" :value="f.id">{{ f.name }} (KES {{ Number(f.price_per_unit).toLocaleString() }})</option>
@@ -198,7 +198,7 @@ const garmentBadge = computed(() => {
                     :value="item.quantity"
                     @input="update('quantity', parseInt($event.target.value) || 1)"
                     min="1"
-                    class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500"
+                    class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                 />
             </div>
 
@@ -210,7 +210,7 @@ const garmentBadge = computed(() => {
                     @input="update('craftsmanship_fee', parseFloat($event.target.value) || 0)"
                     min="0"
                     step="50"
-                    class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500"
+                    class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                     required
                 />
             </div>
@@ -223,7 +223,7 @@ const garmentBadge = computed(() => {
                     @input="update('fabric_cost', parseFloat($event.target.value) || 0)"
                     min="0"
                     step="50"
-                    class="w-full rounded-md border-gray-300 text-sm focus:border-green-500 focus:ring-green-500"
+                    class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                 />
             </div>
         </div>

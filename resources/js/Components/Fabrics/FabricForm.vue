@@ -40,7 +40,7 @@ watch(() => props.show, (val) => {
 });
 
 function submit() {
-    if (props.fabric) {
+    if (props.fabric?.id) {
         form.put(route('fabrics.update', props.fabric.id), {
             onSuccess: () => emit('close'),
             preserveScroll: true,
@@ -105,7 +105,7 @@ function submit() {
                     </div>
                     <div>
                         <InputLabel for="fab_status" value="Status" />
-                        <select id="fab_status" v-model="form.status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm">
+                        <select id="fab_status" v-model="form.status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm">
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
@@ -115,7 +115,7 @@ function submit() {
                 <!-- Notes -->
                 <div>
                     <InputLabel for="fab_notes" value="Notes" />
-                    <textarea id="fab_notes" v-model="form.notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm" placeholder="Optional notes"></textarea>
+                    <textarea id="fab_notes" v-model="form.notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm" placeholder="Optional notes"></textarea>
                     <InputError :message="form.errors.notes" class="mt-1" />
                 </div>
             </div>
@@ -123,7 +123,7 @@ function submit() {
             <!-- Actions -->
             <div class="mt-6 flex justify-end gap-3">
                 <button type="button" @click="emit('close')" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                <button type="submit" :disabled="form.processing" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors">
+                <button type="submit" :disabled="form.processing" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 transition-colors">
                     {{ form.processing ? 'Saving...' : (fabric ? 'Update Fabric' : 'Add Fabric') }}
                 </button>
             </div>
