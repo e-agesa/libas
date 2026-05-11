@@ -67,7 +67,7 @@ function formatCurrency(amount) {
                         @input="emit('update:initialPayment', parseFloat($event.target.value) || 0)"
                         min="0"
                         :max="total"
-                        step="100"
+                        step="1"
                         class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                         placeholder="0"
                     />

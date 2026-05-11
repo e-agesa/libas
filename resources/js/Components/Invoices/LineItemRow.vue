@@ -118,7 +118,7 @@ const garmentBadge = computed(() => {
                     :value="item.unit_price"
                     @input="update('unit_price', parseFloat($event.target.value) || 0)"
                     min="0"
-                    step="50"
+                    step="1"
                     class="w-full rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
                     required
                 />
@@ -209,7 +209,7 @@ const garmentBadge = computed(() => {
                     :value="item.craftsmanship_fee"
                     @input="update('craftsmanship_fee', parseFloat($event.target.value) || 0)"
                     min="0"
-                    step="50"
+                    step="1"
                     class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                     required
                 />
@@ -222,7 +222,7 @@ const garmentBadge = computed(() => {
                     :value="item.fabric_cost"
                     @input="update('fabric_cost', parseFloat($event.target.value) || 0)"
                     min="0"
-                    step="50"
+                    step="1"
                     class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                 />
             </div>

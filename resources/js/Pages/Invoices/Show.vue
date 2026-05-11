@@ -319,7 +319,7 @@ function shareWhatsApp() {
                 <div class="space-y-4">
                     <div>
                         <label class="text-sm font-medium text-gray-700 mb-1 block">Amount (KES) *</label>
-                        <input v-model="paymentForm.amount" type="number" min="0.01" :max="invoice.balance" step="100" required class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" :placeholder="`Max: ${Number(invoice.balance).toLocaleString()}`" />
+                        <input v-model="paymentForm.amount" type="number" min="0.01" :max="invoice.balance" step="1" required class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" :placeholder="`Max: ${Number(invoice.balance).toLocaleString()}`" />
                         <InputError :message="paymentForm.errors.amount" class="mt-1" />
                     </div>
                     <div class="grid grid-cols-2 gap-4">
