@@ -86,7 +86,7 @@ function submit() {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <InputLabel for="fab_price" value="Price per Unit (KES) *" />
-                        <TextInput id="fab_price" v-model="form.price_per_unit" type="number" min="0" step="50" class="mt-1 block w-full" required placeholder="0" />
+                        <TextInput id="fab_price" v-model="form.price_per_unit" type="number" min="0" step="any" class="mt-1 block w-full" required placeholder="0" />
                         <InputError :message="form.errors.price_per_unit" class="mt-1" />
                     </div>
                     <div>

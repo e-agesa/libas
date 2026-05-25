@@ -104,7 +104,7 @@ function formatCurrency(amount) {
                         :value="discount"
                         @input="emit('update:discount', parseFloat($event.target.value) || 0)"
                         min="0"
-                        step="1"
+                        step="any"
                         class="flex-1 rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                         placeholder="0"
                     />
@@ -126,7 +126,7 @@ function formatCurrency(amount) {
                     @input="emit('update:tax', parseFloat($event.target.value) || 0)"
                     min="0"
                     max="100"
-                    step="1"
+                    step="any"
                     class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                     placeholder="0"
                 />

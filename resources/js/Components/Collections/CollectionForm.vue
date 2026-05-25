@@ -142,13 +142,13 @@ function submit() {
 
                 <div>
                     <InputLabel for="c_price" value="Selling Price (KES) *" />
-                    <TextInput id="c_price" v-model.number="form.price" type="number" min="0" step="50" class="mt-1 block w-full" required />
+                    <TextInput id="c_price" v-model.number="form.price" type="number" min="0" step="any" class="mt-1 block w-full" required />
                     <InputError :message="form.errors.price" class="mt-1" />
                 </div>
 
                 <div>
                     <InputLabel for="c_cost" value="Cost Price (KES)" />
-                    <TextInput id="c_cost" v-model.number="form.cost_price" type="number" min="0" step="50" class="mt-1 block w-full" />
+                    <TextInput id="c_cost" v-model.number="form.cost_price" type="number" min="0" step="any" class="mt-1 block w-full" />
                 </div>
 
                 <div>

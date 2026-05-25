@@ -422,7 +422,7 @@ function formatCurrency(v) {
                         <div class="flex gap-3">
                             <div class="flex-1">
                                 <label class="text-xs font-medium text-gray-600 mb-1 block">Discount (KES)</label>
-                                <input v-model="discount" type="number" min="0" step="1" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" />
+                                <input v-model="discount" type="number" min="0" step="any" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" />
                             </div>
                         </div>
 
