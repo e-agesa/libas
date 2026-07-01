@@ -148,12 +148,8 @@ class ShopController extends Controller
                 }
             }
 
-            // Generate order number
-            $prefix = 'WEB';
-            $lastNum = Invoice::where('invoice_number', 'like', $prefix . '-%')
-                ->selectRaw("MAX(CAST(SUBSTRING(invoice_number, 5) AS UNSIGNED)) as last_num")
-                ->value('last_num') ?? 0;
-            $invoiceNumber = $prefix . '-' . str_pad($lastNum + 1, 5, '0', STR_PAD_LEFT);
+            // Generate order number (atomic, prefix-scoped, race-safe)
+            $invoiceNumber = Invoice::nextNumber('WEB', 5);
 
             $orderNotes = "Online order by {$validated['name']}";
             if ($validated['preferred_date'] ?? null) {

@@ -67,12 +67,8 @@ class PosController extends Controller
         }
 
         $invoice = DB::transaction(function () use ($validated, $items, $includeInvoices) {
-            // Generate POS receipt number
-            $prefix = 'POS';
-            $lastNum = Invoice::where('invoice_number', 'like', $prefix . '-%')
-                ->selectRaw("MAX(CAST(SUBSTRING(invoice_number, 5) AS UNSIGNED)) as last_num")
-                ->value('last_num') ?? 0;
-            $invoiceNumber = $prefix . '-' . str_pad($lastNum + 1, 5, '0', STR_PAD_LEFT);
+            // Generate POS receipt number (atomic, prefix-scoped, race-safe)
+            $invoiceNumber = Invoice::nextNumber('POS', 5);
 
             $invoice = Invoice::create([
                 'client_id' => $validated['client_id'],

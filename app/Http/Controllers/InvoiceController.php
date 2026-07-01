@@ -9,6 +9,7 @@ use App\Models\Fabric;
 use App\Models\Invoice;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class InvoiceController extends Controller
@@ -146,48 +147,59 @@ class InvoiceController extends Controller
         }
 
         $type = $validated['type'] ?? 'invoice';
-        $docNumber = $type === 'quotation'
-            ? Invoice::generateQuoteNumber()
-            : Invoice::generateInvoiceNumber();
 
-        $invoice = Invoice::create([
-            'client_id' => $validated['client_id'],
-            'invoice_number' => $docNumber,
-            'type' => $type,
-            'date' => $validated['date'],
-            'due_date' => $validated['due_date'],
-            'status' => $status,
-            'subtotal' => $subtotal,
-            'discount' => $discountAmount,
-            'discount_type' => $discountType,
-            'tax' => $taxAmount,
-            'total' => $total,
-            'amount_paid' => $initialPayment,
-            'balance' => $balance,
-            'payment_method' => $validated['payment_method'],
-            'notes' => $validated['notes'],
-        ]);
+        // Number generation + all dependent writes run in one transaction so the
+        // pessimistic lock in Invoice::nextNumber() holds across the insert, and
+        // the invoice/line-items/payment are created atomically (all or nothing).
+        $invoice = DB::transaction(function () use (
+            $validated, $type, $subtotal, $discountAmount, $discountType,
+            $taxAmount, $total, $initialPayment, $balance, $status
+        ) {
+            $docNumber = $type === 'quotation'
+                ? Invoice::generateQuoteNumber()
+                : Invoice::generateInvoiceNumber();
 
-        // Create line items and deduct collection stock
-        foreach ($validated['line_items'] as $item) {
-            $invoice->lineItems()->create($item);
-
-            // Deduct stock for collection items
-            if (($item['item_type'] ?? 'custom') === 'collection' && !empty($item['collection_id'])) {
-                Collection::where('id', $item['collection_id'])
-                    ->decrement('stock_qty', $item['quantity']);
-            }
-        }
-
-        // Create initial payment record
-        if ($initialPayment > 0) {
-            $invoice->payments()->create([
-                'amount' => $initialPayment,
-                'method' => $validated['payment_method'] ?? 'cash',
+            $invoice = Invoice::create([
+                'client_id' => $validated['client_id'],
+                'invoice_number' => $docNumber,
+                'type' => $type,
                 'date' => $validated['date'],
-                'notes' => 'Initial payment',
+                'due_date' => $validated['due_date'],
+                'status' => $status,
+                'subtotal' => $subtotal,
+                'discount' => $discountAmount,
+                'discount_type' => $discountType,
+                'tax' => $taxAmount,
+                'total' => $total,
+                'amount_paid' => $initialPayment,
+                'balance' => $balance,
+                'payment_method' => $validated['payment_method'],
+                'notes' => $validated['notes'],
             ]);
-        }
+
+            // Create line items and deduct collection stock
+            foreach ($validated['line_items'] as $item) {
+                $invoice->lineItems()->create($item);
+
+                // Deduct stock for collection items
+                if (($item['item_type'] ?? 'custom') === 'collection' && !empty($item['collection_id'])) {
+                    Collection::where('id', $item['collection_id'])
+                        ->decrement('stock_qty', $item['quantity']);
+                }
+            }
+
+            // Create initial payment record
+            if ($initialPayment > 0) {
+                $invoice->payments()->create([
+                    'amount' => $initialPayment,
+                    'method' => $validated['payment_method'] ?? 'cash',
+                    'date' => $validated['date'],
+                    'notes' => 'Initial payment',
+                ]);
+            }
+
+            return $invoice;
+        });
 
         return redirect()->route('invoices.show', $invoice)
             ->with('success', 'Invoice created successfully.');
@@ -217,11 +229,14 @@ class InvoiceController extends Controller
         ]);
 
         if (!empty($validated['convert_to_invoice']) && $invoice->type === 'quotation') {
-            $invoice->update([
-                'type' => 'invoice',
-                'invoice_number' => Invoice::generateInvoiceNumber(),
-                'status' => $validated['status'],
-            ]);
+            // Transaction so the lock in nextNumber() holds across the update.
+            DB::transaction(function () use ($invoice, $validated) {
+                $invoice->update([
+                    'type' => 'invoice',
+                    'invoice_number' => Invoice::generateInvoiceNumber(),
+                    'status' => $validated['status'],
+                ]);
+            });
             return redirect()->back()
                 ->with('success', 'Quotation converted to invoice.');
         }
