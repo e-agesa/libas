@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 
 class Invoice extends Model
 {
@@ -104,5 +106,50 @@ class Invoice extends Model
     public static function generateQuoteNumber(): string
     {
         return static::nextNumber('QUO', 4);
+    }
+
+    /**
+     * Run a numbering transaction that self-heals a colliding invoice_number.
+     *
+     * nextNumber()'s pessimistic lock serialises callers only once a row exists
+     * for the prefix. For the FIRST insert of a prefix the locking SELECT matches
+     * zero rows, so InnoDB takes only a (mutually-compatible) gap lock — two
+     * concurrent "first" callers can both read null and both mint PREFIX-0001.
+     * The UNIQUE index is the correctness backstop; this wrapper turns the
+     * resulting duplicate-key (1062) into a transparent retry instead of a 500.
+     *
+     * Deadlocks / lock-wait timeouts (1213 / 1205) are retried by Laravel's own
+     * transaction attempts (the `, 3`). A duplicate-key is NOT a concurrency error
+     * to Laravel, so we catch it here and re-run the closure — nextNumber() then
+     * reads the now-committed row and mints the next value. The whole closure
+     * (invoice + line items + stock + payment) rolls back between attempts, so
+     * retries stay atomic and side-effect-clean.
+     *
+     * @template T
+     * @param  callable():T  $callback
+     * @return T
+     */
+    public static function withUniqueNumber(callable $callback, int $maxAttempts = 5)
+    {
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                return DB::transaction($callback, 3);
+            } catch (UniqueConstraintViolationException $e) {
+                if ($attempt >= $maxAttempts || ! static::isInvoiceNumberCollision($e)) {
+                    throw $e;
+                }
+                // Another caller took our number; brief jittered back-off, then re-derive.
+                usleep(random_int(2000, 15000));
+            }
+        }
+    }
+
+    /**
+     * Only retry violations of the invoice_number index — never mask an unrelated
+     * unique constraint by blindly re-running the transaction against it.
+     */
+    protected static function isInvoiceNumberCollision(UniqueConstraintViolationException $e): bool
+    {
+        return str_contains($e->getMessage(), 'invoice_number');
     }
 }

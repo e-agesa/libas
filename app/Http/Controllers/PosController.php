@@ -9,7 +9,6 @@ use App\Models\InvoiceLineItem;
 use App\Models\StockMovement;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class PosController extends Controller
@@ -66,8 +65,8 @@ class PosController extends Controller
             return redirect()->back()->withErrors(['items' => 'Add cart items or include pending orders.']);
         }
 
-        $invoice = DB::transaction(function () use ($validated, $items, $includeInvoices) {
-            // Generate POS receipt number (atomic, prefix-scoped, race-safe)
+        $invoice = Invoice::withUniqueNumber(function () use ($validated, $items, $includeInvoices) {
+            // Generate POS receipt number (atomic, prefix-scoped, retried on collision)
             $invoiceNumber = Invoice::nextNumber('POS', 5);
 
             $invoice = Invoice::create([

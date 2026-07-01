@@ -14,7 +14,6 @@ use App\Models\InvoiceLineItem;
 use App\Models\Measurement;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class ShopController extends Controller
@@ -119,7 +118,7 @@ class ShopController extends Controller
             return back()->withErrors(['items' => 'At least one item is required.']);
         }
 
-        $invoice = DB::transaction(function () use ($validated, $items, $customItems) {
+        $invoice = Invoice::withUniqueNumber(function () use ($validated, $items, $customItems) {
             // Find or create client by phone
             $client = Client::where('phone', $validated['phone'])->first();
             if (!$client) {

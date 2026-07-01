@@ -9,7 +9,6 @@ use App\Models\Fabric;
 use App\Models\Invoice;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class InvoiceController extends Controller
@@ -151,7 +150,9 @@ class InvoiceController extends Controller
         // Number generation + all dependent writes run in one transaction so the
         // pessimistic lock in Invoice::nextNumber() holds across the insert, and
         // the invoice/line-items/payment are created atomically (all or nothing).
-        $invoice = DB::transaction(function () use (
+        // withUniqueNumber() re-derives the number and retries if a concurrent
+        // caller wins the same one (esp. the first insert of a prefix).
+        $invoice = Invoice::withUniqueNumber(function () use (
             $validated, $type, $subtotal, $discountAmount, $discountType,
             $taxAmount, $total, $initialPayment, $balance, $status
         ) {
@@ -229,9 +230,14 @@ class InvoiceController extends Controller
         ]);
 
         if (!empty($validated['convert_to_invoice']) && $invoice->type === 'quotation') {
-            // Transaction so the lock in nextNumber() holds across the update.
-            DB::transaction(function () use ($invoice, $validated) {
-                $invoice->update([
+            // Re-load under a row lock inside the transaction and re-check the type,
+            // so a concurrent double-submit converts (and burns an INV number) once.
+            Invoice::withUniqueNumber(function () use ($invoice, $validated) {
+                $fresh = Invoice::whereKey($invoice->getKey())->lockForUpdate()->first();
+                if (!$fresh || $fresh->type !== 'quotation') {
+                    return; // already converted by an earlier/concurrent request — no-op
+                }
+                $fresh->update([
                     'type' => 'invoice',
                     'invoice_number' => Invoice::generateInvoiceNumber(),
                     'status' => $validated['status'],
