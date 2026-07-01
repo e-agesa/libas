@@ -65,6 +65,17 @@ class PosController extends Controller
             return redirect()->back()->withErrors(['items' => 'Add cart items or include pending orders.']);
         }
 
+        // Pre-flight stock check for a friendly error (the guarded decrement inside
+        // the transaction is the concurrency backstop that actually prevents oversell).
+        foreach ($items as $item) {
+            $collection = Collection::find($item['collection_id']);
+            if ($collection && $collection->stock_qty < $item['quantity']) {
+                return redirect()->back()->withErrors([
+                    'items' => "Insufficient stock for {$collection->name} (have {$collection->stock_qty}, need {$item['quantity']}).",
+                ]);
+            }
+        }
+
         $invoice = Invoice::withUniqueNumber(function () use ($validated, $items, $includeInvoices) {
             // Generate POS receipt number (atomic, prefix-scoped, retried on collision)
             $invoiceNumber = Invoice::nextNumber('POS', 5);
@@ -102,8 +113,14 @@ class PosController extends Controller
                     'line_total' => $lineTotal,
                 ]);
 
-                // Deduct stock and record movement
-                $collection->decrement('stock_qty', $item['quantity']);
+                // Guarded atomic decrement — the WHERE stock_qty >= qty makes it
+                // refuse to oversell even if two terminals sell the last unit at once.
+                $sold = Collection::whereKey($collection->id)
+                    ->where('stock_qty', '>=', $item['quantity'])
+                    ->decrement('stock_qty', $item['quantity']);
+                if (! $sold) {
+                    throw new \Exception("Insufficient stock for {$collection->name}");
+                }
                 $collection->refresh();
 
                 StockMovement::record($collection, 'sale', -$item['quantity'], [

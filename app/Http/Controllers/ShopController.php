@@ -198,7 +198,14 @@ class ShopController extends Controller
                     'line_total' => $lineTotal,
                 ]);
 
-                $collection->decrement('stock_qty', $item['quantity']);
+                // Guarded atomic decrement closes the check-then-act race with a
+                // concurrent POS/web sale of the same item.
+                $sold = Collection::whereKey($collection->id)
+                    ->where('stock_qty', '>=', $item['quantity'])
+                    ->decrement('stock_qty', $item['quantity']);
+                if (! $sold) {
+                    throw new \Exception("Insufficient stock for {$collection->name}");
+                }
                 $collection->refresh();
 
                 StockMovement::record($collection, 'sale', -$item['quantity'], [

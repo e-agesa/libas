@@ -137,7 +137,8 @@ function shareWhatsApp() {
                         <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500">
                             <span class="flex items-center gap-1">
                                 <i class="pi pi-user text-xs"></i>
-                                <Link :href="route('clients.show', invoice.client.id)" class="text-brand-600 hover:underline">{{ invoice.client.name }}</Link>
+                                <Link v-if="invoice.client" :href="route('clients.show', invoice.client.id)" class="text-brand-600 hover:underline">{{ invoice.client.name }}</Link>
+                                <span v-else>Walk-in customer</span>
                             </span>
                             <span class="flex items-center gap-1"><i class="pi pi-calendar text-xs"></i> {{ formatDate(invoice.date) }}</span>
                             <span v-if="invoice.due_date" class="flex items-center gap-1"><i class="pi pi-clock text-xs"></i> Due {{ formatDate(invoice.due_date) }}</span>
