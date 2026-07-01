@@ -179,9 +179,6 @@ function getPlaceholderIcon(index) {
                             <span class="hidden sm:inline">Cart</span>
                             <span v-if="cartCount > 0" class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">{{ cartCount }}</span>
                         </button>
-                        <Link :href="route('login')" class="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:bg-brand-700 transition-colors shadow-sm">
-                            <i class="pi pi-sign-in text-xs"></i> <span class="hidden sm:inline">Login</span>
-                        </Link>
                     </nav>
                 </div>
             </div>
@@ -486,7 +483,6 @@ function getPlaceholderIcon(index) {
                         <h4 class="text-white font-semibold text-sm mb-3">Quick Links</h4>
                         <div class="space-y-2 text-sm">
                             <Link :href="route('shop')" class="block hover:text-brand-400 transition-colors">Shop</Link>
-                            <Link :href="route('login')" class="block hover:text-brand-400 transition-colors">Admin Login</Link>
                         </div>
                     </div>
                 </div>

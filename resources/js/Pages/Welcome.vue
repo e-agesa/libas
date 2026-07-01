@@ -32,9 +32,6 @@ defineProps({
                 <Link :href="route('shop')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-white text-brand-700 px-8 py-3 text-sm font-semibold hover:bg-gray-100 transition-colors shadow-lg">
                     <i class="pi pi-shopping-bag"></i> Visit Shop
                 </Link>
-                <Link v-if="canLogin" :href="route('login')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 text-white border border-white/20 px-8 py-3 text-sm font-semibold hover:bg-white/20 transition-colors backdrop-blur-sm">
-                    <i class="pi pi-sign-in"></i> Admin Login
-                </Link>
             </div>
 
             <div class="flex items-center justify-center gap-6 mt-10 text-sm text-brand-200">
