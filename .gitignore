@@ -22,3 +22,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Local migration notes / credentials — NEVER commit
+/_migration/

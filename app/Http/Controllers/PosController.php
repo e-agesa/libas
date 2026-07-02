@@ -162,7 +162,8 @@ class PosController extends Controller
                 // Add a line item on the POS receipt referencing the settled order
                 InvoiceLineItem::create([
                     'invoice_id' => $invoice->id,
-                    'item_type' => 'service',
+                    // 'custom' is a valid enum value; 'service' is not in the item_type enum and would crash the sale.
+                    'item_type' => 'custom',
                     'description' => "Settled: {$pending->invoice_number}",
                     'unit_price' => $balance,
                     'quantity' => 1,

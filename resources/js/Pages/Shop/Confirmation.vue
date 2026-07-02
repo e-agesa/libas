@@ -31,12 +31,8 @@ function shareWhatsApp() {
         <!-- Header -->
         <header class="bg-white border-b border-gray-200">
             <div class="max-w-4xl mx-auto px-4 sm:px-6">
-                <div class="flex items-center justify-center h-14">
-                    <div class="flex items-center gap-2">
-                        <img v-if="company.logo_url" :src="company.logo_url" alt="Logo" class="h-8 w-8 rounded-lg object-cover" />
-                        <div v-else class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-600 to-brand-700 text-white font-bold text-sm">{{ company.name?.charAt(0) }}</div>
-                        <span class="text-sm font-bold text-gray-900">{{ company.name }}</span>
-                    </div>
+                <div class="flex items-center justify-center h-16">
+                    <img :src="company.logo_url || '/logo.jpeg'" :alt="company.name" class="h-10 sm:h-12 w-auto max-w-[200px] object-contain" />
                 </div>
             </div>
         </header>

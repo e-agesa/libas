@@ -13,6 +13,8 @@ const props = defineProps({
 
 const searchTerm = ref('');
 const selectedCategory = ref('');
+const sortBy = ref('name');
+const visibleCount = ref(60);
 const cart = ref([]);
 const showCart = ref(false);
 const showMobileMenu = ref(false);
@@ -31,7 +33,7 @@ watch(cart, (val) => {
 }, { deep: true });
 
 const filteredItems = computed(() => {
-    let items = props.collections || [];
+    let items = [...(props.collections || [])];
     if (searchTerm.value) {
         const q = searchTerm.value.toLowerCase();
         items = items.filter(c =>
@@ -43,8 +45,15 @@ const filteredItems = computed(() => {
     if (selectedCategory.value) {
         items = items.filter(c => c.category_id == selectedCategory.value);
     }
+    if (sortBy.value === 'price_asc') items.sort((a, b) => Number(a.price) - Number(b.price));
+    else if (sortBy.value === 'price_desc') items.sort((a, b) => Number(b.price) - Number(a.price));
+    else items.sort((a, b) => a.name.localeCompare(b.name));
     return items;
 });
+
+// Render only a window of the catalog for speed; "Load more" reveals the rest.
+const visibleItems = computed(() => filteredItems.value.slice(0, visibleCount.value));
+watch([searchTerm, selectedCategory, sortBy], () => { visibleCount.value = 60; });
 
 const collectionCartItems = computed(() => cart.value.filter(c => c.type !== 'custom'));
 const customCartItems = computed(() => cart.value.filter(c => c.type === 'custom'));
@@ -145,13 +154,13 @@ function checkoutOnline() {
 }
 
 const placeholderColors = ['#f0fdf4', '#eff6ff', '#fef3c7', '#fce7f3', '#f3e8ff', '#ecfeff', '#fef2f2', '#f0f9ff'];
-function getPlaceholderBg(index) {
-    return placeholderColors[index % placeholderColors.length];
+function getPlaceholderBg(seed) {
+    return placeholderColors[(seed || 0) % placeholderColors.length];
 }
 
 const placeholderIcons = ['pi-star', 'pi-heart', 'pi-tag', 'pi-gift', 'pi-bookmark', 'pi-bolt', 'pi-sparkles', 'pi-crown'];
-function getPlaceholderIcon(index) {
-    return placeholderIcons[index % placeholderIcons.length];
+function getPlaceholderIcon(seed) {
+    return placeholderIcons[(seed || 0) % placeholderIcons.length];
 }
 </script>
 
@@ -162,14 +171,10 @@ function getPlaceholderIcon(index) {
         <!-- Header -->
         <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4 sm:px-6">
-                <div class="flex items-center justify-between h-14 sm:h-16">
-                    <div class="flex items-center gap-2 sm:gap-3">
-                        <img src="/logo.jpeg" alt="Libas" class="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover shadow-md" />
-                        <div>
-                            <h1 class="text-sm sm:text-lg font-bold text-gray-900">{{ company.name }}</h1>
-                            <p v-if="company.tagline" class="text-[10px] sm:text-xs text-gray-500 -mt-0.5 hidden sm:block">{{ company.tagline }}</p>
-                        </div>
-                    </div>
+                <div class="flex items-center justify-between h-16 sm:h-20">
+                    <Link :href="route('shop')" class="flex items-center py-1.5 shrink-0">
+                        <img :src="company.logo_url || '/logo.jpeg'" :alt="company.name" class="h-11 sm:h-14 w-auto max-w-[190px] sm:max-w-[300px] object-contain" />
+                    </Link>
                     <nav class="flex items-center gap-2 sm:gap-4">
                         <a v-if="company.phone" :href="'tel:' + company.phone" class="hidden md:inline-flex items-center gap-1 text-sm text-gray-600 hover:text-brand-600">
                             <i class="pi pi-phone text-xs"></i> {{ company.phone }}
@@ -255,16 +260,24 @@ function getPlaceholderIcon(index) {
 
         <!-- Products grid -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
+            <div v-if="filteredItems.length" class="flex items-center justify-between mb-4">
+                <p class="text-sm text-gray-500">{{ filteredItems.length }} item{{ filteredItems.length === 1 ? '' : 's' }}</p>
+                <select v-model="sortBy" class="rounded-lg border-gray-200 text-sm text-gray-700 focus:border-brand-600 focus:ring-brand-600 py-1.5">
+                    <option value="name">Sort: Name</option>
+                    <option value="price_asc">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                </select>
+            </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
                 <div
-                    v-for="(item, idx) in filteredItems"
+                    v-for="item in visibleItems"
                     :key="item.id"
                     class="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group"
                 >
                     <div class="aspect-square relative overflow-hidden cursor-pointer" @click="quickViewItem = item">
-                        <img v-if="item.image_url" :src="item.image_url" :alt="item.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                        <div v-else class="w-full h-full flex flex-col items-center justify-center" :style="{ background: getPlaceholderBg(idx) }">
-                            <i :class="['pi', getPlaceholderIcon(idx), 'text-5xl sm:text-6xl opacity-30']" :style="{ color: '#C41E2A' }"></i>
+                        <img v-if="item.image_url" :src="item.image_url" :alt="item.name" loading="lazy" decoding="async" width="400" height="400" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <div v-else class="w-full h-full flex flex-col items-center justify-center" :style="{ background: getPlaceholderBg(item.id) }">
+                            <i :class="['pi', getPlaceholderIcon(item.id), 'text-5xl sm:text-6xl opacity-30']" :style="{ color: '#C41E2A' }"></i>
                             <span class="text-xs text-gray-400 mt-2">{{ item.name }}</span>
                         </div>
                         <span v-if="item.stock_qty <= 5" class="absolute top-2 left-2 inline-flex rounded-full bg-red-500 text-white px-2 py-0.5 text-[10px] font-bold shadow">Only {{ item.stock_qty }} left</span>
@@ -298,6 +311,12 @@ function getPlaceholderIcon(index) {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div v-if="visibleItems.length < filteredItems.length" class="text-center mt-8">
+                <button @click="visibleCount += 60" class="rounded-xl bg-white border border-brand-200 text-brand-700 px-6 py-3 text-sm font-semibold hover:bg-brand-50 shadow-sm">
+                    Load more ({{ filteredItems.length - visibleItems.length }} more)
+                </button>
             </div>
 
             <div v-if="filteredItems.length === 0" class="text-center py-16 text-gray-400">
@@ -465,10 +484,7 @@ function getPlaceholderIcon(index) {
             <div class="max-w-7xl mx-auto px-4 sm:px-6">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
                     <div>
-                        <div class="flex items-center gap-2 mb-3">
-                            <img src="/logo.jpeg" alt="Libas" class="h-8 w-8 rounded-lg object-cover" />
-                            <span class="text-white font-semibold">{{ company.name }}</span>
-                        </div>
+                        <img :src="company.logo_url || '/logo.jpeg'" :alt="company.name" class="h-16 w-auto max-w-[240px] object-contain mb-3 bg-white rounded-lg p-1.5" />
                         <p v-if="company.tagline" class="text-sm">{{ company.tagline }}</p>
                     </div>
                     <div>
@@ -487,8 +503,7 @@ function getPlaceholderIcon(index) {
                     </div>
                 </div>
                 <div class="border-t border-gray-800 mt-8 pt-6 text-center text-xs">
-                    <p>&copy; {{ new Date().getFullYear() }} {{ company.name }}. All rights reserved.</p>
-                    <p class="mt-1">Powered by <a href="https://twinfusion.com" target="_blank" class="text-brand-600 hover:text-brand-400">TwinFusion</a></p>
+                    <p>Powered by <a href="https://twinfusion.com" target="_blank" class="text-brand-600 hover:text-brand-400">TwinFusion</a></p>
                 </div>
             </div>
         </footer>

@@ -152,10 +152,7 @@ const minDate = new Date().toISOString().split('T')[0];
                         <i class="pi pi-arrow-left text-sm"></i>
                         <span class="text-sm font-medium">Back to Shop</span>
                     </Link>
-                    <div class="flex items-center gap-2">
-                        <img src="/logo.jpeg" alt="Libas" class="h-8 w-8 rounded-lg object-cover" />
-                        <span class="text-sm font-bold text-gray-900 hidden sm:inline">{{ company.name }}</span>
-                    </div>
+                    <img :src="company.logo_url || '/logo.jpeg'" :alt="company.name" class="h-9 sm:h-11 w-auto max-w-[160px] sm:max-w-[220px] object-contain" />
                 </div>
             </div>
         </header>
@@ -381,8 +378,7 @@ const minDate = new Date().toISOString().split('T')[0];
         <!-- Footer -->
         <footer class="bg-gray-900 text-gray-400 py-6 mt-8">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center text-xs">
-                <p>&copy; {{ new Date().getFullYear() }} {{ company.name }}. All rights reserved.</p>
-                <p class="mt-1">Powered by <a href="https://twinfusion.com" target="_blank" class="text-brand-600 hover:text-brand-400">TwinFusion</a></p>
+                <p>Powered by <a href="https://twinfusion.com" target="_blank" class="text-brand-600 hover:text-brand-400">TwinFusion</a></p>
             </div>
         </footer>
     </div>

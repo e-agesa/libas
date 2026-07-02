@@ -46,7 +46,8 @@ class ShopController extends Controller
                 ->where('show_on_shop', true)
                 ->with('category:id,name')
                 ->orderBy('name')
-                ->get(),
+                // Explicit columns: never expose cost_price / low_stock_threshold on the public shop.
+                ->get(['id', 'category_id', 'name', 'sku', 'description', 'image_path', 'size', 'color', 'price', 'stock_qty']),
             'categories' => CollectionCategory::where('is_active', true)
                 ->orderBy('sort_order')
                 ->get(['id', 'name', 'description']),
