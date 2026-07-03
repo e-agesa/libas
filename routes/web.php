@@ -20,6 +20,34 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// Vite build assets served through PHP.
+// The production host's LiteSpeed static layer reads a frozen filesystem
+// snapshot (stale CageFS mount): files added/changed after deploy 404 or serve
+// stale bytes. PHP sees the live disk, so requests for asset filenames unknown
+// to LiteSpeed fall through to index.php and this route streams the real file.
+// Filenames are content-hashed, so aggressive caching is safe. Remove once the
+// host remounts CageFS / restarts LiteSpeed.
+Route::get('/build/{path}', function (string $path) {
+    $base = realpath(public_path('build'));
+    $full = realpath(public_path('build/' . $path));
+    abort_unless(
+        $base && $full && str_starts_with($full, $base . DIRECTORY_SEPARATOR) && is_file($full),
+        404
+    );
+    $types = [
+        'js' => 'application/javascript', 'css' => 'text/css', 'json' => 'application/json',
+        'map' => 'application/json', 'woff2' => 'font/woff2', 'woff' => 'font/woff',
+        'ttf' => 'font/ttf', 'eot' => 'application/vnd.ms-fontobject', 'svg' => 'image/svg+xml',
+        'png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'webp' => 'image/webp',
+    ];
+    $ext = strtolower(pathinfo($full, PATHINFO_EXTENSION));
+
+    return response()->file($full, [
+        'Content-Type' => $types[$ext] ?? 'application/octet-stream',
+        'Cache-Control' => 'public, max-age=31536000, immutable',
+    ]);
+})->where('path', '[A-Za-z0-9_\-./]+');
+
 // Public shop
 Route::get('/', [ShopController::class, 'index'])->name('shop');
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
