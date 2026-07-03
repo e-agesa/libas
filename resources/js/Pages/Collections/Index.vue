@@ -39,6 +39,11 @@ function applyFilters() {
     }, { preserveState: true, replace: true });
 }
 
+function openNew() {
+    editingItem.value = null;
+    showModal.value = true;
+}
+
 function openEdit(item) {
     editingItem.value = item;
     showModal.value = true;
@@ -111,7 +116,7 @@ function deleteCategory(cat) {
                     <button @click="showCategoryModal = true" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                         <i class="pi pi-tag text-xs"></i> Categories
                     </button>
-                    <button @click="showModal = true" class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors">
+                    <button @click="openNew" class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors">
                         <i class="pi pi-plus text-xs"></i> Add Item
                     </button>
                 </div>
