@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Libas ul Anwar — POS &amp; Invoicing · Issue Resolution Report (August 2026)</title>
+<meta name="description" content="All three issues from the 16 Aug 2026 POS/Invoicing review are resolved: inline person creation, measurement capture on the invoice, and the Ridhaa fabric now live. Two small confirmations remain with the client.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="favicon.png">
+<meta property="og:title" content="Libas ul Anwar — Issue Resolution Report · August 2026">
+<meta property="og:description" content="Your review, answered point by point: all three POS/Invoicing findings resolved — inline person &amp; measurement capture, Ridhaa fabric live.">
+<meta property="og:url" content="https://libas.saifypos.org/report/status-report.html">
+<meta property="og:image" content="https://libas.saifypos.org/report/status-report-og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root{
+    --ground:#0E1418; --band-ink:#F2EFE8; --band-dim:#9AA3A1; --band-gold:#CBA25C;
+    --paper:#F6F4EF; --surface:#FFFFFF; --ink:#15191C; --dim:#5B6662;
+    --line:rgba(21,25,28,.12); --line-soft:rgba(21,25,28,.07);
+    --accent:#9A6E34; --accent-soft:rgba(154,110,52,.10);
+    --ok:#2F7D52; --ok-bg:rgba(47,125,82,.12);
+    --warn:#9C6A15; --warn-bg:rgba(180,121,30,.14);
+    --stop:#B23A3A; --stop-bg:rgba(178,58,58,.12);
+    --measure:68ch;
+    --sans:"Helvetica Neue","Segoe UI",Roboto,Arial,system-ui,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code",Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0E1418; --surface:#141C21; --ink:#ECE7DE; --dim:#96A09D;
+      --line:rgba(236,231,222,.13); --line-soft:rgba(236,231,222,.07);
+      --accent:#CBA25C; --accent-soft:rgba(203,162,92,.12);
+      --ok:#66C08A; --ok-bg:rgba(102,192,138,.13);
+      --warn:#D8A64B; --warn-bg:rgba(216,166,75,.14);
+      --stop:#E27070; --stop-bg:rgba(226,112,112,.13);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0E1418; --surface:#141C21; --ink:#ECE7DE; --dim:#96A09D;
+    --line:rgba(236,231,222,.13); --line-soft:rgba(236,231,222,.07);
+    --accent:#CBA25C; --accent-soft:rgba(203,162,92,.12);
+    --ok:#66C08A; --ok-bg:rgba(102,192,138,.13); --warn:#D8A64B; --warn-bg:rgba(216,166,75,.14);
+    --stop:#E27070; --stop-bg:rgba(226,112,112,.13);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.62;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  .wrap{max-width:940px;margin-inline:auto;padding-inline:clamp(20px,5vw,40px)}
+  .eyebrow{font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;font-weight:700;color:var(--accent)}
+  h1,h2,h3{text-wrap:balance;margin:0}
+  p{margin:0;max-width:var(--measure)}
+  a{color:var(--accent)}
+
+  /* ---- brand header band ---- */
+  .band{background:var(--ground);color:var(--band-ink);position:relative;overflow:hidden}
+  .band::after{content:"";position:absolute;inset:-40% -20% auto auto;width:38rem;height:38rem;
+    background:radial-gradient(circle at 70% 30%,rgba(203,162,92,.16),transparent 62%);pointer-events:none}
+  .band .wrap{position:relative;padding-block:clamp(34px,6vw,58px)}
+  .brandrow{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+  .wordmark{font-weight:800;letter-spacing:.34em;font-size:1rem;padding-left:.34em}
+  .wordmark span{color:var(--band-gold);margin-left:.4em}
+  .band .kicker{color:var(--band-gold);font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;font-weight:700}
+  .band h1{font-size:clamp(1.7rem,4.4vw,2.75rem);font-weight:600;line-height:1.08;letter-spacing:-.01em;margin-top:14px;max-width:22ch}
+  .band .sub{color:var(--band-dim);margin-top:16px;max-width:62ch}
+  .meta{display:flex;gap:26px;flex-wrap:wrap;margin-top:26px;padding-top:20px;border-top:1px solid rgba(236,231,222,.14)}
+  .meta div{font-size:.85rem}
+  .meta .k{color:var(--band-dim);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;display:block;margin-bottom:3px}
+  .meta .v{color:var(--band-ink);font-weight:500}
+
+  .pill{display:inline-flex;align-items:center;gap:.5em;font-size:.72rem;font-weight:700;letter-spacing:.04em;
+    padding:.28em .7em;border-radius:2px;white-space:nowrap}
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+  .pill.ok{color:var(--ok);background:var(--ok-bg)} .pill.warn{color:var(--warn);background:var(--warn-bg)}
+  .pill.stop{color:var(--stop);background:var(--stop-bg)}
+
+  .summary{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);
+    padding:clamp(20px,3vw,30px);margin-top:-30px;position:relative;z-index:2;box-shadow:0 12px 32px -22px rgba(0,0,0,.4)}
+  .summary .eyebrow{margin-bottom:12px}
+  .summary p+p{margin-top:14px}
+
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);margin-top:34px}
+  .metric{background:var(--surface);padding:20px 18px}
+  .metric .n{font-size:1.7rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .metric .l{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:4px}
+  .metric.flag .n{color:var(--stop)}
+
+  section.block{padding-block:clamp(30px,4.5vw,46px);border-top:1px solid var(--line-soft)}
+  section.block:first-of-type{border-top:0}
+  .h-lead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+  h2{font-size:1.34rem;font-weight:650;letter-spacing:-.01em}
+  h3{font-size:1rem;font-weight:650;margin-bottom:6px}
+  .lede{color:var(--ink);font-size:1.06rem}
+  .muted{color:var(--dim)}
+
+  ul.clean{list-style:none;padding:0;margin:14px 0 0;display:flex;flex-direction:column;gap:11px;max-width:var(--measure)}
+  ul.clean li{position:relative;padding-left:22px}
+  ul.clean li::before{content:"";position:absolute;left:2px;top:.62em;width:6px;height:6px;background:var(--accent);border-radius:1px}
+  ul.clean li b{font-weight:650}
+
+  /* ---- finding cards (answering the review) ---- */
+  .finding{background:var(--surface);border:1px solid var(--line);padding:clamp(18px,3vw,26px);margin-top:18px}
+  .finding .fhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .finding .fhead .num{font-family:var(--mono);font-size:.8rem;color:var(--accent);font-weight:700}
+  .finding h3{font-size:1.05rem;margin:0}
+  .finding blockquote{margin:12px 0 0;padding:12px 16px;border-left:3px solid var(--line);
+    color:var(--dim);font-size:.92rem;background:var(--accent-soft)}
+  .finding blockquote .q{font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;font-weight:700;
+    color:var(--accent);display:block;margin-bottom:4px}
+  .finding .now{margin-top:14px;font-size:.94rem;color:var(--dim)}
+  .finding .now b{color:var(--ink)}
+
+  /* ---- timeline ---- */
+  .timeline{display:flex;flex-direction:column;gap:0;margin-top:8px}
+  .phase{display:grid;grid-template-columns:auto 1fr;gap:20px;padding:16px 0;border-bottom:1px solid var(--line-soft)}
+  .phase:last-child{border-bottom:0}
+  .phase .idx{font-family:var(--mono);font-size:.8rem;color:var(--accent);font-weight:700;padding-top:2px}
+  .phase h3{margin-bottom:3px}
+  .phase p{font-size:.94rem;color:var(--dim)}
+
+  /* ---- table ---- */
+  .tablewrap{overflow-x:auto;margin-top:8px;border:1px solid var(--line)}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:.9rem}
+  thead th{text-align:left;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);
+    font-weight:700;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+  tbody td{padding:14px 16px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  tbody tr:last-child td{border-bottom:0}
+  td .item{font-weight:600} td .why{color:var(--dim);font-size:.85rem;margin-top:3px}
+  td .owner{font-size:.82rem;color:var(--dim)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:8px}
+  .card{background:var(--surface);border:1px solid var(--line);padding:20px}
+  .card h3{color:var(--accent)}
+
+  /* ---- evidence gallery ---- */
+  .shots{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:20px}
+  .shot{background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden;
+    box-shadow:0 14px 30px -22px rgba(0,0,0,.45)}
+  .shot .bar{display:flex;gap:5px;padding:9px 12px;border-bottom:1px solid var(--line-soft);background:var(--surface)}
+  .shot .bar i{width:9px;height:9px;border-radius:50%;background:var(--line);display:block}
+  .shot img{display:block;width:100%;height:auto}
+  .shot figcaption{padding:10px 14px 12px;font-size:.8rem;color:var(--dim);border-top:1px solid var(--line-soft)}
+  .shot figcaption b{color:var(--ink)}
+
+  footer{border-top:1px solid var(--line);padding-block:26px;color:var(--dim);font-size:.82rem;
+    display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  code{font-family:var(--mono);font-size:.86em;background:var(--accent-soft);padding:.08em .38em;border-radius:3px}
+
+  /* ---- print button ---- */
+  .printbtn{position:fixed;top:14px;right:14px;z-index:50;border:1px solid var(--line);background:var(--surface);
+    color:var(--ink);font-family:var(--sans);font-size:.78rem;font-weight:600;padding:.55em 1em;border-radius:4px;
+    cursor:pointer;box-shadow:0 8px 22px -12px rgba(0,0,0,.5)}
+  .printbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* ---- comments & sign-off ---- */
+  .cwrap{margin-top:18px;display:flex;flex-direction:column;gap:14px}
+  .comment{background:var(--surface);border:1px solid var(--line);padding:14px 18px}
+  .comment .chead{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.8rem;color:var(--dim)}
+  .comment .chead b{color:var(--ink);font-size:.9rem}
+  .comment .ctext{margin-top:6px;font-size:.92rem;white-space:pre-wrap}
+  .comment .cfile a{font-size:.8rem}
+  .formcard{background:var(--surface);border:1px solid var(--line);padding:clamp(16px,3vw,24px);margin-top:16px}
+  .formcard .frow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .formcard label{display:block;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--dim);font-weight:700;margin-bottom:5px}
+  .formcard input[type=text],.formcard input[type=email],.formcard textarea{
+    width:100%;border:1px solid var(--line);background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:.92rem;padding:.6em .8em;border-radius:3px}
+  .formcard textarea{min-height:90px;resize:vertical}
+  .formcard .fitem{margin-top:14px}
+  .formcard .actions{margin-top:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .btn{border:0;background:var(--accent);color:#fff;font-family:var(--sans);font-weight:650;font-size:.88rem;
+    padding:.65em 1.3em;border-radius:3px;cursor:pointer}
+  .btn:disabled{opacity:.55;cursor:default}
+  .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+  .fnote{font-size:.8rem;color:var(--dim)}
+  .fmsg{font-size:.85rem;font-weight:600}
+  .fmsg.ok{color:var(--ok)} .fmsg.err{color:var(--stop)}
+  .signed{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok);padding:12px 16px;
+    font-weight:600;font-size:.92rem;margin-top:14px}
+  .chk{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;color:var(--dim);margin-top:14px}
+  .chk input{margin-top:4px}
+
+  /* ---- access gate ---- */
+  .gate{min-height:100svh;display:flex;align-items:center;justify-content:center;background:var(--ground);padding:20px}
+  .gatecard{background:#FFFFFF;color:#15191C;max-width:420px;width:100%;padding:clamp(26px,5vw,40px);
+    border-radius:8px;text-align:center;box-shadow:0 30px 80px -30px rgba(0,0,0,.8)}
+  .gatecard img{height:52px;margin-bottom:18px}
+  .gatecard h1{font-size:1.15rem;font-weight:650;letter-spacing:-.01em}
+  .gatecard p{color:#5B6662;font-size:.9rem;margin:10px auto 0;max-width:32ch}
+  .gatecard form{margin-top:20px;display:flex;flex-direction:column;gap:12px}
+  .gatecard input{border:1px solid rgba(21,25,28,.2);font-size:1rem;padding:.7em .9em;border-radius:4px;
+    text-align:center;font-family:var(--sans);letter-spacing:.08em}
+  .gatecard .btn{width:100%;justify-content:center}
+  .gate .gerr{color:#B23A3A;font-size:.85rem;font-weight:600;min-height:1.2em;margin-top:2px}
+  .gatecard .gfoot{margin-top:18px;font-size:.75rem;color:#9AA3A1}
+
+  @media (max-width:680px){
+    .metrics{grid-template-columns:1fr 1fr}
+    .grid2{grid-template-columns:1fr}
+    .shots{grid-template-columns:1fr}
+    .formcard .frow{grid-template-columns:1fr}
+  }
+
+  /* ---- print ---- */
+  @media print{
+    :root{
+      --paper:#FFFFFF; --surface:#FFFFFF; --ink:#15191C; --dim:#5B6662;
+      --line:rgba(21,25,28,.16); --line-soft:rgba(21,25,28,.09);
+      --accent:#9A6E34; --accent-soft:rgba(154,110,52,.10);
+    }
+    body{background:#fff}
+    .no-print,.printbtn,.formcard,.gate{display:none !important}
+    .band{background:#fff !important;color:#15191C;border-bottom:2px solid #15191C}
+    .band::after{display:none}
+    .band .kicker,.wordmark span{color:#9A6E34}
+    .band .sub,.meta .k{color:#5B6662}
+    .meta .v{color:#15191C}
+    .pill,.shot img,.metric,.signed{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+    .summary{box-shadow:none;margin-top:20px}
+    .shot,.finding,.phase,.comment,.metric,tr,figure{page-break-inside:avoid}
+    @page{margin:14mm}
+  }
+</style>
+</head>
+<body>
+
+<!-- ======== ACCESS GATE (public — no report content in this file) ======== -->
+<div class="gate" id="gate">
+  <div class="gatecard">
+    <img src="twinfusion-logo.png" alt="Twinfusion">
+    <h1>This report is private</h1>
+    <p>Libas ul Anwar — POS &amp; Invoicing issue-resolution report. Enter the access password you were given to view it.</p>
+    <form id="gateform" autocomplete="off">
+      <input type="password" id="gatepw" placeholder="Access password" autofocus required>
+      <div class="gerr" id="gateerr"></div>
+      <button class="btn" type="submit" id="gatebtn">View the report</button>
+    </form>
+    <div class="gfoot">Prepared by Twinfusion · twinfusion.org</div>
+  </div>
+</div>
+
+<!-- report body is injected here after the password checks out -->
+<div id="report-root"></div>
+
+<script>
+(function () {
+  var KEY = 'libas_report_pw';
+  var gate = document.getElementById('gate');
+  var root = document.getElementById('report-root');
+  var form = document.getElementById('gateform');
+  var errEl = document.getElementById('gateerr');
+  var btn = document.getElementById('gatebtn');
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function unlock(pw, silent) {
+    btn.disabled = true; errEl.textContent = '';
+    fetch('report-content.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'pw=' + encodeURIComponent(pw)
+    }).then(function (r) { return r.json().catch(function () { return { ok: false, error: 'Unexpected response.' }; }); })
+      .then(function (d) {
+        btn.disabled = false;
+        if (!d.ok) {
+          try { sessionStorage.removeItem(KEY); } catch (e) {}
+          if (!silent) errEl.textContent = d.error || 'Incorrect password.';
+          return;
+        }
+        try { sessionStorage.setItem(KEY, pw); } catch (e) {}
+        gate.style.display = 'none';
+        root.innerHTML = d.html;
+        initReport();
+        window.scrollTo(0, 0);
+      })
+      .catch(function () { btn.disabled = false; if (!silent) errEl.textContent = 'Could not reach the server. Try again.'; });
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    unlock(document.getElementById('gatepw').value, false);
+  });
+
+  try {
+    var saved = sessionStorage.getItem(KEY);
+    if (saved) unlock(saved, true);
+  } catch (e) {}
+
+  /* ------- wiring that runs after the body is injected ------- */
+  function initReport() {
+    var pb = document.getElementById('printbtn');
+    if (pb) pb.addEventListener('click', function () { window.print(); });
+
+    loadReview();
+
+    var cf = document.getElementById('cform');
+    if (cf) cf.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var msg = document.getElementById('cmsg');
+      var fd = new FormData(cf);
+      msg.className = 'fmsg'; msg.textContent = 'Sending…';
+      fetch('review.php', { method: 'POST', body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.ok) { msg.className = 'fmsg ok'; msg.textContent = 'Thank you — your comment is posted.'; cf.reset(); loadReview(); }
+          else { msg.className = 'fmsg err'; msg.textContent = d.error || 'Could not post the comment.'; }
+        })
+        .catch(function () { msg.className = 'fmsg err'; msg.textContent = 'Could not reach the server.'; });
+    });
+
+    var sf = document.getElementById('sform');
+    if (sf) sf.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var msg = document.getElementById('smsg');
+      if (!document.getElementById('sconfirm').checked) {
+        msg.className = 'fmsg err'; msg.textContent = 'Please tick the confirmation box.'; return;
+      }
+      if (!window.confirm('Record your formal sign-off on this report?')) return;
+      var fd = new FormData(sf);
+      fd.append('type', 'signoff');
+      msg.className = 'fmsg'; msg.textContent = 'Recording…';
+      fetch('review.php', { method: 'POST', body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.ok) { msg.className = 'fmsg ok'; msg.textContent = 'Sign-off recorded — thank you.'; sf.reset(); loadReview(); }
+          else { msg.className = 'fmsg err'; msg.textContent = d.error || 'Could not record the sign-off.'; }
+        })
+        .catch(function () { msg.className = 'fmsg err'; msg.textContent = 'Could not reach the server.'; });
+    });
+  }
+
+  function loadReview() {
+    var list = document.getElementById('clist');
+    var sstate = document.getElementById('sstate');
+    if (!list) return;
+    fetch('review.php?action=list')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) return;
+        if (!d.comments.length) {
+          list.innerHTML = '<p class="muted" style="font-size:.9rem">No comments yet — be the first to respond.</p>';
+        } else {
+          list.innerHTML = d.comments.map(function (c) {
+            return '<div class="comment"><div class="chead"><b>' + esc(c.name) + '</b><span>' + esc(c.date) + '</span></div>' +
+              '<div class="ctext">' + esc(c.text) + '</div>' +
+              (c.file ? '<div class="cfile"><a href="' + esc(c.file) + '" target="_blank" rel="noopener">📎 ' + esc(c.file_name || 'attachment') + '</a></div>' : '') +
+              '</div>';
+          }).join('');
+        }
+        if (sstate) {
+          if (d.signoffs.length) {
+            sstate.innerHTML = d.signoffs.map(function (s) {
+              return '<div class="signed">✓ Signed off by ' + esc(s.name) + (s.role ? ' · ' + esc(s.role) : '') + ' · ' + esc(s.date) + '</div>';
+            }).join('');
+          } else {
+            sstate.innerHTML = '<p class="muted" style="font-size:.9rem;margin-top:12px">Awaiting sign-off.</p>';
+          }
+        }
+      })
+      .catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>

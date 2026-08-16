@@ -48,6 +48,35 @@ Route::get('/build/{path}', function (string $path) {
     ]);
 })->where('path', '[A-Za-z0-9_\-./]+');
 
+// Same LiteSpeed-stale-snapshot fallback for the private client report's static
+// assets (public/report). PHP files are deliberately excluded — they must be
+// executed by the server, never streamed as source.
+Route::get('/report/{path}', function (string $path) {
+    $base = realpath(public_path('report'));
+    $full = realpath(public_path('report/' . $path));
+    abort_unless(
+        $base && $full && str_starts_with($full, $base . DIRECTORY_SEPARATOR) && is_file($full)
+            && !str_ends_with(strtolower($full), '.php'),
+        404
+    );
+    $types = [
+        'html' => 'text/html', 'png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg',
+        'webp' => 'image/webp', 'svg' => 'image/svg+xml', 'css' => 'text/css', 'js' => 'application/javascript',
+        'pdf' => 'application/pdf', 'zip' => 'application/zip', 'csv' => 'text/csv',
+        'doc' => 'application/msword', 'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xls' => 'application/vnd.ms-excel', 'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'gif' => 'image/gif',
+    ];
+    $ext = strtolower(pathinfo($full, PATHINFO_EXTENSION));
+    $cache = $ext === 'html' ? 'no-cache' : 'public, max-age=86400';
+
+    return response()->file($full, [
+        'Content-Type' => $types[$ext] ?? 'application/octet-stream',
+        'Cache-Control' => $cache,
+        'X-Robots-Tag' => 'noindex, nofollow',
+    ]);
+})->where('path', '[A-Za-z0-9_\-./]+');
+
 // Public shop
 Route::get('/', [ShopController::class, 'index'])->name('shop');
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
