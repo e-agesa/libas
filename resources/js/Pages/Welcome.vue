@@ -22,7 +22,7 @@ defineProps({
         <div class="relative text-center px-6">
             <!-- Logo -->
             <div class="mb-6">
-                <img src="/logo.jpeg" alt="Libas ul Anwar" class="h-24 sm:h-32 mx-auto rounded-2xl shadow-2xl" />
+                <img :src="$page.props.company?.logo_url || '/logo.jpeg'" alt="Libas ul Anwar" class="h-20 sm:h-24 w-auto max-w-[340px] sm:max-w-[440px] mx-auto object-contain rounded-xl shadow-2xl" />
             </div>
 
             <h1 class="text-3xl sm:text-5xl font-bold text-white mb-3">Libas ul Anwar</h1>

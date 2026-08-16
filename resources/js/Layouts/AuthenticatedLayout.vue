@@ -99,11 +99,9 @@ function navHref(routeName) {
         >
             <!-- Logo -->
             <div class="flex h-16 items-center justify-between px-4">
-                <Link :href="route('dashboard')" class="flex items-center gap-3">
-                    <img src="/logo.jpeg" alt="Libas" class="h-10 w-10 shrink-0 rounded-lg object-cover" />
-                    <span v-if="sidebarOpen" class="text-white font-semibold text-lg whitespace-nowrap">
-                        Libas TMS
-                    </span>
+                <Link :href="route('dashboard')" class="flex items-center min-w-0">
+                    <img v-if="sidebarOpen" :src="$page.props.company?.logo_url || '/logo.jpeg'" alt="Libas ul Anwar" class="h-9 w-auto max-w-[190px] object-contain rounded" />
+                    <img v-else :src="$page.props.company?.logo_url || '/logo.jpeg'" alt="Libas" class="h-9 w-9 shrink-0 rounded-lg object-cover" />
                 </Link>
                 <button
                     @click="sidebarOpen = !sidebarOpen"

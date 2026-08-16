@@ -48,7 +48,13 @@ class CompanySetting extends Model
     public function getLogoUrlAttribute(): ?string
     {
         if (!$this->logo_path) return null;
-        return Storage::url($this->logo_path);
+        $url = Storage::url($this->logo_path);
+        // Cache-bust on file change so a new logo reaches returning visitors.
+        try {
+            return $url . '?v=' . Storage::lastModified($this->logo_path);
+        } catch (\Throwable $e) {
+            return $url;
+        }
     }
 
     /**
