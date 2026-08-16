@@ -22,6 +22,12 @@ class ContactController extends Controller
 
         $contact = $client->contacts()->create($validated);
 
+        // Quick-add from the invoice wizard (axios): return the contact instead
+        // of redirecting so the in-progress invoice form is not lost.
+        if ($request->wantsJson()) {
+            return response()->json($contact, 201);
+        }
+
         if ($request->boolean('open_measurement')) {
             return redirect()->route('contacts.show', $contact)
                 ->with('success', 'Contact created. Add a measurement now.');

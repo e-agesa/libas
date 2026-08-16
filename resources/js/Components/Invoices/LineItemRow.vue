@@ -10,7 +10,7 @@ const props = defineProps({
     index: Number,
 });
 
-const emit = defineEmits(['update', 'remove']);
+const emit = defineEmits(['update', 'remove', 'add-person', 'add-measurement']);
 
 const isCollection = computed(() => props.item.item_type === 'collection');
 
@@ -49,6 +49,32 @@ function onCollectionChange(collectionId) {
         unit_price: col ? parseFloat(col.price) : 0,
     };
     emit('update', props.index, updates);
+}
+
+function onPersonChange(e) {
+    const v = e.target.value;
+    if (v === '__new__') {
+        // Restore the previous selection and open the quick-add modal instead
+        e.target.value = props.item.contact_id != null ? String(props.item.contact_id) : '';
+        emit('add-person', props.index);
+        return;
+    }
+    // Changing the person invalidates any measurement picked for the old person
+    emit('update', props.index, {
+        ...props.item,
+        contact_id: v ? parseInt(v) : '',
+        measurement_id: null,
+    });
+}
+
+function onMeasurementChange(e) {
+    const v = e.target.value;
+    if (v === '__new__') {
+        e.target.value = props.item.measurement_id != null ? String(props.item.measurement_id) : '';
+        emit('add-measurement', props.index, props.item.contact_id);
+        return;
+    }
+    update('measurement_id', v ? parseInt(v) : null);
 }
 
 function onFabricChange(fabricId) {
@@ -152,30 +178,55 @@ const garmentBadge = computed(() => {
         <!-- Custom item fields -->
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-                <label class="text-xs font-medium text-gray-600 mb-1 block">Person *</label>
+                <div class="flex items-center justify-between mb-1">
+                    <label class="text-xs font-medium text-gray-600 block">Person *</label>
+                    <button
+                        type="button"
+                        @click="emit('add-person', index)"
+                        class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"
+                    >
+                        <i class="pi pi-user-plus text-[10px]"></i> Add New Person
+                    </button>
+                </div>
                 <select
                     :value="item.contact_id"
-                    @change="update('contact_id', parseInt($event.target.value))"
+                    @change="onPersonChange"
                     class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                     required
                 >
                     <option value="">Select person...</option>
                     <option v-for="c in contacts" :key="c.id" :value="c.id">{{ c.name }}</option>
+                    <option value="__new__">＋ Add new person…</option>
                 </select>
             </div>
 
             <div>
-                <label class="text-xs font-medium text-gray-600 mb-1 block">Measurement</label>
+                <div class="flex items-center justify-between mb-1">
+                    <label class="text-xs font-medium text-gray-600 block">Measurement</label>
+                    <button
+                        v-if="item.contact_id"
+                        type="button"
+                        @click="emit('add-measurement', index, item.contact_id)"
+                        class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"
+                    >
+                        <i class="pi pi-plus text-[10px]"></i> Add Measurement
+                    </button>
+                </div>
                 <select
                     :value="item.measurement_id"
-                    @change="update('measurement_id', $event.target.value ? parseInt($event.target.value) : null)"
+                    @change="onMeasurementChange"
                     class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
+                    :disabled="!item.contact_id"
                 >
                     <option value="">None</option>
                     <option v-for="m in contactMeasurements" :key="m.id" :value="m.id">
-                        {{ m.garment_type }} — {{ m.label || 'Untitled' }}
+                        {{ getLabel(m.garment_type) }} — {{ m.label || 'Untitled' }}
                     </option>
+                    <option v-if="item.contact_id" value="__new__">＋ Add new measurement…</option>
                 </select>
+                <p v-if="item.contact_id && !contactMeasurements.length" class="text-xs text-amber-600 mt-1">
+                    No saved measurements for this person yet — use "Add Measurement".
+                </p>
                 <span v-if="garmentBadge" :class="garmentBadge.color" class="inline-flex mt-1 rounded-full px-2 py-0.5 text-xs font-medium capitalize">{{ garmentBadge.label }}</span>
             </div>
 

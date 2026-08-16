@@ -1,11 +1,13 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ref, computed, onMounted } from 'vue';
 import StepClient from '@/Components/Invoices/StepClient.vue';
 import StepLineItems from '@/Components/Invoices/StepLineItems.vue';
 import StepReview from '@/Components/Invoices/StepReview.vue';
 import StepFinalize from '@/Components/Invoices/StepFinalize.vue';
+import QuickPersonModal from '@/Components/Invoices/QuickPersonModal.vue';
+import QuickMeasurementModal from '@/Components/Invoices/QuickMeasurementModal.vue';
 
 const props = defineProps({
     clients: Array,
@@ -66,6 +68,60 @@ const steps = [
 
 const contacts = computed(() => selectedClient.value?.contacts || []);
 
+// Quick-add modals (person / measurement) launched from a line item row
+const showPersonModal = ref(false);
+const showMeasurementModal = ref(false);
+const activeItemIndex = ref(null);
+const measurementContact = ref(null);
+
+function openAddPerson(index) {
+    activeItemIndex.value = index;
+    showPersonModal.value = true;
+}
+
+function openAddMeasurement(index, contactId) {
+    const contact = contacts.value.find(c => c.id === contactId);
+    if (!contact) return;
+    activeItemIndex.value = index;
+    measurementContact.value = contact;
+    showMeasurementModal.value = true;
+}
+
+function onPersonCreated(contact) {
+    showPersonModal.value = false;
+    if (!selectedClient.value) return;
+    if (!Array.isArray(selectedClient.value.contacts)) {
+        selectedClient.value.contacts = [];
+    }
+    selectedClient.value.contacts.push({ ...contact, measurements: [] });
+    const item = activeItemIndex.value !== null ? form.line_items[activeItemIndex.value] : null;
+    if (item) {
+        item.contact_id = contact.id;
+        item.measurement_id = null;
+    }
+}
+
+function onMeasurementCreated(measurement) {
+    showMeasurementModal.value = false;
+    const contact = contacts.value.find(c => c.id === measurement.contact_id);
+    if (contact) {
+        if (!Array.isArray(contact.measurements)) {
+            contact.measurements = [];
+        }
+        contact.measurements.push(measurement);
+    }
+    const item = activeItemIndex.value !== null ? form.line_items[activeItemIndex.value] : null;
+    if (item && item.contact_id === measurement.contact_id) {
+        item.measurement_id = measurement.id;
+    }
+}
+
+// Re-sync fabrics and shelf items from the server whenever the Items step is
+// shown, so fabrics added in the Fabrics module appear without a full reload.
+function syncCatalogs() {
+    router.reload({ only: ['fabrics', 'collections'] });
+}
+
 function selectClient(client) {
     selectedClient.value = client;
     form.client_id = client.id;
@@ -116,12 +172,14 @@ const canNext = computed(() => {
 function nextStep() {
     if (canNext.value && currentStep.value < 4) {
         currentStep.value++;
+        if (currentStep.value === 2) syncCatalogs();
     }
 }
 
 function prevStep() {
     if (currentStep.value > 1) {
         currentStep.value--;
+        if (currentStep.value === 2) syncCatalogs();
     }
 }
 
@@ -200,6 +258,8 @@ function submit() {
                     :contacts="contacts"
                     :fabrics="fabrics"
                     :collections="collections"
+                    @add-person="openAddPerson"
+                    @add-measurement="openAddMeasurement"
                 />
 
                 <StepReview
@@ -258,5 +318,21 @@ function submit() {
                 </div>
             </div>
         </div>
+
+        <QuickPersonModal
+            :show="showPersonModal"
+            :client-id="form.client_id"
+            :client-name="selectedClient?.name"
+            @close="showPersonModal = false"
+            @created="onPersonCreated"
+        />
+
+        <QuickMeasurementModal
+            :show="showMeasurementModal"
+            :contact-id="measurementContact?.id"
+            :contact-name="measurementContact?.name"
+            @close="showMeasurementModal = false"
+            @created="onMeasurementCreated"
+        />
     </AuthenticatedLayout>
 </template>

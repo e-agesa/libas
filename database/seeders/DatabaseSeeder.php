@@ -70,6 +70,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Grey Polyester', 'type' => 'Polyester', 'color' => '#808080', 'price_per_unit' => 650, 'stock_qty' => 60, 'supplier' => 'Nairobi Fabrics'],
             ['name' => 'Olive Green Cotton', 'type' => 'Cotton', 'color' => '#808000', 'price_per_unit' => 950, 'stock_qty' => 25, 'supplier' => 'Mombasa Textiles'],
             ['name' => 'Navy Blue Linen', 'type' => 'Linen', 'color' => '#000080', 'price_per_unit' => 1300, 'stock_qty' => 18, 'supplier' => 'Premium Imports'],
+            ['name' => 'Ridhaa', 'type' => 'Ridhaa', 'color' => '#1F2937', 'price_per_unit' => 1200, 'stock_qty' => 30, 'supplier' => 'Mombasa Textiles'],
         ];
         foreach ($fabrics as $fabric) {
             Fabric::firstOrCreate(['name' => $fabric['name']], $fabric);

@@ -35,7 +35,13 @@ class MeasurementController extends Controller
             $validated['revision'] = 1;
         }
 
-        $contact->measurements()->create($validated);
+        $measurement = $contact->measurements()->create($validated);
+
+        // Quick-add from the invoice wizard (axios): return the measurement
+        // instead of redirecting so the in-progress invoice form is not lost.
+        if ($request->wantsJson()) {
+            return response()->json($measurement, 201);
+        }
 
         return redirect()->route('contacts.show', $contact)
             ->with('success', 'Measurement saved successfully.');

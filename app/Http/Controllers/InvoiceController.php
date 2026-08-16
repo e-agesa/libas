@@ -44,33 +44,27 @@ class InvoiceController extends Controller
 
     public function create(Request $request)
     {
-        $clients = Client::with([
-            'contacts:id,client_id,name',
-            'contacts.measurements:id,contact_id,garment_type,label',
-        ])->select('id', 'name')->orderBy('name')->get();
-
-        $fabrics = Fabric::where('status', 'active')
-            ->select('id', 'name', 'type', 'color', 'price_per_unit')
-            ->orderBy('name')->get();
-
-        $collections = Collection::active()->inStock()
-            ->with('category:id,name')
-            ->select('id', 'category_id', 'name', 'sku', 'size', 'color', 'price', 'stock_qty')
-            ->orderBy('name')->get();
-
-        $invoiceNumber = Invoice::generateInvoiceNumber();
-        $quoteNumber = Invoice::generateQuoteNumber();
-
         // If a client_id is passed (e.g. from client detail page)
         $selectedClientId = $request->input('client_id');
         $type = $request->input('type', 'invoice');
 
+        // Props are closures so Inertia partial reloads (e.g. the wizard
+        // re-syncing fabrics when entering the Items step) only run the
+        // queries they actually ask for.
         return Inertia::render('Invoices/Create', [
-            'clients' => $clients,
-            'fabrics' => $fabrics,
-            'collections' => $collections,
-            'invoiceNumber' => $invoiceNumber,
-            'quoteNumber' => $quoteNumber,
+            'clients' => fn () => Client::with([
+                'contacts:id,client_id,name',
+                'contacts.measurements:id,contact_id,garment_type,label',
+            ])->select('id', 'name')->orderBy('name')->get(),
+            'fabrics' => fn () => Fabric::where('status', 'active')
+                ->select('id', 'name', 'type', 'color', 'price_per_unit')
+                ->orderBy('name')->get(),
+            'collections' => fn () => Collection::active()->inStock()
+                ->with('category:id,name')
+                ->select('id', 'category_id', 'name', 'sku', 'size', 'color', 'price', 'stock_qty')
+                ->orderBy('name')->get(),
+            'invoiceNumber' => fn () => Invoice::generateInvoiceNumber(),
+            'quoteNumber' => fn () => Invoice::generateQuoteNumber(),
             'selectedClientId' => $selectedClientId ? (int) $selectedClientId : null,
             'defaultType' => $type,
         ]);
