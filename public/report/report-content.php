@@ -31,7 +31,7 @@ $html = <<<'REPORTBODY'
     <div class="meta">
       <div><span class="k">Prepared</span><span class="v">16 August 2026 — same-day response</span></div>
       <div><span class="k">Responding to</span><span class="v">Client review · 3 findings (2 high, 1 medium)</span></div>
-      <div><span class="k">System</span><span class="v">libas.saifypos.org</span></div>
+      <div><span class="k">System</span><span class="v">libasulanwar.com</span></div>
       <div><span class="k">Overall status</span><span class="v" style="color:var(--band-gold)">3 of 3 resolved — ready to deploy</span></div>
     </div>
   </div>
@@ -175,7 +175,7 @@ $html = <<<'REPORTBODY'
         <thead><tr><th>Item</th><th>Status</th><th>Owner</th></tr></thead>
         <tbody>
           <tr>
-            <td><div class="item">Deploy this release to the live system</div><div class="why">The fixes are verified and packaged. They go live on the next deployment to libas.saifypos.org — same day as your go-ahead.</div></td>
+            <td><div class="item">Deploy this release to the live system</div><div class="why">The fixes are verified and packaged. They go live on the next deployment to libasulanwar.com — same day as your go-ahead.</div></td>
             <td><span class="pill warn"><span class="dot"></span>Action needed</span></td>
             <td><div class="owner">Twinfusion — on your go-ahead</div></td>
           </tr>

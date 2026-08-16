@@ -14,9 +14,9 @@ header('Content-Type: application/json; charset=utf-8');
 header('X-Robots-Tag: noindex, nofollow');
 
 $ADMIN_EMAIL = 'twinfusion2023@gmail.com';
-$FROM        = 'noreply@saifypos.org';
-$REPORT_URL  = 'https://libas.saifypos.org/report/status-report.html';
-$BASE_URL    = 'https://libas.saifypos.org/report/';
+$FROM        = 'noreply@libasulanwar.com';
+$REPORT_URL  = 'https://libasulanwar.com/report/status-report.html';
+$BASE_URL    = 'https://libasulanwar.com/report/';
 $MAX_UPLOAD  = 20 * 1024 * 1024; // 20 MB
 $ALLOWED_EXT = ['jpg','jpeg','png','gif','webp','pdf','doc','docx','xls','xlsx','csv','zip'];
 
