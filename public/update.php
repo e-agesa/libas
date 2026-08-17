@@ -134,27 +134,56 @@ unset($zipData);
 /* ---------- 3. Extract ---------- */
 echo '<h2>[3/6] Extract</h2>';
 
-if (!class_exists('ZipArchive')) {
-    @unlink($tmpZip);
-    say('PHP ZipArchive extension is not available on this server.', 'err');
-    die('</body></html>');
-}
-
 $extractDir = $projectRoot . '/_update-tmp';
 if (is_dir($extractDir)) {
     rrmdir($extractDir);
 }
 @mkdir($extractDir, 0755, true);
 
-$zip = new ZipArchive();
-if ($zip->open($tmpZip) !== true) {
-    @unlink($tmpZip);
-    say('Could not open the downloaded zip.', 'err');
+// Shared hosting varies wildly in what it enables, so try every route in turn.
+$extracted = false;
+
+if (!$extracted && class_exists('ZipArchive')) {
+    $zip = new ZipArchive();
+    if ($zip->open($tmpZip) === true) {
+        $extracted = $zip->extractTo($extractDir);
+        $zip->close();
+        if ($extracted) say('extracted with ZipArchive', 'ok');
+    }
+}
+
+if (!$extracted && function_exists('shell_exec')) {
+    @shell_exec('unzip -o -q ' . escapeshellarg($tmpZip) . ' -d ' . escapeshellarg($extractDir) . ' 2>&1');
+    $extracted = is_dir($extractDir . '/libas-main');
+    if ($extracted) say('extracted with unzip', 'ok');
+}
+
+if (!$extracted && class_exists('PharData')) {
+    try {
+        $phar = new PharData($tmpZip);
+        $phar->extractTo($extractDir, null, true);
+        $extracted = is_dir($extractDir . '/libas-main');
+        if ($extracted) say('extracted with PharData', 'ok');
+    } catch (Throwable $e) {
+        say('PharData: ' . $e->getMessage(), 'warn');
+    }
+}
+
+if (!$extracted) {
+    // Last resort: parse the zip ourselves. Needs only zlib (gzinflate),
+    // which is present on effectively every PHP build.
+    $n = unzip_pure_php($tmpZip, $extractDir);
+    $extracted = $n > 0;
+    if ($extracted) say("extracted with built-in reader ({$n} files)", 'ok');
+}
+
+@unlink($tmpZip);
+
+if (!$extracted) {
+    rrmdir($extractDir);
+    say('Could not extract the archive by any available method.', 'err');
     die('</body></html>');
 }
-$zip->extractTo($extractDir);
-$zip->close();
-@unlink($tmpZip);
 
 $src = $extractDir . '/libas-main';
 if (!is_dir($src)) {
@@ -317,6 +346,75 @@ function copy_path($from, $to, array $preserve = []) {
         $count += copy_path($from . '/' . $entry, $to . '/' . $entry, $preserve);
     }
     return $count;
+}
+
+/**
+ * Minimal ZIP extractor for hosts without ZipArchive/unzip/PharData.
+ * Reads the central directory (rather than scanning local headers) so entries
+ * written with data descriptors still report correct sizes.
+ * Returns the number of files written.
+ */
+function unzip_pure_php($zipFile, $destDir) {
+    $data = file_get_contents($zipFile);
+    if ($data === false) return 0;
+    $size = strlen($data);
+
+    // Locate the End Of Central Directory record (scan back over the comment).
+    $eocd = -1;
+    $start = max(0, $size - 66000);
+    for ($i = $size - 22; $i >= $start; $i--) {
+        if (substr($data, $i, 4) === "PK\x05\x06") { $eocd = $i; break; }
+    }
+    if ($eocd < 0) return 0;
+
+    $entries   = unpack('v', substr($data, $eocd + 10, 2))[1];
+    $cdOffset  = unpack('V', substr($data, $eocd + 16, 4))[1];
+
+    $written = 0;
+    $p = $cdOffset;
+
+    for ($e = 0; $e < $entries; $e++) {
+        if (substr($data, $p, 4) !== "PK\x01\x02") break;
+
+        $method    = unpack('v', substr($data, $p + 10, 2))[1];
+        $compSize  = unpack('V', substr($data, $p + 20, 4))[1];
+        $nameLen   = unpack('v', substr($data, $p + 28, 2))[1];
+        $extraLen  = unpack('v', substr($data, $p + 30, 2))[1];
+        $commLen   = unpack('v', substr($data, $p + 32, 2))[1];
+        $localOff  = unpack('V', substr($data, $p + 42, 4))[1];
+        $name      = substr($data, $p + 46, $nameLen);
+
+        $p += 46 + $nameLen + $extraLen + $commLen;
+
+        // Reject anything trying to escape the destination.
+        if ($name === '' || strpos($name, '..') !== false || strpos($name, "\0") !== false) continue;
+
+        $target = $destDir . '/' . $name;
+
+        if (substr($name, -1) === '/') {
+            @mkdir($target, 0755, true);
+            continue;
+        }
+
+        // Data begins after this entry's LOCAL header (its own lengths differ).
+        if (substr($data, $localOff, 4) !== "PK\x03\x04") continue;
+        $lNameLen  = unpack('v', substr($data, $localOff + 26, 2))[1];
+        $lExtraLen = unpack('v', substr($data, $localOff + 28, 2))[1];
+        $dataStart = $localOff + 30 + $lNameLen + $lExtraLen;
+
+        $payload = substr($data, $dataStart, $compSize);
+        if ($method === 8) {
+            $payload = @gzinflate($payload);
+        } elseif ($method !== 0) {
+            continue; // unsupported compression
+        }
+        if ($payload === false) continue;
+
+        @mkdir(dirname($target), 0755, true);
+        if (@file_put_contents($target, $payload) !== false) $written++;
+    }
+
+    return $written;
 }
 
 function rrmdir($dir) {
