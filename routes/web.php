@@ -67,8 +67,11 @@ Route::post('/report/unlock', function (\Illuminate\Http\Request $request) {
     $bodyFile = resource_path('reports/review-response.html');
     abort_unless(is_file($bodyFile), 500, 'Report body missing.');
 
+    // Grant this viewer access to comment attachments for the next 2 hours.
+    // The cookie is encrypted+signed by the framework, so it cannot be forged.
     return response()->json(['ok' => true, 'html' => file_get_contents($bodyFile)])
-        ->header('X-Robots-Tag', 'noindex, nofollow');
+        ->header('X-Robots-Tag', 'noindex, nofollow')
+        ->cookie('report_access', '1', 120);
 });
 
 // Same reasoning for the report's comment / sign-off endpoint: delegate to the
@@ -77,9 +80,24 @@ Route::post('/report/unlock', function (\Illuminate\Http\Request $request) {
 Route::match(['get', 'post'], '/report/review-api', function () {
     $script = public_path('report/review.php');
     abort_unless(is_file($script), 404);
+    // Keep comments/sign-offs (which contain reviewer emails) out of the web
+    // root — this host does not honour .htaccess deny rules.
+    $GLOBALS['REPORT_REVIEW_DIR'] = storage_path('app/report-review');
     require $script;
     exit;
 });
+
+// Comment attachments, streamed from outside the web root and only to a viewer
+// who has already entered the report password.
+Route::get('/report/attachment/{name}', function (string $name, \Illuminate\Http\Request $request) {
+    abort_unless($request->cookie('report_access') === '1', 403);
+
+    $dir  = storage_path('app/report-review/uploads');
+    $full = realpath($dir . '/' . $name);
+    abort_unless($full && str_starts_with($full, realpath($dir) . DIRECTORY_SEPARATOR) && is_file($full), 404);
+
+    return response()->file($full, ['X-Robots-Tag' => 'noindex, nofollow']);
+})->where('name', '[A-Za-z0-9._-]+');
 
 // Static assets for the report (images, the shell HTML). PHP files are
 // deliberately excluded — they must be executed by the server, never streamed.

@@ -20,7 +20,39 @@ $BASE_URL    = 'https://libasulanwar.com/report/';
 $MAX_UPLOAD  = 20 * 1024 * 1024; // 20 MB
 $ALLOWED_EXT = ['jpg','jpeg','png','gif','webp','pdf','doc','docx','xls','xlsx','csv','zip'];
 
-$base   = __DIR__ . '/_review';
+/**
+ * Where review data lives.
+ *
+ * NEVER inside the web root: this host ignores .htaccess deny rules, so a
+ * _review/comments.json under public/ was fetchable by anyone who guessed the
+ * URL — and it holds reviewer email addresses. Storage therefore sits in the
+ * framework's storage/ directory, which no web request can reach.
+ */
+function locate_review_dir() {
+    // Passed explicitly when invoked through the Laravel route.
+    if (!empty($GLOBALS['REPORT_REVIEW_DIR'])) {
+        return $GLOBALS['REPORT_REVIEW_DIR'];
+    }
+    // Otherwise find the Laravel root (it holds artisan), including the case
+    // where it is a SIBLING of the document root, as on this host.
+    $dir = __DIR__;
+    for ($i = 0; $i < 4; $i++) {
+        $dir = dirname($dir);
+        if ($dir === '' || $dir === DIRECTORY_SEPARATOR) break;
+        if (is_file($dir . '/artisan')) {
+            return $dir . '/storage/app/report-review';
+        }
+        foreach (glob($dir . '/*', GLOB_ONLYDIR) ?: [] as $sibling) {
+            if (is_file($sibling . '/artisan')) {
+                return $sibling . '/storage/app/report-review';
+            }
+        }
+    }
+    // Plain static hosting with no framework: keep it beside the script.
+    return __DIR__ . '/_review';
+}
+
+$base   = locate_review_dir();
 $updir  = $base . '/uploads';
 
 function ensure_storage($base, $updir) {
@@ -172,7 +204,9 @@ if (!empty($_FILES['file']['name']) && ($_FILES['file']['error'] ?? UPLOAD_ERR_N
         echo json_encode(['ok' => false, 'error' => 'Could not store the file. Try again.']);
         exit;
     }
-    $fileUrl  = '_review/uploads/' . $unique;
+    // Served through the gated Laravel route, since the file now lives outside
+    // the web root. Relative to /report/, this resolves to /report/attachment/…
+    $fileUrl  = 'attachment/' . $unique;
     $fileName = clean_text($orig, 140);
 }
 
