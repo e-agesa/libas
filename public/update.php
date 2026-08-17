@@ -47,14 +47,35 @@ function say($msg, $class = 'info') {
 echo '<h2>[1/6] Locate the installation</h2>';
 
 $publicDir = __DIR__;
-
-// The Laravel project root is wherever artisan lives: normally one level above
-// the document root on cPanel, but tolerate the script sitting in the root too.
 $projectRoot = null;
-foreach ([dirname($publicDir), $publicDir, dirname(dirname($publicDir))] as $candidate) {
-    if (is_file($candidate . '/artisan') && is_dir($candidate . '/app')) {
-        $projectRoot = $candidate;
-        break;
+
+// Most reliable source of truth: the live index.php states where the framework
+// lives. On this host the app root is a SIBLING of the document root
+// (public_html/index.php requires ../libas/vendor/autoload.php), so guessing
+// "one level up" would be wrong.
+$indexFile = $publicDir . '/index.php';
+if (is_file($indexFile)) {
+    $indexSrc = (string) file_get_contents($indexFile);
+    if (preg_match('#__DIR__\s*\.\s*[\'"]([^\'"]*?)/vendor/autoload\.php[\'"]#', $indexSrc, $m)) {
+        $candidate = realpath($publicDir . $m[1]);
+        if ($candidate && is_file($candidate . '/artisan') && is_dir($candidate . '/app')) {
+            $projectRoot = $candidate;
+            say('Detected app root from index.php: ' . $m[1], 'ok');
+        }
+    }
+}
+
+// Fallbacks: the conventional layouts.
+if (!$projectRoot) {
+    $candidates = [dirname($publicDir), $publicDir, dirname(dirname($publicDir))];
+    foreach (glob(dirname($publicDir) . '/*', GLOB_ONLYDIR) ?: [] as $sibling) {
+        $candidates[] = $sibling; // e.g. ~/libas next to ~/public_html
+    }
+    foreach ($candidates as $candidate) {
+        if ($candidate && is_file($candidate . '/artisan') && is_dir($candidate . '/app')) {
+            $projectRoot = $candidate;
+            break;
+        }
     }
 }
 
@@ -153,8 +174,10 @@ echo '<h2>[4/6] Update application files</h2>';
 $copied = 0;
 $skipped = [];
 
-// Everything that makes up the app. .env, storage/ and vendor/ are deliberately absent.
-$rootPaths = ['app', 'bootstrap', 'config', 'database', 'resources', 'routes', 'composer.json', 'composer.lock', 'artisan'];
+// Deliberately surgical: only the directories this release actually changes.
+// config/, composer.*, artisan and vendor/ are left alone — dependencies have
+// not changed, so replacing them could only ever break a working server.
+$rootPaths = ['app', 'bootstrap', 'database', 'resources', 'routes'];
 
 foreach ($rootPaths as $rel) {
     $from = $src . '/' . $rel;
@@ -169,8 +192,15 @@ $fromPublic = $src . '/public';
 if (is_dir($fromPublic)) {
     foreach (scandir($fromPublic) as $entry) {
         if ($entry === '.' || $entry === '..') continue;
-        // never ship the deploy helpers, and never clobber live review data
-        if (in_array($entry, ['update.php', 'bootstrap-deploy.php', 'deploy.php', 'setup.php', 'test-deploy.php', 'test.php', 'fix-env.php', 'fix-vendor.php'], true)) {
+        // Never ship the deploy helpers. Also never touch the live server's
+        // entry point or rewrite rules — they are host-specific and working,
+        // and nothing in this release changes them.
+        $keepServerCopy = [
+            'index.php', '.htaccess', 'favicon.ico', 'robots.txt',
+            'update.php', 'bootstrap-deploy.php', 'deploy.php', 'setup.php',
+            'test-deploy.php', 'test.php', 'fix-env.php', 'fix-vendor.php',
+        ];
+        if (in_array($entry, $keepServerCopy, true)) {
             continue;
         }
         $copied += copy_path($fromPublic . '/' . $entry, $publicTarget . '/' . $entry, ['_review']);
