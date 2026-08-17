@@ -261,14 +261,46 @@
     });
   }
 
+  // Primary endpoint is the Laravel route (always served here); the static
+  // report-content.php is the fallback for plain static hosting.
+  var ENDPOINTS = ['/report/unlock', 'report-content.php'];
+  // Same idea for the review thread: Laravel route first, static script second.
+  var REVIEW_API = '/report/review-api';
+  var REVIEW_FALLBACK = 'review.php';
+
+  function reviewPost(body) {
+    return fetch(REVIEW_API, { method: 'POST', body: body })
+      .then(function (r) {
+        if (r.status === 404 || r.status === 405) throw new Error('unavailable');
+        return r.json();
+      })
+      .catch(function () {
+        return fetch(REVIEW_FALLBACK, { method: 'POST', body: body }).then(function (r) { return r.json(); });
+      });
+  }
+
+  function post(url, pw) {
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+      body: 'pw=' + encodeURIComponent(pw)
+    }).then(function (r) {
+      // 404/405 => this endpoint isn't available here; try the next one.
+      if (r.status === 404 || r.status === 405) return { __unavailable: true };
+      return r.json().catch(function () { return { __unavailable: true }; });
+    }).catch(function () { return { __unavailable: true }; });
+  }
+
   function unlock(pw, silent) {
     btn.disabled = true; errEl.textContent = '';
-    fetch('report-content.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'pw=' + encodeURIComponent(pw)
-    }).then(function (r) { return r.json().catch(function () { return { ok: false, error: 'Unexpected response.' }; }); })
+    post(ENDPOINTS[0], pw)
+      .then(function (d) { return d && !d.__unavailable ? d : post(ENDPOINTS[1], pw); })
       .then(function (d) {
+        if (!d || d.__unavailable) {
+          btn.disabled = false;
+          if (!silent) errEl.textContent = 'Could not reach the server. Try again.';
+          return;
+        }
         btn.disabled = false;
         if (!d.ok) {
           try { sessionStorage.removeItem(KEY); } catch (e) {}
@@ -307,8 +339,7 @@
       var msg = document.getElementById('cmsg');
       var fd = new FormData(cf);
       msg.className = 'fmsg'; msg.textContent = 'Sending…';
-      fetch('review.php', { method: 'POST', body: fd })
-        .then(function (r) { return r.json(); })
+      reviewPost(fd)
         .then(function (d) {
           if (d.ok) { msg.className = 'fmsg ok'; msg.textContent = 'Thank you — your comment is posted.'; cf.reset(); loadReview(); }
           else { msg.className = 'fmsg err'; msg.textContent = d.error || 'Could not post the comment.'; }
@@ -327,8 +358,7 @@
       var fd = new FormData(sf);
       fd.append('type', 'signoff');
       msg.className = 'fmsg'; msg.textContent = 'Recording…';
-      fetch('review.php', { method: 'POST', body: fd })
-        .then(function (r) { return r.json(); })
+      reviewPost(fd)
         .then(function (d) {
           if (d.ok) { msg.className = 'fmsg ok'; msg.textContent = 'Sign-off recorded — thank you.'; sf.reset(); loadReview(); }
           else { msg.className = 'fmsg err'; msg.textContent = d.error || 'Could not record the sign-off.'; }
@@ -341,8 +371,9 @@
     var list = document.getElementById('clist');
     var sstate = document.getElementById('sstate');
     if (!list) return;
-    fetch('review.php?action=list')
-      .then(function (r) { return r.json(); })
+    fetch(REVIEW_API + '?action=list')
+      .then(function (r) { if (r.status === 404 || r.status === 405) throw new Error('unavailable'); return r.json(); })
+      .catch(function () { return fetch(REVIEW_FALLBACK + '?action=list').then(function (r) { return r.json(); }); })
       .then(function (d) {
         if (!d.ok) return;
         if (!d.comments.length) {

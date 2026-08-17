@@ -1,7 +1,14 @@
 <?php
 /**
- * Password-gated report body for the Libas ul Anwar issue-resolution report.
- * Returns the report HTML only after the password checks out.
+ * Password-gated report body (static-hosting endpoint).
+ *
+ * The page's primary unlock path is the Laravel route POST /report/unlock,
+ * which is immune to this host's stale-static-snapshot quirk. This file is the
+ * fallback for plain static hosting and keeps the report portable.
+ *
+ * The body itself lives OUTSIDE the web root (resources/reports/) so it can
+ * never be fetched directly, whatever the server config.
+ *
  * A plain GET or a wrong password returns 403 with no content.
  */
 
@@ -17,238 +24,11 @@ if (!is_string($pw) || !hash_equals($PW, $pw)) {
     exit;
 }
 
-$html = <<<'REPORTBODY'
-<button class="printbtn no-print" id="printbtn" type="button">🖨 Print / PDF</button>
+$bodyFile = __DIR__ . '/../../resources/reports/review-response.html';
+if (!is_file($bodyFile)) {
+    http_response_code(500);
+    echo json_encode(['ok' => false, 'error' => 'Report body is missing on the server.']);
+    exit;
+}
 
-<header class="band">
-  <div class="wrap">
-    <div class="brandrow">
-      <div class="wordmark">LIBAS<span>UL ANWAR</span></div>
-      <div class="kicker">Issue Resolution Report</div>
-    </div>
-    <h1>Your review, answered — all three issues resolved</h1>
-    <p class="sub">On 16 August 2026 we received your <b>System Issue Finding &amp; Resolution Report</b> for the POS / Invoicing portal's custom garment workflow. This document answers it point by point: what you reported, what we changed the same day, and how each screen behaves now.</p>
-    <div class="meta">
-      <div><span class="k">Prepared</span><span class="v">16 August 2026 — same-day response</span></div>
-      <div><span class="k">Responding to</span><span class="v">Client review · 3 findings (2 high, 1 medium)</span></div>
-      <div><span class="k">System</span><span class="v">libasulanwar.com</span></div>
-      <div><span class="k">Overall status</span><span class="v" style="color:var(--band-gold)">3 of 3 resolved — ready to deploy</span></div>
-    </div>
-  </div>
-</header>
-
-<div class="wrap">
-  <div class="summary">
-    <div class="eyebrow">Executive summary</div>
-    <p class="lede">All three findings in your review are <b>resolved and verified</b>. Staff can now add a new person, capture a full set of measurements, and select any active fabric — including <b>Ridhaa</b> — without ever leaving the invoice they are working on. The dead ends your testers hit no longer exist.</p>
-    <p>Each fix has been verified end-to-end: a production build of the interface, automated checks on the new save paths, and the screenshots below taken from the running system. <b>Two small confirmations sit with you, not with development:</b> the price of the Ridhaa fabric (a placeholder of KES 1,200/unit is in place), and whether "Ridhaa" should also exist as a <i>garment type</i> with its own measurement fields. Neither blocks anything.</p>
-  </div>
-
-  <div class="metrics">
-    <div class="metric"><div class="n">3 / 3</div><div class="l">Findings resolved</div></div>
-    <div class="metric"><div class="n">2</div><div class="l">New quick-add flows</div></div>
-    <div class="metric"><div class="n">9</div><div class="l">Active fabrics (incl. Ridhaa)</div></div>
-    <div class="metric"><div class="n">0</div><div class="l">Outstanding blockers</div></div>
-  </div>
-
-  <section class="block">
-    <div class="h-lead"><span class="eyebrow">Answering the review</span><span class="pill ok"><span class="dot"></span>All resolved</span></div>
-    <h2>The three findings, point by point</h2>
-
-    <div class="finding">
-      <div class="fhead">
-        <span class="num">ISSUE 1</span>
-        <h3>Inability to add or select a person</h3>
-        <span class="pill stop"><span class="dot"></span>You rated: High</span>
-        <span class="pill ok"><span class="dot"></span>Resolved</span>
-      </div>
-      <blockquote><span class="q">You reported</span>"The Person field operates as a restricted dropdown without an in-line option or modal trigger to create/add a new person profile on the fly… Add an inline '+ Add New Person' button/option directly inside or beside the dropdown and implement a quick modal overlay."</blockquote>
-      <ul class="clean">
-        <li><b>Delivered exactly as requested — in both placements.</b> An <b>"Add New Person"</b> action now sits beside the Person field, and a <b>"＋ Add new person…"</b> entry sits inside the dropdown itself.</li>
-        <li><b>A quick modal overlay</b> captures the person's name, relationship, phone, gender and age group, and saves them under the invoice's client — the invoice in progress is untouched; nothing already entered is lost.</li>
-        <li><b>The new person is selected automatically</b> on that line item the moment they are saved, so work continues without a single extra click.</li>
-      </ul>
-      <p class="now"><b>How it behaves now:</b> an invoice for a family of five who have never been recorded can be raised in one sitting — each person added inline as their garment line is created.</p>
-    </div>
-
-    <div class="finding">
-      <div class="fhead">
-        <span class="num">ISSUE 2</span>
-        <h3>Fabric selection missing 'Ridhaa'</h3>
-        <span class="pill warn"><span class="dot"></span>You rated: Medium</span>
-        <span class="pill ok"><span class="dot"></span>Resolved</span>
-      </div>
-      <blockquote><span class="q">You reported</span>"The Fabric dropdown defaults to 'No fabric' or fails to populate/display required fabric categories, specifically missing the 'Ridhaa' option requested by the client… ensure 'Ridhaa' and all active materials dynamically sync from the Fabrics management module."</blockquote>
-      <ul class="clean">
-        <li><b>'Ridhaa' now exists in the fabric master catalogue</b> as an active material and appears in the invoice fabric dropdown alongside the other eight fabrics. It ships to the live system as a safe, one-time database update.</li>
-        <li><b>The fabric list now re-syncs from the Fabrics module every time the Items step opens</b> — a fabric added by a manager appears in the invoice screen immediately, with no page refresh and no re-deployment. This is the "dynamic sync" your review asked for.</li>
-        <li><b>Selecting a fabric still auto-fills its cost</b> from the price per unit held in the Fabrics module, so pricing stays consistent between inventory and invoicing.</li>
-      </ul>
-      <p class="now"><b>One input needed from you:</b> Ridhaa is priced at a placeholder <b>KES 1,200 per unit</b>. Confirm the real price and it is a one-minute edit in the Fabrics module — no developer needed.</p>
-    </div>
-
-    <div class="finding">
-      <div class="fhead">
-        <span class="num">ISSUE 3</span>
-        <h3>Measurement selection / assignment not working</h3>
-        <span class="pill stop"><span class="dot"></span>You rated: High</span>
-        <span class="pill ok"><span class="dot"></span>Resolved</span>
-      </div>
-      <blockquote><span class="q">You reported</span>"The Measurement selector remains set to 'None' and fails to load existing measurement profiles or allow direct measurement entry… Fix conditional linking so selecting a Person populates their saved measurement profiles, and add an inline '+ Add/Edit Measurements' modal trigger."</blockquote>
-      <ul class="clean">
-        <li><b>Root cause found and fixed.</b> Two gaps produced the behaviour your testers saw: a person with no saved measurements offered no way to create one from the invoice, and switching persons silently kept the previous person's measurement on the line. Both are corrected — changing the person now clears the stale selection, and the selector stays disabled until a person is chosen.</li>
-        <li><b>The inline "+ Add Measurement" trigger is in</b> — beside the selector and inside the dropdown. It opens a full measurement modal: garment type, label/occasion, date, a <b>cm ⇄ inches</b> toggle that converts values already typed, and the exact measurement fields configured per garment type in Settings (shoulder, chest, kanzu length, and so on).</li>
-        <li><b>The saved measurement links to the invoice line instantly</b>, so the tailor receives accurate garment dimensions attached directly to the order — the outcome your review asked for.</li>
-        <li><b>A clear amber hint</b> now appears when the selected person has no measurements yet, pointing staff to "Add Measurement" instead of leaving a silent "None".</li>
-      </ul>
-      <p class="now"><b>How it behaves now:</b> select a person → their saved profiles load by name and garment type; none on file → capture one in the modal without leaving the invoice; it attaches to the line the moment it is saved.</p>
-    </div>
-  </section>
-
-  <section class="block">
-    <span class="eyebrow">Evidence — the fixes on screen</span>
-    <h2 style="margin-top:12px">Taken from the running system</h2>
-    <p class="muted" style="margin-top:12px">The same screens your review photographed, after the fixes. (Development environment; identical build ships to the live server.)</p>
-    <div class="shots">
-      <figure class="shot" style="margin:0">
-        <div class="bar"><i></i><i></i><i></i></div>
-        <img src="shot-1.png" alt="Invoice Items step with Add New Person and Add Measurement actions" loading="lazy">
-        <figcaption><b>Fig 1 — The Items step now.</b> "Add New Person" and "Add Measurement" actions sit on the exact fields your review flagged as dead ends.</figcaption>
-      </figure>
-      <figure class="shot" style="margin:0">
-        <div class="bar"><i></i><i></i><i></i></div>
-        <img src="shot-3.png" alt="Quick Add New Person modal over the invoice" loading="lazy">
-        <figcaption><b>Fig 2 — Person quick-add (Issue 1).</b> The modal overlay requested in the review — the invoice behind it stays intact.</figcaption>
-      </figure>
-      <figure class="shot" style="margin:0">
-        <div class="bar"><i></i><i></i><i></i></div>
-        <img src="shot-4.png" alt="New Measurement modal with per-garment fields and cm/in toggle" loading="lazy">
-        <figcaption><b>Fig 3 — Measurement capture (Issue 3).</b> Garment-specific fields (Kanzu shown), cm ⇄ inches toggle, saved straight onto the invoice line.</figcaption>
-      </figure>
-      <figure class="shot" style="margin:0">
-        <div class="bar"><i></i><i></i><i></i></div>
-        <img src="shot-2.png" alt="Fabrics module listing including Ridhaa" loading="lazy">
-        <figcaption><b>Fig 4 — Ridhaa live (Issue 2).</b> The Fabrics &amp; Materials catalogue with Ridhaa active among nine fabrics — the same list the invoice now syncs from.</figcaption>
-      </figure>
-    </div>
-  </section>
-
-  <section class="block">
-    <span class="eyebrow">How the fixes are built</span>
-    <h2 style="margin-top:12px">Same system, no new moving parts</h2>
-    <div class="grid2" style="margin-top:18px">
-      <div class="card">
-        <h3>One source of truth</h3>
-        <p class="muted" style="font-size:.94rem">A person or measurement added from the invoice is saved through the same validated path as the Clients module — so it appears everywhere: the client's file, the contact's profile, and future invoices. Nothing is duplicated.</p>
-      </div>
-      <div class="card">
-        <h3>Nothing new to maintain</h3>
-        <p class="muted" style="font-size:.94rem">The quick-add windows are part of the existing screens, not a separate system. Staff learn two small buttons; there is no new module, login or process to manage.</p>
-      </div>
-    </div>
-    <ul class="clean">
-      <li><b>The invoice never loses state</b> — quick-adds save in the background; a half-built four-step invoice survives every one of them.</li>
-      <li><b>Fabric data stays live</b> — the invoice screen reads the Fabrics module afresh each time the Items step opens.</li>
-      <li><b>Ridhaa arrives as a safe data update</b> — added automatically during deployment, skipped if it already exists, and never touching existing records.</li>
-    </ul>
-  </section>
-
-  <section class="block">
-    <span class="eyebrow">Work completed</span>
-    <h2 style="margin-top:12px">From your review to this report — one day</h2>
-    <div class="timeline">
-      <div class="phase"><div class="idx">01</div><div><h3>Findings reproduced</h3><p>Each of the three issues reproduced on the system exactly as your testers described them.</p></div></div>
-      <div class="phase"><div class="idx">02</div><div><h3>Person quick-add built</h3><p>Inline "Add New Person" (beside and inside the dropdown) with the quick modal overlay, auto-selecting the new person.</p></div></div>
-      <div class="phase"><div class="idx">03</div><div><h3>Measurement flow fixed &amp; extended</h3><p>Stale-selection bug corrected; inline measurement capture with per-garment fields and unit conversion added.</p></div></div>
-      <div class="phase"><div class="idx">04</div><div><h3>Ridhaa &amp; live fabric sync</h3><p>Ridhaa added to the fabric master; the invoice fabric list now re-syncs from the Fabrics module on every visit to the Items step.</p></div></div>
-      <div class="phase"><div class="idx">05</div><div><h3>Verification</h3><p>Production interface build, automated checks on both new save paths, database checks, and the screenshots above taken from the running system.</p></div></div>
-      <div class="phase"><div class="idx">06</div><div><h3>This report &amp; deployment package</h3><p>Fixes packaged for the live server, with the Ridhaa data update applied automatically on deployment.</p></div></div>
-    </div>
-  </section>
-
-  <section class="block">
-    <span class="eyebrow">Outstanding items</span>
-    <h2 style="margin-top:12px">What still needs a decision or input</h2>
-    <p class="muted" style="margin-top:12px">Nothing here blocks the fixes — two items are quick confirmations that sit with you.</p>
-    <div class="tablewrap">
-      <table>
-        <thead><tr><th>Item</th><th>Status</th><th>Owner</th></tr></thead>
-        <tbody>
-          <tr>
-            <td><div class="item">Deploy this release to the live system</div><div class="why">The fixes are verified and packaged. They go live on the next deployment to libasulanwar.com — same day as your go-ahead.</div></td>
-            <td><span class="pill warn"><span class="dot"></span>Action needed</span></td>
-            <td><div class="owner">Twinfusion — on your go-ahead</div></td>
-          </tr>
-          <tr>
-            <td><div class="item">Confirm the Ridhaa price per unit</div><div class="why">Currently a placeholder of KES 1,200. Once confirmed it is a one-minute edit in the Fabrics module.</div></td>
-            <td><span class="pill warn"><span class="dot"></span>Minor</span></td>
-            <td><div class="owner">Client</div></td>
-          </tr>
-          <tr>
-            <td><div class="item">Is "Ridhaa" also a garment type?</div><div class="why">Your review asked for Ridhaa as a fabric, which is done. If tailors also cut the ridhaa as a garment, it should additionally exist under Settings → Garment Types with its own measurement fields — tell us and we add it the same day.</div></td>
-            <td><span class="pill warn"><span class="dot"></span>Decision</span></td>
-            <td><div class="owner">Client</div></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="block">
-    <span class="eyebrow">Recommended next steps</span>
-    <h2 style="margin-top:12px">To close this review out</h2>
-    <ul class="clean">
-      <li><b>1. Give the go-ahead to deploy</b> — a comment below is enough. The fixes and the Ridhaa update go live together.</li>
-      <li><b>2. Confirm the Ridhaa unit price</b> (and whether it is also needed as a garment type).</li>
-      <li><b>3. Re-run your original test</b> — the same three scenarios from your review, on the live system. We are happy to be on the call.</li>
-      <li><b>4. Sign off below</b> once you are satisfied each finding is closed.</li>
-    </ul>
-  </section>
-
-  <section class="block no-print">
-    <span class="eyebrow">Comments</span>
-    <h2 style="margin-top:12px">Respond to this report</h2>
-    <p class="muted" style="margin-top:12px">Questions, corrections, the Ridhaa price, or anything we missed — post it here. You can attach a file (photo, document, price list). We are notified immediately.</p>
-    <div class="cwrap" id="clist"><p class="muted" style="font-size:.9rem">Loading comments…</p></div>
-    <form class="formcard" id="cform">
-      <div class="frow">
-        <div><label for="c_name">Your name *</label><input type="text" id="c_name" name="name" required maxlength="120"></div>
-        <div><label for="c_email">Your email *</label><input type="email" id="c_email" name="email" required maxlength="190"></div>
-      </div>
-      <div class="fitem"><label for="c_text">Comment *</label><textarea id="c_text" name="text" required maxlength="4000" placeholder="e.g. Ridhaa is KES 1,450 per unit — please update."></textarea></div>
-      <div class="fitem"><label for="c_file">Attach a file (optional)</label><input type="file" id="c_file" name="file"></div>
-      <div class="actions">
-        <button class="btn" type="submit">Post comment</button>
-        <span class="fmsg" id="cmsg"></span>
-      </div>
-      <p class="fnote" style="margin-top:10px">Your email is used for notifications only and is never shown publicly.</p>
-    </form>
-  </section>
-
-  <section class="block no-print">
-    <span class="eyebrow">Client sign-off</span>
-    <h2 style="margin-top:12px">Formal approval</h2>
-    <p class="muted" style="margin-top:12px">Once you have reviewed the resolutions above — ideally after re-testing on the live system — record your approval here.</p>
-    <div id="sstate"></div>
-    <form class="formcard" id="sform">
-      <div class="frow">
-        <div><label for="s_name">Full name *</label><input type="text" id="s_name" name="name" required maxlength="120"></div>
-        <div><label for="s_email">Email *</label><input type="email" id="s_email" name="email" required maxlength="190"></div>
-      </div>
-      <div class="fitem"><label for="s_role">Role / company (optional)</label><input type="text" id="s_role" name="role" maxlength="120" placeholder="e.g. Proprietor, Libas ul Anwar"></div>
-      <div class="chk"><input type="checkbox" id="sconfirm" name="sconfirm"><label for="sconfirm" style="text-transform:none;letter-spacing:0;font-weight:500;font-size:.88rem">I confirm the three issues raised in the review of 16 August 2026 have been resolved to my satisfaction.</label></div>
-      <div class="actions">
-        <button class="btn" type="submit">Sign off this report</button>
-        <span class="fmsg" id="smsg"></span>
-      </div>
-    </form>
-  </section>
-</div>
-
-<footer class="wrap">
-  <span>© 2026 Libas ul Anwar — POS &amp; Invoicing Issue Resolution · Powered by <a href="https://twinfusion.org" target="_blank" rel="noopener">Twinfusion</a></span>
-  <span>Issue resolution report · 16 August 2026</span>
-</footer>
-REPORTBODY;
-
-echo json_encode(['ok' => true, 'html' => $html]);
+echo json_encode(['ok' => true, 'html' => file_get_contents($bodyFile)]);

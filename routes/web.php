@@ -48,9 +48,41 @@ Route::get('/build/{path}', function (string $path) {
     ]);
 })->where('path', '[A-Za-z0-9_\-./]+');
 
-// Same LiteSpeed-stale-snapshot fallback for the private client report's static
-// assets (public/report). PHP files are deliberately excluded — they must be
-// executed by the server, never streamed as source.
+// ---- Private client report ----
+// The two API routes must be declared BEFORE the static-file wildcard below,
+// or GET /report/review-api is swallowed by it and 404s.
+
+// Primary unlock endpoint. Routed through Laravel (rather than the static
+// report-content.php) because index.php is always served here, while
+// newly-uploaded static files can 404 behind the stale CageFS mount.
+// The report body lives outside the web root so it can never be fetched directly.
+Route::post('/report/unlock', function (\Illuminate\Http\Request $request) {
+    $password = 'libas2026'; // shared with the client separately
+
+    if (!hash_equals($password, (string) $request->input('pw'))) {
+        return response()->json(['ok' => false, 'error' => 'Incorrect password.'], 403)
+            ->header('X-Robots-Tag', 'noindex, nofollow');
+    }
+
+    $bodyFile = resource_path('reports/review-response.html');
+    abort_unless(is_file($bodyFile), 500, 'Report body missing.');
+
+    return response()->json(['ok' => true, 'html' => file_get_contents($bodyFile)])
+        ->header('X-Robots-Tag', 'noindex, nofollow');
+});
+
+// Same reasoning for the report's comment / sign-off endpoint: delegate to the
+// standalone script so there is one implementation, reachable even when the
+// static layer will not serve the .php file directly.
+Route::match(['get', 'post'], '/report/review-api', function () {
+    $script = public_path('report/review.php');
+    abort_unless(is_file($script), 404);
+    require $script;
+    exit;
+});
+
+// Static assets for the report (images, the shell HTML). PHP files are
+// deliberately excluded — they must be executed by the server, never streamed.
 Route::get('/report/{path}', function (string $path) {
     $base = realpath(public_path('report'));
     $full = realpath(public_path('report/' . $path));

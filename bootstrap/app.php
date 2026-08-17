@@ -16,6 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        // The private client report is a static page with no session/CSRF token;
+        // its unlock endpoint is guarded by the report password instead.
+        $middleware->validateCsrfTokens(except: [
+            'report/unlock',
+            'report/review-api',
+        ]);
+
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
