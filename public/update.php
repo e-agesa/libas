@@ -216,7 +216,17 @@ foreach ($rootPaths as $rel) {
     say("updated  {$rel}");
 }
 
-// public/ contents go to the document root (public_html), preserving _review data.
+// public/ contents go to the document root (public_html) so the browser can
+// fetch them, AND to the app's own public/ directory when that is a separate
+// folder — Laravel's public_path() reads the Vite manifest from there, so
+// updating only the document root leaves the site serving the previous bundle.
+$publicTargets = [$publicTarget];
+$appPublic = $projectRoot . '/public';
+if (is_dir($appPublic) && realpath($appPublic) !== realpath($publicTarget)) {
+    $publicTargets[] = $appPublic;
+    say('Second public dir detected (Laravel public_path): ' . $appPublic, 'warn');
+}
+
 $fromPublic = $src . '/public';
 if (is_dir($fromPublic)) {
     foreach (scandir($fromPublic) as $entry) {
@@ -226,14 +236,17 @@ if (is_dir($fromPublic)) {
         // and nothing in this release changes them.
         $keepServerCopy = [
             'index.php', '.htaccess', 'favicon.ico', 'robots.txt',
+            'storage', // symlink to storage/app/public — never replace
             'update.php', 'bootstrap-deploy.php', 'deploy.php', 'setup.php',
             'test-deploy.php', 'test.php', 'fix-env.php', 'fix-vendor.php',
         ];
         if (in_array($entry, $keepServerCopy, true)) {
             continue;
         }
-        $copied += copy_path($fromPublic . '/' . $entry, $publicTarget . '/' . $entry, ['_review']);
-        say("updated  public/{$entry}");
+        foreach ($publicTargets as $dest) {
+            $copied += copy_path($fromPublic . '/' . $entry, $dest . '/' . $entry, ['_review', 'storage']);
+        }
+        say("updated  public/{$entry}" . (count($publicTargets) > 1 ? ' (both public dirs)' : ''));
     }
 }
 
@@ -302,9 +315,18 @@ if (!$artisanRan) {
 /* ---------- 6. Verify ---------- */
 echo '<h2>[6/6] Verify</h2>';
 
+// The manifest Laravel actually reads is the one under its own public_path();
+// checking only the document root would report success while the site still
+// served the previous bundle.
+$laravelManifest = end($publicTargets) . '/build/manifest.json';
+$servedManifest  = $publicTarget . '/build/manifest.json';
+$manifestsAgree  = is_file($laravelManifest) && is_file($servedManifest)
+    && md5_file($laravelManifest) === md5_file($servedManifest);
+
 $checks = [
-    'Invoice fix (new interface bundle)' => is_file($publicTarget . '/build/manifest.json')
-        && strpos((string) file_get_contents($publicTarget . '/build/manifest.json'), 'Create-') !== false,
+    'Interface bundle updated (served copy)' => is_file($servedManifest)
+        && strpos((string) file_get_contents($servedManifest), 'Create-') !== false,
+    'Manifest Laravel reads is in sync'      => $manifestsAgree,
     'Client report page'                 => is_file($publicTarget . '/report/status-report.html'),
     'Report body (outside web root)'     => is_file($projectRoot . '/resources/reports/review-response.html'),
     'Ridhaa data migration present'      => is_file($projectRoot . '/database/migrations/2026_08_16_000001_seed_ridhaa_fabric.php'),
