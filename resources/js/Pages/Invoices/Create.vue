@@ -147,11 +147,27 @@ function syncCatalogs() {
 }
 
 function selectClient(client) {
+    const switched = selectedClient.value && selectedClient.value.id !== client.id;
+
     selectedClient.value = client;
     form.client_id = client.id;
-    // Set first contact as default in first line item
-    if (client.contacts?.length && form.line_items[0]) {
-        form.line_items[0].contact_id = client.contacts[0].id;
+
+    // Switching client invalidates every person and measurement already picked:
+    // they belong to the previous client's file, and leaving them would put
+    // someone else's family member (and their measurements) on this invoice.
+    if (switched) {
+        form.line_items.forEach((item) => {
+            if (item.item_type !== 'collection') {
+                item.contact_id = '';
+                item.measurement_id = null;
+            }
+        });
+    }
+
+    // Convenience default: first person of the new client on the first custom line.
+    const first = form.line_items[0];
+    if (client.contacts?.length && first && first.item_type !== 'collection' && !first.contact_id) {
+        first.contact_id = client.contacts[0].id;
     }
 }
 

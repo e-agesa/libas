@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\Collection;
 use App\Models\CompanySetting;
+use App\Models\Contact;
 use App\Models\Fabric;
 use App\Models\Invoice;
+use App\Models\Measurement;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class InvoiceController extends Controller
@@ -96,6 +99,12 @@ class InvoiceController extends Controller
             'line_items.*.fabric_cost' => 'nullable|numeric|min:0',
         ]);
 
+        // A line item may only reference people — and their measurements —
+        // belonging to this invoice's own client. Without this, a stale
+        // selection (or a crafted request) could attach another client's
+        // family member and their measurements to the invoice.
+        $this->assertLineItemsBelongToClient($validated);
+
         // Calculate subtotal from line items
         $subtotal = 0;
         foreach ($validated['line_items'] as &$item) {
@@ -159,7 +168,9 @@ class InvoiceController extends Controller
                 'invoice_number' => $docNumber,
                 'type' => $type,
                 'date' => $validated['date'],
-                'due_date' => $validated['due_date'],
+                // These are all nullable, so the key is simply absent when the
+                // caller omits it — reading it directly would throw.
+                'due_date' => $validated['due_date'] ?? null,
                 'status' => $status,
                 'subtotal' => $subtotal,
                 'discount' => $discountAmount,
@@ -168,8 +179,8 @@ class InvoiceController extends Controller
                 'total' => $total,
                 'amount_paid' => $initialPayment,
                 'balance' => $balance,
-                'payment_method' => $validated['payment_method'],
-                'notes' => $validated['notes'],
+                'payment_method' => $validated['payment_method'] ?? null,
+                'notes' => $validated['notes'] ?? null,
             ]);
 
             // Create line items and deduct collection stock
@@ -198,6 +209,40 @@ class InvoiceController extends Controller
 
         return redirect()->route('invoices.show', $invoice)
             ->with('success', 'Invoice created successfully.');
+    }
+
+    /**
+     * Guard cross-client leakage: every contact_id on a line item must belong
+     * to the invoice's client, and every measurement_id to that same contact.
+     */
+    protected function assertLineItemsBelongToClient(array $validated): void
+    {
+        $contactIds = Contact::where('client_id', $validated['client_id'])
+            ->pluck('id')
+            ->all();
+
+        foreach ($validated['line_items'] as $i => $item) {
+            $contactId = $item['contact_id'] ?? null;
+            $measurementId = $item['measurement_id'] ?? null;
+
+            if ($contactId && !in_array((int) $contactId, $contactIds, true)) {
+                throw ValidationException::withMessages([
+                    "line_items.{$i}.contact_id" => 'That person does not belong to the selected client.',
+                ]);
+            }
+
+            if ($measurementId) {
+                $belongs = $contactId && Measurement::whereKey($measurementId)
+                    ->where('contact_id', $contactId)
+                    ->exists();
+
+                if (!$belongs) {
+                    throw ValidationException::withMessages([
+                        "line_items.{$i}.measurement_id" => 'That measurement does not belong to the selected person.',
+                    ]);
+                }
+            }
+        }
     }
 
     public function show(Invoice $invoice)

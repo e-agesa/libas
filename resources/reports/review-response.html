@@ -77,11 +77,11 @@
       <blockquote><span class="q">You reported</span>"The Measurement selector remains set to 'None' and fails to load existing measurement profiles or allow direct measurement entry… Fix conditional linking so selecting a Person populates their saved measurement profiles, and add an inline '+ Add/Edit Measurements' modal trigger."</blockquote>
       <ul class="clean">
         <li><b>Root cause found and fixed.</b> Two gaps produced the behaviour your testers saw: a person with no saved measurements offered no way to create one from the invoice, and switching persons silently kept the previous person's measurement on the line. Both are corrected — changing the person now clears the stale selection, and the selector stays disabled until a person is chosen.</li>
-        <li><b>The inline "+ Add Measurement" trigger is in</b> — beside the selector and inside the dropdown. It opens a full measurement modal: garment type, label/occasion, date, a <b>cm ⇄ inches</b> toggle that converts values already typed, and the exact measurement fields configured per garment type in Settings (shoulder, chest, kanzu length, and so on).</li>
+        <li><b>The inline "+ Add/Edit Measurements" trigger is in — both halves.</b> <b>Add</b> opens a blank measurement form; <b>Edit</b> appears the moment a measurement is selected and opens that record pre-filled, so a wrong figure is corrected on the spot instead of abandoning the invoice to go to the person's file. Both sit beside the selector and inside the dropdown, and both offer garment type, label/occasion, date, a <b>cm ⇄ inches</b> toggle that converts values already typed, and the exact measurement fields configured per garment type in Settings (shoulder, chest, kanzu length, and so on).</li>
         <li><b>The saved measurement links to the invoice line instantly</b>, so the tailor receives accurate garment dimensions attached directly to the order — the outcome your review asked for.</li>
         <li><b>A clear amber hint</b> now appears when the selected person has no measurements yet, pointing staff to "Add Measurement" instead of leaving a silent "None".</li>
       </ul>
-      <p class="now"><b>How it behaves now:</b> select a person → their saved profiles load by name and garment type; none on file → capture one in the modal without leaving the invoice; it attaches to the line the moment it is saved.</p>
+      <p class="now"><b>How it behaves now:</b> select a person → their saved profiles load by name and garment type; none on file → capture one in the modal without leaving the invoice; a figure that needs correcting → edit it in place. Either way it attaches to the line the moment it is saved.</p>
     </div>
   </section>
 
