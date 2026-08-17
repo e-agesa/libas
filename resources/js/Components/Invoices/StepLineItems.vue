@@ -8,7 +8,7 @@ const props = defineProps({
     collections: { type: Array, default: () => [] },
 });
 
-const emit = defineEmits(['update:lineItems', 'add-person', 'add-measurement']);
+const emit = defineEmits(['update:lineItems', 'add-person', 'add-measurement', 'edit-measurement']);
 
 function addCustomItem() {
     const updated = [...props.lineItems, {
@@ -94,6 +94,7 @@ function removeItem(index) {
                 @remove="removeItem"
                 @add-person="(index) => emit('add-person', index)"
                 @add-measurement="(index, contactId) => emit('add-measurement', index, contactId)"
+                @edit-measurement="(index, contactId, measurementId) => emit('edit-measurement', index, contactId, measurementId)"
             />
         </div>
 

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import Modal from '@/Components/Modal.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -12,9 +12,14 @@ const props = defineProps({
     show: Boolean,
     contactId: [Number, String],
     contactName: String,
+    // When set, the modal edits this existing measurement instead of creating one.
+    measurementId: { type: [Number, String], default: null },
 });
 
-const emit = defineEmits(['close', 'created']);
+const emit = defineEmits(['close', 'created', 'updated']);
+
+const isEdit = computed(() => !!props.measurementId);
+const loading = ref(false);
 
 const CM_TO_INCHES = 0.393701;
 const INCHES_TO_CM = 2.54;
@@ -35,16 +40,46 @@ const errors = ref({});
 const processing = ref(false);
 const previousUnit = ref('cm');
 
-watch(() => props.show, (val) => {
-    if (val) {
-        form.value = blank();
-        errors.value = {};
-        previousUnit.value = 'cm';
+// Guards the "clear values on garment-type change" watcher while we populate
+// the form from the server — otherwise loading an existing measurement would
+// immediately wipe the values it just loaded.
+const populating = ref(false);
+
+watch(() => props.show, async (val) => {
+    if (!val) return;
+
+    form.value = blank();
+    errors.value = {};
+    previousUnit.value = 'cm';
+
+    if (!isEdit.value) return;
+
+    loading.value = true;
+    populating.value = true;
+    try {
+        const { data } = await window.axios.get(route('measurements.show', props.measurementId));
+        form.value = {
+            garment_type: data.garment_type || '',
+            label: data.label || '',
+            date_taken: (data.date_taken || '').split('T')[0] || new Date().toISOString().split('T')[0],
+            unit: data.unit || 'cm',
+            values: { ...(data.values || {}) },
+            notes: data.notes || '',
+        };
+        previousUnit.value = form.value.unit;
+    } catch (err) {
+        errors.value = { values: ['Could not load this measurement. Close and try again.'] };
+    } finally {
+        loading.value = false;
+        // Let the garment_type watcher fire for this change before re-arming it.
+        await nextTick();
+        populating.value = false;
     }
 });
 
 // Reset entered values when switching garment type (fields differ per type)
 watch(() => form.value.garment_type, () => {
+    if (populating.value) return;
     form.value.values = {};
 });
 
@@ -83,11 +118,14 @@ async function submit() {
     processing.value = true;
     errors.value = {};
     try {
-        const { data } = await window.axios.post(route('measurements.store', props.contactId), {
-            ...form.value,
-            values: cleanValues,
-        });
-        emit('created', data);
+        const payload = { ...form.value, values: cleanValues };
+        if (isEdit.value) {
+            const { data } = await window.axios.put(route('measurements.update', props.measurementId), payload);
+            emit('updated', data);
+        } else {
+            const { data } = await window.axios.post(route('measurements.store', props.contactId), payload);
+            emit('created', data);
+        }
     } catch (err) {
         if (err.response?.status === 422) {
             errors.value = err.response.data.errors || {};
@@ -104,14 +142,19 @@ async function submit() {
     <Modal :show="show" @close="emit('close')" max-width="2xl">
         <form @submit.prevent="submit" class="p-6">
             <div class="flex items-center justify-between mb-1">
-                <h3 class="text-lg font-semibold text-gray-900">New Measurement</h3>
+                <h3 class="text-lg font-semibold text-gray-900">{{ isEdit ? 'Edit Measurement' : 'New Measurement' }}</h3>
                 <UnitToggle v-model="form.unit" />
             </div>
             <p v-if="contactName" class="text-sm text-gray-500 mb-4">
-                For <span class="font-medium text-gray-700">{{ contactName }}</span> — linked to this line item once saved.
+                For <span class="font-medium text-gray-700">{{ contactName }}</span> —
+                {{ isEdit ? 'changes apply everywhere this measurement is used.' : 'linked to this line item once saved.' }}
             </p>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <div v-if="loading" class="py-10 text-center text-sm text-gray-500">
+                <i class="pi pi-spin pi-spinner mr-2"></i> Loading measurement…
+            </div>
+
+            <div v-show="!loading" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                 <div>
                     <InputLabel for="qm_type" value="Garment Type *" />
                     <select id="qm_type" v-model="form.garment_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm" required>
@@ -131,7 +174,7 @@ async function submit() {
                 </div>
             </div>
 
-            <div class="rounded-lg border border-gray-200 p-4 mb-2 bg-gray-50/50">
+            <div v-show="!loading" class="rounded-lg border border-gray-200 p-4 mb-2 bg-gray-50/50">
                 <DynamicGarmentFields
                     v-if="form.garment_type"
                     :garment-type="form.garment_type"
@@ -144,7 +187,7 @@ async function submit() {
             </div>
             <InputError :message="errors.values?.[0]" class="mb-3" />
 
-            <div class="mb-5">
+            <div v-show="!loading" class="mb-5">
                 <InputLabel for="qm_notes" value="Notes" />
                 <textarea id="qm_notes" v-model="form.notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-600 focus:ring-brand-600 text-sm" placeholder="Style preferences, fit notes, etc."></textarea>
                 <InputError :message="errors.notes?.[0]" class="mt-1" />
@@ -154,9 +197,9 @@ async function submit() {
                 <button type="button" @click="emit('close')" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                     Cancel
                 </button>
-                <button type="submit" :disabled="processing || !hasValues" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 transition-colors">
+                <button type="submit" :disabled="processing || loading || !hasValues" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 transition-colors">
                     <i class="pi pi-check text-xs mr-1"></i>
-                    {{ processing ? 'Saving...' : 'Save Measurement' }}
+                    {{ processing ? 'Saving...' : (isEdit ? 'Update Measurement' : 'Save Measurement') }}
                 </button>
             </div>
         </form>

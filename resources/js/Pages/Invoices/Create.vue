@@ -73,6 +73,7 @@ const showPersonModal = ref(false);
 const showMeasurementModal = ref(false);
 const activeItemIndex = ref(null);
 const measurementContact = ref(null);
+const editingMeasurementId = ref(null);
 
 function openAddPerson(index) {
     activeItemIndex.value = index;
@@ -84,7 +85,30 @@ function openAddMeasurement(index, contactId) {
     if (!contact) return;
     activeItemIndex.value = index;
     measurementContact.value = contact;
+    editingMeasurementId.value = null;
     showMeasurementModal.value = true;
+}
+
+function openEditMeasurement(index, contactId, measurementId) {
+    const contact = contacts.value.find(c => c.id === contactId);
+    if (!contact || !measurementId) return;
+    activeItemIndex.value = index;
+    measurementContact.value = contact;
+    editingMeasurementId.value = measurementId;
+    showMeasurementModal.value = true;
+}
+
+function onMeasurementUpdated(measurement) {
+    showMeasurementModal.value = false;
+    editingMeasurementId.value = null;
+
+    // Refresh the cached copy so the dropdown label and garment badge follow
+    // the edit, on every line item that references this measurement.
+    const contact = contacts.value.find(c => c.id === measurement.contact_id);
+    const existing = contact?.measurements?.find(m => m.id === measurement.id);
+    if (existing) {
+        Object.assign(existing, measurement);
+    }
 }
 
 function onPersonCreated(contact) {
@@ -260,6 +284,7 @@ function submit() {
                     :collections="collections"
                     @add-person="openAddPerson"
                     @add-measurement="openAddMeasurement"
+                    @edit-measurement="openEditMeasurement"
                 />
 
                 <StepReview
@@ -331,8 +356,10 @@ function submit() {
             :show="showMeasurementModal"
             :contact-id="measurementContact?.id"
             :contact-name="measurementContact?.name"
-            @close="showMeasurementModal = false"
+            :measurement-id="editingMeasurementId"
+            @close="showMeasurementModal = false; editingMeasurementId = null"
             @created="onMeasurementCreated"
+            @updated="onMeasurementUpdated"
         />
     </AuthenticatedLayout>
 </template>

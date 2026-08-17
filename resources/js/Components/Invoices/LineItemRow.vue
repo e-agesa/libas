@@ -10,7 +10,7 @@ const props = defineProps({
     index: Number,
 });
 
-const emit = defineEmits(['update', 'remove', 'add-person', 'add-measurement']);
+const emit = defineEmits(['update', 'remove', 'add-person', 'add-measurement', 'edit-measurement']);
 
 const isCollection = computed(() => props.item.item_type === 'collection');
 
@@ -69,9 +69,15 @@ function onPersonChange(e) {
 
 function onMeasurementChange(e) {
     const v = e.target.value;
-    if (v === '__new__') {
+    // The two action entries are triggers, not values — restore the real
+    // selection before opening the modal so the dropdown never shows them.
+    if (v === '__new__' || v === '__edit__') {
         e.target.value = props.item.measurement_id != null ? String(props.item.measurement_id) : '';
-        emit('add-measurement', props.index, props.item.contact_id);
+        if (v === '__new__') {
+            emit('add-measurement', props.index, props.item.contact_id);
+        } else {
+            emit('edit-measurement', props.index, props.item.contact_id, props.item.measurement_id);
+        }
         return;
     }
     update('measurement_id', v ? parseInt(v) : null);
@@ -201,16 +207,26 @@ const garmentBadge = computed(() => {
             </div>
 
             <div>
-                <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center justify-between mb-1 gap-2">
                     <label class="text-xs font-medium text-gray-600 block">Measurement</label>
-                    <button
-                        v-if="item.contact_id"
-                        type="button"
-                        @click="emit('add-measurement', index, item.contact_id)"
-                        class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"
-                    >
-                        <i class="pi pi-plus text-[10px]"></i> Add Measurement
-                    </button>
+                    <div v-if="item.contact_id" class="flex items-center gap-2">
+                        <button
+                            v-if="item.measurement_id"
+                            type="button"
+                            @click="emit('edit-measurement', index, item.contact_id, item.measurement_id)"
+                            class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"
+                        >
+                            <i class="pi pi-pencil text-[10px]"></i> Edit
+                        </button>
+                        <span v-if="item.measurement_id" class="text-gray-300 text-xs">|</span>
+                        <button
+                            type="button"
+                            @click="emit('add-measurement', index, item.contact_id)"
+                            class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"
+                        >
+                            <i class="pi pi-plus text-[10px]"></i> Add
+                        </button>
+                    </div>
                 </div>
                 <select
                     :value="item.measurement_id"
@@ -223,6 +239,7 @@ const garmentBadge = computed(() => {
                         {{ getLabel(m.garment_type) }} — {{ m.label || 'Untitled' }}
                     </option>
                     <option v-if="item.contact_id" value="__new__">＋ Add new measurement…</option>
+                    <option v-if="item.measurement_id" value="__edit__">✎ Edit selected measurement…</option>
                 </select>
                 <p v-if="item.contact_id && !contactMeasurements.length" class="text-xs text-amber-600 mt-1">
                     No saved measurements for this person yet — use "Add Measurement".

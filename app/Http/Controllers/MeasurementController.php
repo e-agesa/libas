@@ -47,6 +47,21 @@ class MeasurementController extends Controller
             ->with('success', 'Measurement saved successfully.');
     }
 
+    /**
+     * Full measurement as JSON — used by the invoice wizard's inline
+     * "Edit Measurement" modal, which is only given id/garment_type/label
+     * in its page props and needs the recorded values to pre-fill.
+     */
+    public function show(Measurement $measurement)
+    {
+        return response()->json(
+            $measurement->only([
+                'id', 'contact_id', 'garment_type', 'label',
+                'date_taken', 'unit', 'values', 'notes', 'revision',
+            ])
+        );
+    }
+
     public function update(Request $request, Measurement $measurement)
     {
         $validated = $request->validate([
@@ -60,6 +75,12 @@ class MeasurementController extends Controller
         ]);
 
         $measurement->update($validated);
+
+        // Inline edit from the invoice wizard (axios): return the updated
+        // record so the in-progress invoice is not lost to a redirect.
+        if ($request->wantsJson()) {
+            return response()->json($measurement->fresh());
+        }
 
         return redirect()->route('contacts.show', $measurement->contact_id)
             ->with('success', 'Measurement updated successfully.');

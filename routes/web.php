@@ -157,6 +157,7 @@ Route::middleware('auth')->group(function () {
 
     // Measurements
     Route::post('/contacts/{contact}/measurements', [MeasurementController::class, 'store'])->name('measurements.store');
+    Route::get('/measurements/{measurement}', [MeasurementController::class, 'show'])->name('measurements.show');
     Route::put('/measurements/{measurement}', [MeasurementController::class, 'update'])->name('measurements.update');
     Route::delete('/measurements/{measurement}', [MeasurementController::class, 'destroy'])->name('measurements.destroy');
 
