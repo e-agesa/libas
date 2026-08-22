@@ -152,6 +152,9 @@
                                 <span class="garment-badge garment-{{ $item->measurement->garment_type }}">{{ $item->measurement->garment_type }}</span>
                             @endif
                             @if($item->fabric) {{ $item->fabric->name }} @endif
+                            @if($item->ridhaa_qty > 0 && $item->ridhaa_price > 0)
+                                <br><span style="font-size:9px;">{{ $item->ridhaa_name ?: 'Ridhaa' }} x{{ $item->ridhaa_qty }} @ {{ number_format($item->ridhaa_price, 0) }}</span>
+                            @endif
                         </td>
                         <td class="text-center">{{ $item->quantity }}</td>
                         <td class="text-right">{{ number_format($item->craftsmanship_fee + $item->fabric_cost, 0) }}</td>

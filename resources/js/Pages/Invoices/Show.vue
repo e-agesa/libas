@@ -243,6 +243,9 @@ function shareWhatsApp() {
                                 <td class="px-6 py-3 text-right text-gray-900 text-xs">
                                     <div>Fee: {{ formatCurrency(item.craftsmanship_fee) }}</div>
                                     <div v-if="Number(item.fabric_cost) > 0" class="text-gray-500">Fabric: {{ formatCurrency(item.fabric_cost) }}</div>
+                                    <div v-if="Number(item.ridhaa_qty) > 0 &amp;&amp; Number(item.ridhaa_price) > 0" class="text-amber-700">
+                                        {{ item.ridhaa_name || 'Ridhaa' }}: {{ item.ridhaa_qty }} x {{ formatCurrency(item.ridhaa_price) }}
+                                    </div>
                                 </td>
                                 <td class="px-6 py-3 text-right font-medium text-gray-900">{{ formatCurrency(item.line_total) }}</td>
                             </template>

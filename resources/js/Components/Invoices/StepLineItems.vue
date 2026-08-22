@@ -22,6 +22,9 @@ function addCustomItem() {
         quantity: 1,
         craftsmanship_fee: 0,
         fabric_cost: 0,
+        ridhaa_name: '',
+        ridhaa_qty: 0,
+        ridhaa_price: 0,
     }];
     emit('update:lineItems', updated);
 }
@@ -38,6 +41,9 @@ function addCollectionItem() {
         quantity: 1,
         craftsmanship_fee: 0,
         fabric_cost: 0,
+        ridhaa_name: '',
+        ridhaa_qty: 0,
+        ridhaa_price: 0,
     }];
     emit('update:lineItems', updated);
 }

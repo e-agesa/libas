@@ -1,4 +1,5 @@
 <script setup>
+import { invoiceSubtotal, lineItemTotal, ridhaaTotal } from '@/composables/useLineTotal';
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -13,14 +14,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:discount', 'update:discountType', 'update:tax']);
 
-const subtotal = computed(() => {
-    return props.lineItems.reduce((sum, item) => {
-        const fee = parseFloat(item.craftsmanship_fee) || 0;
-        const fabric = parseFloat(item.fabric_cost) || 0;
-        const qty = parseInt(item.quantity) || 1;
-        return sum + (fee + fabric) * qty;
-    }, 0);
-});
+const subtotal = computed(() => invoiceSubtotal(props.lineItems));
 
 const discountAmount = computed(() => {
     const d = parseFloat(props.discount) || 0;
@@ -84,11 +78,16 @@ function formatCurrency(amount) {
                 <tbody class="divide-y divide-gray-100">
                     <tr v-for="(item, i) in lineItems" :key="i">
                         <td class="px-4 py-2 text-gray-900">{{ getContactName(item.contact_id) }}</td>
-                        <td class="px-4 py-2 text-gray-600">{{ item.fabric_id ? getFabricName(item.fabric_id) : '—' }}</td>
+                        <td class="px-4 py-2 text-gray-600">
+                            <div>{{ item.fabric_id ? getFabricName(item.fabric_id) : '—' }}</div>
+                            <div v-if="ridhaaTotal(item) > 0" class="text-xs text-amber-700 mt-0.5">
+                                + {{ item.ridhaa_name || 'Ridhaa' }} x{{ item.ridhaa_qty }} ({{ formatCurrency(ridhaaTotal(item)) }})
+                            </div>
+                        </td>
                         <td class="px-4 py-2 text-center text-gray-600">{{ item.quantity }}</td>
                         <td class="px-4 py-2 text-right text-gray-900">{{ formatCurrency(item.craftsmanship_fee) }}</td>
                         <td class="px-4 py-2 text-right text-gray-600">{{ formatCurrency(item.fabric_cost || 0) }}</td>
-                        <td class="px-4 py-2 text-right font-medium text-gray-900">{{ formatCurrency((parseFloat(item.craftsmanship_fee || 0) + parseFloat(item.fabric_cost || 0)) * (parseInt(item.quantity) || 1)) }}</td>
+                        <td class="px-4 py-2 text-right font-medium text-gray-900">{{ formatCurrency(lineItemTotal(item)) }}</td>
                     </tr>
                 </tbody>
             </table>

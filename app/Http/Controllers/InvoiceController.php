@@ -97,6 +97,9 @@ class InvoiceController extends Controller
             'line_items.*.quantity' => 'required|integer|min:1',
             'line_items.*.craftsmanship_fee' => 'nullable|numeric|min:0',
             'line_items.*.fabric_cost' => 'nullable|numeric|min:0',
+            'line_items.*.ridhaa_name' => 'nullable|string|max:255',
+            'line_items.*.ridhaa_qty' => 'nullable|integer|min:0',
+            'line_items.*.ridhaa_price' => 'nullable|numeric|min:0',
         ]);
 
         // A line item may only reference people — and their measurements —
@@ -112,13 +115,17 @@ class InvoiceController extends Controller
             $item['craftsmanship_fee'] = $item['craftsmanship_fee'] ?? 0;
             $item['fabric_cost'] = $item['fabric_cost'] ?? 0;
             $item['unit_price'] = $item['unit_price'] ?? 0;
+            $item['ridhaa_qty'] = $item['ridhaa_qty'] ?? 0;
+            $item['ridhaa_price'] = $item['ridhaa_price'] ?? 0;
+            $item['ridhaa_name'] = $item['ridhaa_name'] ?? null;
+            $ridhaaTotal = $item['ridhaa_qty'] * $item['ridhaa_price'];
 
             if ($item['item_type'] === 'collection') {
                 // For collection items: unit_price * quantity
                 $item['line_total'] = $item['unit_price'] * $item['quantity'];
             } else {
                 // For custom items: (craftsmanship + fabric) * quantity
-                $item['line_total'] = ($item['craftsmanship_fee'] + $item['fabric_cost']) * $item['quantity'];
+                $item['line_total'] = ($item['craftsmanship_fee'] + $item['fabric_cost']) * $item['quantity'] + $ridhaaTotal;
             }
             $subtotal += $item['line_total'];
         }

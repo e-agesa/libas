@@ -8,6 +8,7 @@ import StepReview from '@/Components/Invoices/StepReview.vue';
 import StepFinalize from '@/Components/Invoices/StepFinalize.vue';
 import QuickPersonModal from '@/Components/Invoices/QuickPersonModal.vue';
 import QuickMeasurementModal from '@/Components/Invoices/QuickMeasurementModal.vue';
+import { invoiceSubtotal, ridhaaTotal } from '@/composables/useLineTotal';
 
 const props = defineProps({
     clients: Array,
@@ -45,6 +46,9 @@ const form = useForm({
         quantity: 1,
         craftsmanship_fee: 0,
         fabric_cost: 0,
+        ridhaa_name: '',
+        ridhaa_qty: 0,
+        ridhaa_price: 0,
     }],
 });
 
@@ -171,17 +175,7 @@ function selectClient(client) {
     }
 }
 
-const subtotal = computed(() => {
-    return form.line_items.reduce((sum, item) => {
-        const qty = parseInt(item.quantity) || 1;
-        if (item.item_type === 'collection') {
-            return sum + (parseFloat(item.unit_price) || 0) * qty;
-        }
-        const fee = parseFloat(item.craftsmanship_fee) || 0;
-        const fabric = parseFloat(item.fabric_cost) || 0;
-        return sum + (fee + fabric) * qty;
-    }, 0);
-});
+const subtotal = computed(() => invoiceSubtotal(form.line_items));
 
 const discountAmount = computed(() => {
     const d = parseFloat(form.discount) || 0;
@@ -201,7 +195,8 @@ const canNext = computed(() => {
         case 1: return !!form.client_id;
         case 2: return form.line_items.length > 0 && form.line_items.every(i => {
             if (i.item_type === 'collection') return i.collection_id && parseFloat(i.unit_price) > 0;
-            return i.contact_id && parseFloat(i.craftsmanship_fee) > 0;
+            // A line may be billed for the tailoring, for a ridhaa, or both.
+            return i.contact_id && (parseFloat(i.craftsmanship_fee) > 0 || ridhaaTotal(i) > 0);
         });
         case 3: return true;
         case 4: return !!form.date;

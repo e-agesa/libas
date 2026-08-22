@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useGarmentTypes } from '@/composables/useGarmentTypes';
+import { lineItemTotal, ridhaaTotal } from '@/composables/useLineTotal';
 
 const props = defineProps({
     item: Object,
@@ -26,15 +27,8 @@ const selectedCollection = computed(() =>
     props.collections?.find(c => c.id === parseInt(props.item.collection_id))
 );
 
-const lineTotal = computed(() => {
-    const qty = parseInt(props.item.quantity) || 1;
-    if (isCollection.value) {
-        return (parseFloat(props.item.unit_price) || 0) * qty;
-    }
-    const fee = parseFloat(props.item.craftsmanship_fee) || 0;
-    const fabric = parseFloat(props.item.fabric_cost) || 0;
-    return (fee + fabric) * qty;
-});
+const lineTotal = computed(() => lineItemTotal(props.item));
+const ridhaaLineTotal = computed(() => ridhaaTotal(props.item));
 
 function update(field, value) {
     emit('update', props.index, { ...props.item, [field]: value });
@@ -293,6 +287,57 @@ const garmentBadge = computed(() => {
                     step="any"
                     class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                 />
+            </div>
+
+            <!-- Ridhaa is not carried as stock: every one is a new item with its
+                 own price, so the name, quantity and price are typed here at
+                 invoice time rather than picked from the fabric catalogue. -->
+            <div class="sm:col-span-2 rounded-lg border border-dashed border-amber-300 bg-amber-50/50 p-3">
+                <div class="flex items-center justify-between gap-2 mb-2">
+                    <label class="text-xs font-semibold text-amber-900">
+                        Ridhaa
+                        <span class="font-normal text-amber-700">— not stocked, enter it manually</span>
+                    </label>
+                    <span v-if="ridhaaLineTotal > 0" class="text-xs font-semibold text-amber-900 whitespace-nowrap">
+                        KES {{ ridhaaLineTotal.toLocaleString() }}
+                    </span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                    <div class="sm:col-span-2">
+                        <label class="text-[11px] font-medium text-gray-600 mb-1 block">Name</label>
+                        <input
+                            type="text"
+                            :value="item.ridhaa_name"
+                            @input="update('ridhaa_name', $event.target.value)"
+                            placeholder="Write the ridhaa name"
+                            class="w-full rounded-md border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500"
+                        />
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-medium text-gray-600 mb-1 block">Quantity</label>
+                        <input
+                            type="number"
+                            :value="item.ridhaa_qty"
+                            @input="update('ridhaa_qty', parseInt($event.target.value) || 0)"
+                            min="0"
+                            class="w-full rounded-md border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500"
+                        />
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-medium text-gray-600 mb-1 block">Price (KES)</label>
+                        <input
+                            type="number"
+                            :value="item.ridhaa_price"
+                            @input="update('ridhaa_price', parseFloat($event.target.value) || 0)"
+                            min="0"
+                            step="any"
+                            class="w-full rounded-md border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500"
+                        />
+                    </div>
+                </div>
+                <p v-if="item.ridhaa_name && ridhaaLineTotal <= 0" class="text-[11px] text-amber-700 mt-1.5">
+                    Add a quantity and price so this ridhaa is billed.
+                </p>
             </div>
         </div>
 

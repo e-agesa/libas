@@ -21,6 +21,9 @@ class InvoiceLineItem extends Model
         'quantity',
         'craftsmanship_fee',
         'fabric_cost',
+        'ridhaa_name',
+        'ridhaa_qty',
+        'ridhaa_price',
         'line_total',
     ];
 
@@ -30,6 +33,7 @@ class InvoiceLineItem extends Model
             'unit_price' => 'decimal:2',
             'craftsmanship_fee' => 'decimal:2',
             'fabric_cost' => 'decimal:2',
+            'ridhaa_price' => 'decimal:2',
             'line_total' => 'decimal:2',
         ];
     }
