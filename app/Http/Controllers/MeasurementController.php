@@ -40,7 +40,7 @@ class MeasurementController extends Controller
         // Quick-add from the invoice wizard (axios): return the measurement
         // instead of redirecting so the in-progress invoice form is not lost.
         if ($request->wantsJson()) {
-            return response()->json($measurement, 201);
+            return response()->json($measurement->fresh(), 201);
         }
 
         return redirect()->route('contacts.show', $contact)
