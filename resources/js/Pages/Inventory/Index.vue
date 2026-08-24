@@ -299,7 +299,13 @@ const filteredCollections = computed(() => {
                 </div>
                 <div v-if="filteredFabrics.length === 0" class="text-center py-12 text-gray-400">
                     <i class="pi pi-palette text-4xl mb-2 block"></i>
-                    <p class="text-sm">No fabrics found.</p>
+                    <p class="text-sm">{{ searchTerm ? 'No fabrics match your search.' : 'No fabrics recorded.' }}</p>
+                    <p v-if="!searchTerm && collections.length" class="text-sm text-gray-500 mt-2">
+                        Your stock is under
+                        <button type="button" @click="activeTab = 'collections'" class="text-green-600 font-medium hover:underline">
+                            Collections ({{ collections.length }} item{{ collections.length === 1 ? '' : 's' }})
+                        </button>.
+                    </p>
                 </div>
             </div>
 
@@ -370,7 +376,13 @@ const filteredCollections = computed(() => {
                 </div>
                 <div v-if="filteredCollections.length === 0" class="text-center py-12 text-gray-400">
                     <i class="pi pi-shopping-bag text-4xl mb-2 block"></i>
-                    <p class="text-sm">No collection items found.</p>
+                    <p class="text-sm">{{ searchTerm ? 'No collection items match your search.' : 'No collection items recorded.' }}</p>
+                    <p v-if="!searchTerm && fabrics.length" class="text-sm text-gray-500 mt-2">
+                        Your stock is under
+                        <button type="button" @click="activeTab = 'fabrics'" class="text-green-600 font-medium hover:underline">
+                            Fabrics ({{ fabrics.length }})
+                        </button>.
+                    </p>
                 </div>
             </div>
 

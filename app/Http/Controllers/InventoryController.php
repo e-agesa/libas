@@ -12,8 +12,6 @@ class InventoryController extends Controller
 {
     public function index(Request $request)
     {
-        $tab = $request->input('tab', 'fabrics');
-
         // Fabrics with stock info
         $fabricQuery = Fabric::withCount('invoiceLineItems')
             ->orderBy('name');
@@ -83,7 +81,17 @@ class InventoryController extends Controller
                 'fabricCount' => $fabrics->count(),
                 'collectionCount' => $collections->count(),
             ],
-            'filters' => $request->only(['search', 'tab']),
+            'filters' => [
+                'search' => $request->input('search'),
+                // Open on a tab that actually holds stock. Staff reported the
+                // module "shows nothing": it always opened on Fabrics, and this
+                // shop keeps no fabrics, while hundreds of items sit under
+                // Collections one click away.
+                'tab' => $request->input('tab') ?: (
+                    $fabrics->isNotEmpty() ? 'fabrics'
+                        : ($collections->isNotEmpty() ? 'collections' : 'fabrics')
+                ),
+            ],
         ]);
     }
 
