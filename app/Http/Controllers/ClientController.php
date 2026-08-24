@@ -51,6 +51,19 @@ class ClientController extends Controller
 
         $client = Client::create($validated);
 
+        // Quick-add from the invoice wizard (axios): return the client instead
+        // of redirecting, so the in-progress invoice is not lost. The shape must
+        // match the wizard's own clients prop, contacts array included.
+        if ($request->wantsJson()) {
+            return response()->json([
+                'id' => $client->id,
+                'name' => $client->name,
+                'phone' => $client->phone,
+                'email' => $client->email,
+                'contacts' => [],
+            ], 201);
+        }
+
         return redirect()->route('clients.show', $client)
             ->with('success', 'Client created successfully.');
     }

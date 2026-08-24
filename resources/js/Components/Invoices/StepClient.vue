@@ -6,7 +6,7 @@ const props = defineProps({
     selectedClientId: [Number, String, null],
 });
 
-const emit = defineEmits(['select']);
+const emit = defineEmits(['select', 'add-client']);
 
 const search = ref('');
 
@@ -27,8 +27,19 @@ function selectClient(client) {
 
 <template>
     <div>
-        <h3 class="text-lg font-semibold text-gray-900 mb-1">Select Client</h3>
-        <p class="text-sm text-gray-500 mb-4">Choose which client this invoice is for.</p>
+        <div class="flex items-start justify-between gap-3 mb-4">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">Select Client</h3>
+                <p class="text-sm text-gray-500">Choose which client this invoice is for.</p>
+            </div>
+            <button
+                type="button"
+                @click="emit('add-client', search)"
+                class="shrink-0 inline-flex items-center gap-1 rounded-lg border border-brand-600 px-3 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50 transition-colors"
+            >
+                <i class="pi pi-user-plus text-xs"></i> Add Client
+            </button>
+        </div>
 
         <!-- Search -->
         <div class="relative mb-4">
@@ -66,6 +77,14 @@ function selectClient(client) {
             <div v-if="filteredClients.length === 0" class="text-center py-8 text-gray-400">
                 <i class="pi pi-search text-3xl mb-2 block"></i>
                 <p class="text-sm">No clients match your search.</p>
+                <button
+                    type="button"
+                    @click="emit('add-client', search)"
+                    class="mt-3 inline-flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 transition-colors"
+                >
+                    <i class="pi pi-user-plus text-xs"></i>
+                    Add {{ search ? '"' + search + '"' : 'a new client' }}
+                </button>
             </div>
         </div>
     </div>

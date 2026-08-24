@@ -6,6 +6,7 @@ import StepClient from '@/Components/Invoices/StepClient.vue';
 import StepLineItems from '@/Components/Invoices/StepLineItems.vue';
 import StepReview from '@/Components/Invoices/StepReview.vue';
 import StepFinalize from '@/Components/Invoices/StepFinalize.vue';
+import QuickClientModal from '@/Components/Invoices/QuickClientModal.vue';
 import QuickPersonModal from '@/Components/Invoices/QuickPersonModal.vue';
 import QuickMeasurementModal from '@/Components/Invoices/QuickMeasurementModal.vue';
 import { invoiceSubtotal, ridhaaTotal } from '@/composables/useLineTotal';
@@ -73,11 +74,26 @@ const steps = [
 const contacts = computed(() => selectedClient.value?.contacts || []);
 
 // Quick-add modals (person / measurement) launched from a line item row
+const showClientModal = ref(false);
+const newClientName = ref('');
 const showPersonModal = ref(false);
 const showMeasurementModal = ref(false);
 const activeItemIndex = ref(null);
 const measurementContact = ref(null);
 const editingMeasurementId = ref(null);
+
+function openAddClient(prefill) {
+    newClientName.value = typeof prefill === 'string' ? prefill : '';
+    showClientModal.value = true;
+}
+
+function onClientCreated(client) {
+    showClientModal.value = false;
+    // Make it available to the picker, then run it through the normal selection
+    // path so the client-switch guard clears any stale people on the line items.
+    props.clients.unshift(client);
+    selectClient(client);
+}
 
 function openAddPerson(index) {
     activeItemIndex.value = index;
@@ -285,6 +301,7 @@ function submit() {
                     :clients="clients"
                     :selected-client-id="form.client_id"
                     @select="selectClient"
+                    @add-client="openAddClient"
                 />
 
                 <StepLineItems
@@ -354,6 +371,13 @@ function submit() {
                 </div>
             </div>
         </div>
+
+        <QuickClientModal
+            :show="showClientModal"
+            :prefill-name="newClientName"
+            @close="showClientModal = false"
+            @created="onClientCreated"
+        />
 
         <QuickPersonModal
             :show="showPersonModal"

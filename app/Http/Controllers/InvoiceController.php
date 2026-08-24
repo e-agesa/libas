@@ -58,7 +58,9 @@ class InvoiceController extends Controller
             'clients' => fn () => Client::with([
                 'contacts:id,client_id,name',
                 'contacts.measurements:id,contact_id,garment_type,label',
-            ])->select('id', 'name')->orderBy('name')->get(),
+                // phone/email are searched on and rendered in steps 1 and 3 —
+                // without them, search-by-phone silently matched nothing.
+            ])->select('id', 'name', 'phone', 'email')->orderBy('name')->get(),
             'fabrics' => fn () => Fabric::where('status', 'active')
                 ->select('id', 'name', 'type', 'color', 'price_per_unit')
                 ->orderBy('name')->get(),
