@@ -1,4 +1,5 @@
 <script setup>
+import VariantManager from '@/Components/Collections/VariantManager.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
@@ -58,6 +59,19 @@ function deleteItem(item) {
     if (confirm(`Delete "${item.name}"?`)) {
         router.delete(route('collections.destroy', item.id));
     }
+}
+
+const showVariants = ref(false);
+const variantTarget = ref(null);
+
+function openVariants(item) {
+    variantTarget.value = item;
+    showVariants.value = true;
+}
+
+function onVariantsSaved() {
+    // stock totals live on the product row, so refresh the figures in place
+    router.reload({ only: ['collections', 'stats'], preserveScroll: true });
 }
 
 function openStockAdjust(item) {
@@ -183,6 +197,9 @@ function deleteCategory(cat) {
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-right">
+                                <button @click="openVariants(item)" class="inline-flex items-center gap-1 rounded-md border border-brand-600 px-2 py-1 text-xs font-medium text-brand-600 hover:bg-brand-50 mr-2" title="Sizes, colours, designs and photos">
+                                    <i class="pi pi-clone text-[10px]"></i> Variations
+                                </button>
                                 <button @click="openStockAdjust(item)" class="text-gray-400 hover:text-amber-600 mr-2" title="Adjust Stock"><i class="pi pi-box"></i></button>
                                 <button @click="openEdit(item)" class="text-gray-400 hover:text-blue-600 mr-2" title="Edit"><i class="pi pi-pencil"></i></button>
                                 <button @click="deleteItem(item)" class="text-gray-400 hover:text-red-600" title="Delete"><i class="pi pi-trash"></i></button>
@@ -234,5 +251,17 @@ function deleteCategory(cat) {
 
         <CollectionForm :show="showModal" :item="editingItem" :categories="categories" @close="closeModal" />
         <CategoryForm :show="showCategoryModal" :category="editingCategory" :categories="categories" @close="closeCategoryModal" @edit="openEditCategory" @delete="deleteCategory" />
+        <VariantManager
+
+            :show="showVariants"
+
+            :collection="variantTarget"
+
+            @close="showVariants = false"
+
+            @saved="onVariantsSaved"
+
+        />
+
     </AuthenticatedLayout>
 </template>

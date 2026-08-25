@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Collection;
+use App\Models\CollectionImage;
+use App\Models\CollectionVariant;
 use App\Models\CollectionCategory;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
@@ -127,6 +129,132 @@ class CollectionController extends Controller
     }
 
     // Category management
+    /**
+     * Everything a product's variations and photographs need, in one payload.
+     * Loaded on demand so the collections list itself stays light.
+     */
+    public function variants(Collection $collection)
+    {
+        $collection->load(['variants', 'images.variant']);
+
+        return response()->json([
+            'collection' => $collection->only(['id', 'name', 'sku', 'price', 'stock_qty']),
+            'variants' => $collection->variants,
+            'images' => $collection->images,
+        ]);
+    }
+
+    public function storeVariant(Request $request, Collection $collection)
+    {
+        $validated = $this->validateVariant($request);
+
+        $variant = $collection->variants()->create($validated);
+        $this->syncProductStock($collection);
+
+        return response()->json($variant->fresh(), 201);
+    }
+
+    public function updateVariant(Request $request, CollectionVariant $variant)
+    {
+        $validated = $this->validateVariant($request, $variant->id);
+
+        $variant->update($validated);
+        $this->syncProductStock($variant->collection);
+
+        return response()->json($variant->fresh());
+    }
+
+    public function destroyVariant(CollectionVariant $variant)
+    {
+        $collection = $variant->collection;
+        $variant->delete();
+        $this->syncProductStock($collection);
+
+        return response()->json(['ok' => true]);
+    }
+
+    protected function validateVariant(Request $request, ?int $ignoreId = null): array
+    {
+        return $request->validate([
+            'size' => 'nullable|string|max:100',
+            'color' => 'nullable|string|max:100',
+            'design' => 'nullable|string|max:100',
+            'sku' => 'nullable|string|max:255|unique:collection_variants,sku' . ($ignoreId ? ",{$ignoreId}" : ''),
+            // Blank price means "same as the product" — most variations match it.
+            'price' => 'nullable|numeric|min:0',
+            'stock_qty' => 'required|integer|min:0',
+            'low_stock_threshold' => 'nullable|integer|min:0',
+            'status' => 'nullable|in:active,inactive',
+            'sort_order' => 'nullable|integer',
+        ]);
+    }
+
+    /**
+     * Selling still runs off the product-level stock figure, so keep it equal to
+     * the sum of its variations. Until the tills read variant stock directly,
+     * this is what stops the two disagreeing.
+     */
+    protected function syncProductStock(Collection $collection): void
+    {
+        if (!$collection) {
+            return;
+        }
+        $collection->update(['stock_qty' => (int) $collection->variants()->sum('stock_qty')]);
+    }
+
+    /**
+     * Several photographs per product; each may belong to one variation so a
+     * design can show its own pictures.
+     */
+    public function storeImages(Request $request, Collection $collection)
+    {
+        $request->validate([
+            'images' => 'required|array|min:1|max:10',
+            'images.*' => 'image|max:5120',
+            'collection_variant_id' => 'nullable|exists:collection_variants,id',
+        ]);
+
+        $variantId = $request->input('collection_variant_id') ?: null;
+        $next = (int) $collection->images()->max('sort_order');
+        $created = [];
+
+        foreach ($request->file('images') as $file) {
+            $created[] = $collection->images()->create([
+                'collection_variant_id' => $variantId,
+                'path' => $file->store('collections', 'public'),
+                'alt' => $collection->name,
+                'is_primary' => !$collection->images()->exists(),
+                'sort_order' => ++$next,
+            ]);
+        }
+
+        return response()->json($created, 201);
+    }
+
+    public function destroyImage(CollectionImage $image)
+    {
+        if ($image->path && !str_starts_with($image->path, 'http')) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($image->path);
+        }
+        $wasPrimary = $image->is_primary;
+        $collection = $image->collection;
+        $image->delete();
+
+        // Never leave a product without a lead photograph.
+        if ($wasPrimary && $collection) {
+            $collection->images()->orderBy('sort_order')->first()?->update(['is_primary' => true]);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function setPrimaryImage(CollectionImage $image)
+    {
+        $image->collection->images()->update(['is_primary' => false]);
+        $image->update(['is_primary' => true]);
+
+        return response()->json(['ok' => true]);
+    }
     public function storeCategory(Request $request)
     {
         $validated = $request->validate([

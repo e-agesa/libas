@@ -188,6 +188,15 @@ Route::middleware('auth')->group(function () {
         Route::put('/collections/{collection}', [CollectionController::class, 'update'])->name('collections.update');
         Route::delete('/collections/{collection}', [CollectionController::class, 'destroy'])->name('collections.destroy');
         Route::post('/collections/{collection}/adjust-stock', [CollectionController::class, 'adjustStock'])->name('collections.adjust-stock');
+
+        // Product variations (size / colour / design) and their photographs
+        Route::get('/collections/{collection}/variants', [CollectionController::class, 'variants'])->name('collections.variants');
+        Route::post('/collections/{collection}/variants', [CollectionController::class, 'storeVariant'])->name('collections.variants.store');
+        Route::put('/collection-variants/{variant}', [CollectionController::class, 'updateVariant'])->name('collection-variants.update');
+        Route::delete('/collection-variants/{variant}', [CollectionController::class, 'destroyVariant'])->name('collection-variants.destroy');
+        Route::post('/collections/{collection}/images', [CollectionController::class, 'storeImages'])->name('collections.images.store');
+        Route::delete('/collection-images/{image}', [CollectionController::class, 'destroyImage'])->name('collection-images.destroy');
+        Route::post('/collection-images/{image}/primary', [CollectionController::class, 'setPrimaryImage'])->name('collection-images.primary');
         Route::post('/collection-categories', [CollectionController::class, 'storeCategory'])->name('collection-categories.store');
         Route::put('/collection-categories/{category}', [CollectionController::class, 'updateCategory'])->name('collection-categories.update');
         Route::delete('/collection-categories/{category}', [CollectionController::class, 'destroyCategory'])->name('collection-categories.destroy');
