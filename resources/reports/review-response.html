@@ -6,33 +6,198 @@
       <div class="wordmark">LIBAS<span>UL ANWAR</span></div>
       <div class="kicker">Issue Resolution Report</div>
     </div>
-    <h1>Your review, answered — all three issues resolved</h1>
-    <p class="sub">On 16 August 2026 we received your <b>System Issue Finding &amp; Resolution Report</b> for the POS / Invoicing portal's custom garment workflow. This document answers it point by point: what you reported, what we changed the same day, and how each screen behaves now.</p>
+    <h1>Your feedback, answered — round two</h1>
+    <p class="sub">A running record of what you have reported and what has been done about it. <b>Round two</b> covers your feedback of 24 August — stock, adding clients, the customer receipt and the item name — all of it now live. <b>Round one</b>, your written review of 16 August, follows further down.</p>
     <div class="meta">
-      <div><span class="k">Prepared</span><span class="v">16 August 2026 — same-day response</span></div>
-      <div><span class="k">Responding to</span><span class="v">Client review · 3 findings (2 high, 1 medium)</span></div>
+      <div><span class="k">Last updated</span><span class="v">25 August 2026</span></div>
+      <div><span class="k">Covering</span><span class="v">Two rounds · 14 items</span></div>
       <div><span class="k">System</span><span class="v">libasulanwar.com</span></div>
-      <div><span class="k">Overall status</span><span class="v" style="color:var(--band-gold)">3 of 3 resolved — ready to deploy</span></div>
+      <div><span class="k">Overall status</span><span class="v" style="color:var(--band-gold)">12 fixed and live · 2 scheduled</span></div>
     </div>
   </div>
 </header>
 
 <div class="wrap">
   <div class="summary">
-    <div class="eyebrow">Executive summary</div>
-    <p class="lede">All three findings in your review are <b>resolved and verified</b>. Staff can now add a new person, capture a full set of measurements, and select any active fabric — including <b>Ridhaa</b> — without ever leaving the invoice they are working on. The dead ends your testers hit no longer exist.</p>
-    <p>Each fix has been verified end-to-end: a production build of the interface, automated checks on the new save paths, and the screenshots below taken from the running system. <b>Two small confirmations sit with you, not with development:</b> the price of the Ridhaa fabric (a placeholder of KES 1,200/unit is in place), and whether "Ridhaa" should also exist as a <i>garment type</i> with its own measurement fields. Neither blocks anything.</p>
+    <div class="eyebrow">Where things stand</div>
+    <p class="lede">Everything raised on 24 August has been fixed and is live: stock is visible and can be added, a client can be created from both the till and the invoice screen, and the customer receipt now names the product, shows the discount and thanks the customer on behalf of <b>Libas ul Anwar</b> rather than the software.</p>
+    <p>Two further faults surfaced while we were in there and were fixed without being asked for — a measurement that <b>crashed on save</b> whenever the label was left blank, and a client search by phone number that never matched. <b>Two items remain scheduled:</b> item variations (one product, many sizes, several photographs) and collection-based item selection, which depends on it. Because variations rewrite how all 428 of your products are stored, that runs as one planned migration once you approve the plan.</p>
   </div>
 
   <div class="metrics">
-    <div class="metric"><div class="n">3 / 3</div><div class="l">Findings resolved</div></div>
-    <div class="metric"><div class="n">2</div><div class="l">New quick-add flows</div></div>
-    <div class="metric"><div class="n">9</div><div class="l">Active fabrics (incl. Ridhaa)</div></div>
-    <div class="metric"><div class="n">0</div><div class="l">Outstanding blockers</div></div>
+    <div class="metric"><div class="n">12</div><div class="l">Fixed &amp; live</div></div>
+    <div class="metric"><div class="n">3</div><div class="l">Found by us, unreported</div></div>
+    <div class="metric"><div class="n">428</div><div class="l">Products now visible</div></div>
+    <div class="metric flag"><div class="n">2</div><div class="l">Scheduled next</div></div>
   </div>
 
   <section class="block">
-    <div class="h-lead"><span class="eyebrow">Answering the review</span><span class="pill ok"><span class="dot"></span>All resolved</span></div>
+    <div class="h-lead">
+      <span class="eyebrow">Round two — your feedback of 24 August</span>
+      <span class="pill ok"><span class="dot"></span>9 fixed &amp; live</span>
+      <span class="pill warn"><span class="dot"></span>2 scheduled</span>
+    </div>
+    <h2>Everything you raised, and where it stands</h2>
+    <p class="muted" style="margin-top:12px">Each item below was reproduced on the live system before being changed, and checked again on the live system afterwards. The screenshots further down are taken from libasulanwar.com, not from a test copy.</p>
+
+    <div class="tablewrap" style="margin-top:18px">
+      <table>
+        <thead><tr><th>What you told us</th><th>What we found</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div class="item">"The stock module shows nothing"</div></td>
+            <td><div class="why">Not a broken query. The page always opened on the <b>Fabrics</b> tab — and this shop has no fabrics recorded — while <b>428 items</b> sat on the Collections tab, one click away.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">"There is no option to add stock"</div></td>
+            <td><div class="why">It existed, but only as a small unlabelled <b>+</b> icon at the end of each row. It is now a labelled green <b>Stock</b> button on every row, with a line in the page header saying where to find it.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">"No option for creating a new client profile"</div></td>
+            <td><div class="why">Correct on the two screens that matter. <b>POS</b> had a plain customer dropdown and no way to register a first-time customer, so a sale had to be abandoned to create one. The invoice screen had the same gap. Both now have <b>Add Client</b>.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">"No option for making invoices"</div></td>
+            <td><div class="why">Invoices are raised from <b>Invoices → New Invoice</b>, and that button is present. What was missing was starting a client from inside that flow — now added. If your team means something else here, tell us and we will chase it.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Addressed</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">The receipt says "Thank you for choosing Libas TMS"</div></td>
+            <td><div class="why">That was the software's name, not your shop's. It now reads <b>"Thank you for shopping Libas ul Anwar!"</b>, taken from your Company Settings so it follows the business name automatically.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">"The product name should appear in the item field instead of the customer name"</div></td>
+            <td><div class="why">The real cause: a custom line had <b>no item-name field at all</b> — only Person, Measurement, Fabric and the money — so your team typed the product into the Ridhaa box, and the receipt had nothing to call the item. Custom lines now open with an <b>Item / Product Name</b> field, and the receipt leads with it.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">"The discount has been applied, but it is not showing up in the message"</div></td>
+            <td><div class="why">The discount was always recorded correctly — it simply was never printed. The message now shows <b>Subtotal, Discount and Tax</b> whenever either applies, so the customer can follow how the total was reached.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">Found in your error log — not reported</div></td>
+            <td><div class="why">On 17 August a member of staff entered a full kanzu measurement and it <b>crashed on save</b>: the label was optional on screen but required in the database. Anyone who left it blank lost their work. Fixed.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">Found while working — not reported</div></td>
+            <td><div class="why">Searching for a client <b>by phone number</b> on the invoice screen never matched anything, and the phone showed blank: the screen was not loading those details at all. Fixed.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">Item variations — one product, many sizes</div></td>
+            <td><div class="why">Agreed, and it is the next piece of work: one product holding its size variants, each keeping its own stock count, plus several photographs per item. This changes how all <b>428 existing products</b> are stored, so it will run as one planned migration with your go-ahead — not folded into a routine update.</div></td>
+            <td><span class="pill warn"><span class="dot"></span>Scheduled</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">Choosing items by collection on an invoice</div></td>
+            <td><div class="why">This depends on the variation work above — a category-grouped, searchable picker only makes sense once variants exist. It follows immediately after.</div></td>
+            <td><span class="pill warn"><span class="dot"></span>Scheduled</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="block">
+    <span class="eyebrow">The customer receipt</span>
+    <h2 style="margin-top:12px">The same invoice, before and after</h2>
+    <p class="muted" style="margin-top:12px">Both taken from INV-0019 on your live system — on the left what you sent us, on the right what that same invoice sends now.</p>
+    <div class="grid2" style="margin-top:18px">
+      <div class="card">
+        <h3 style="color:var(--stop)">Before</h3>
+        <pre style="white-space:pre-wrap;font-family:var(--mono);font-size:.8rem;color:var(--dim);margin:10px 0 0;overflow-x:auto">INVOICE: INV-0019
+Client: Amena Zanzibar
+Date: 23 Aug 2026
+
+Items:
+  - Item (Amena Zanzibar): KES 4,400
+
+Total: KES 2,200
+Paid: KES 1,100
+Balance: KES 1,100
+
+Thank you for choosing Libas TMS!</pre>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--ok)">Now</h3>
+        <pre style="white-space:pre-wrap;font-family:var(--mono);font-size:.8rem;color:var(--ink);margin:10px 0 0;overflow-x:auto">INVOICE: INV-0019
+Client: Amena Zanzibar
+Date: 23 Aug 2026
+
+Items:
+  - Customer Rida x4: KES 4,400
+
+Subtotal: KES 4,400
+Discount: -KES 2,200
+Total: KES 2,200
+Paid: KES 1,100
+Balance: KES 1,100
+
+Thank you for shopping Libas ul Anwar!</pre>
+      </div>
+    </div>
+    <ul class="clean">
+      <li><b>The product is named.</b> "Customer Rida" — instead of the literal word "Item" followed by the customer's own name, which already appears in the header.</li>
+      <li><b>The discount is visible.</b> KES 4,400 less KES 2,200, so the customer can follow the arithmetic rather than seeing a total that does not match the line above it.</li>
+      <li><b>The shop is named</b>, not the software that runs it.</li>
+    </ul>
+  </section>
+
+  <section class="block">
+    <span class="eyebrow">Evidence — on your live system</span>
+    <h2 style="margin-top:12px">The screens as they stand now</h2>
+    <div class="shots">
+      <figure class="shot" style="margin:0">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <img src="r2-inventory.png" alt="Inventory opening on the Collections tab showing 428 items" loading="lazy">
+        <figcaption><b>Stock is visible.</b> Inventory opens on a tab that actually holds stock — 428 items, with values and low-stock warnings.</figcaption>
+      </figure>
+      <figure class="shot" style="margin:0">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <img src="r2-stock-button.png" alt="A labelled green Stock button on every inventory row" loading="lazy">
+        <figcaption><b>Adding stock is findable.</b> A labelled green <b>Stock</b> button on every row, in place of an unlabelled icon.</figcaption>
+      </figure>
+      <figure class="shot" style="margin:0">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <img src="r2-pos-client.png" alt="POS cart with an Add Client action beside the customer dropdown" loading="lazy">
+        <figcaption><b>A new customer at the till.</b> POS registers a first-time customer without abandoning the sale.</figcaption>
+      </figure>
+      <figure class="shot" style="margin:0">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <img src="r2-item-name.png" alt="A custom invoice line with an Item / Product Name field at the top" loading="lazy">
+        <figcaption><b>The missing field.</b> Custom lines now start with <b>Item / Product Name</b> — what the customer is buying, and what prints on the receipt.</figcaption>
+      </figure>
+      <figure class="shot" style="margin:0">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <img src="r2-add-client.png" alt="Invoice step one offering to create the client that was searched for" loading="lazy">
+        <figcaption><b>No match, no dead end.</b> Search for a customer who is not on file and the invoice offers to create them under that name.</figcaption>
+      </figure>
+      <figure class="shot" style="margin:0">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <img src="r2-client-modal.png" alt="The add client form opening over the invoice with the name already filled in" loading="lazy">
+        <figcaption><b>Typed once.</b> The name carries into the form, and the invoice underneath is left untouched.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="block">
+    <span class="eyebrow">What we need from you</span>
+    <h2 style="margin-top:12px">Two things, to keep this moving</h2>
+    <ul class="clean">
+      <li><b>The voice notes.</b> Three recordings and a video reached us describing further problems. We cannot play audio, so <b>nothing in them is reflected above</b> — please send the text (holding down a WhatsApp voice note will transcribe it) or a short written list.</li>
+      <li><b>Your go-ahead on the variations migration.</b> It rewrites how all 428 products are stored. We will send the plan first; nothing runs against your live catalogue without your word.</li>
+    </ul>
+    <p class="muted" style="margin-top:16px"><b>Separately, worth knowing:</b> the server is slow and intermittently refuses connections — one page took 18 seconds while we were testing, and several requests were dropped outright. That is the hosting rather than the system, and your team will be feeling it every day. It is worth raising with the hosting provider.</p>
+  </section>
+
+  <section class="block">
+    <div class="h-lead"><span class="eyebrow">Round one — your written review of 16 August</span><span class="pill ok"><span class="dot"></span>All resolved</span></div>
     <h2>The three findings, point by point</h2>
 
     <div class="finding">
