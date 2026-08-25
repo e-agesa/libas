@@ -168,6 +168,13 @@ const filteredCollections = computed(() => {
                 <h2 class="text-xl font-semibold leading-tight text-gray-800">
                     <i class="pi pi-box text-green-600 mr-2"></i> Inventory
                 </h2>
+                <p class="hidden sm:block text-xs text-gray-500">
+                    To add stock, use the green
+                    <span class="inline-flex items-center gap-1 align-middle mx-1 h-5 px-1.5 rounded bg-green-600 text-white text-[10px] font-medium">
+                        <i class="pi pi-plus text-[9px]"></i> Stock
+                    </span>
+                    button on an item row.
+                </p>
             </div>
         </template>
 
@@ -276,8 +283,8 @@ const filteredCollections = computed(() => {
                                 <td class="px-4 py-3 text-center text-gray-500">{{ f.invoice_line_items_count }}</td>
                                 <td class="px-4 py-3 text-right">
                                     <div class="flex items-center justify-end gap-1">
-                                        <button @click="openAdjust(f, 'fabric')" class="w-7 h-7 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 flex items-center justify-center" title="Adjust Stock">
-                                            <i class="pi pi-plus text-xs"></i>
+                                        <button @click="openAdjust(f, 'fabric')" class="inline-flex items-center gap-1 h-7 px-2 rounded-lg bg-green-600 text-white hover:bg-green-700 text-xs font-medium" title="Add or remove stock">
+                                            <i class="pi pi-plus text-[10px]"></i> Stock
                                         </button>
                                         <button @click="openReserve(f)" class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 flex items-center justify-center" title="Reserve">
                                             <i class="pi pi-lock text-xs"></i>
@@ -359,8 +366,8 @@ const filteredCollections = computed(() => {
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     <div class="flex items-center justify-end gap-1">
-                                        <button @click="openAdjust(c, 'collection')" class="w-7 h-7 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 flex items-center justify-center" title="Adjust Stock">
-                                            <i class="pi pi-plus text-xs"></i>
+                                        <button @click="openAdjust(c, 'collection')" class="inline-flex items-center gap-1 h-7 px-2 rounded-lg bg-green-600 text-white hover:bg-green-700 text-xs font-medium" title="Add or remove stock">
+                                            <i class="pi pi-plus text-[10px]"></i> Stock
                                         </button>
                                         <button @click="viewMovements(c, 'collection')" class="w-7 h-7 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 flex items-center justify-center" title="View History">
                                             <i class="pi pi-history text-xs"></i>

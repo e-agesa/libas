@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
+import QuickClientModal from '@/Components/Invoices/QuickClientModal.vue';
 
 const props = defineProps({
     collections: Array,
@@ -13,6 +14,15 @@ const cart = ref([]);
 const searchTerm = ref('');
 const selectedCategory = ref('');
 const clientId = ref(null);
+const clientList = ref([...(props.clients || [])]);
+const showClientModal = ref(false);
+
+function onClientCreated(client) {
+    showClientModal.value = false;
+    clientList.value.unshift(client);
+    clientId.value = client.id;   // serve the customer you just registered
+    walkInName.value = '';
+}
 const walkInName = ref('');
 const paymentMethod = ref('cash');
 const discount = ref(0);
@@ -337,10 +347,19 @@ function formatCurrency(v) {
                     <div v-if="canComplete" class="border-t border-gray-100 p-4 space-y-3">
                         <!-- Customer (optional) -->
                         <div>
-                            <label class="text-xs font-medium text-gray-600 mb-1 block">Customer (optional)</label>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="text-xs font-medium text-gray-600 block">Customer (optional)</label>
+                                <button
+                                    type="button"
+                                    @click="showClientModal = true"
+                                    class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"
+                                >
+                                    <i class="pi pi-user-plus text-[10px]"></i> Add Client
+                                </button>
+                            </div>
                             <select v-model="clientId" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600">
                                 <option :value="null">Walk-in customer</option>
-                                <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.name }}</option>
+                                <option v-for="c in clientList" :key="c.id" :value="c.id">{{ c.name }}</option>
                             </select>
                         </div>
                         <div v-if="!clientId">
@@ -462,5 +481,15 @@ function formatCurrency(v) {
                 </div>
             </div>
         </div>
+        <QuickClientModal
+
+            :show="showClientModal"
+
+            @close="showClientModal = false"
+
+            @created="onClientCreated"
+
+        />
+
     </AuthenticatedLayout>
 </template>
