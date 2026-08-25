@@ -42,6 +42,25 @@ class Collection extends Model
         ];
     }
 
+    public function variants()
+    {
+        return $this->hasMany(CollectionVariant::class)->orderBy('sort_order');
+    }
+
+    public function images()
+    {
+        return $this->hasMany(CollectionImage::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Stock held across every variation. While selling still runs off the
+     * product-level stock_qty, this is the figure to compare it against.
+     */
+    public function variantStock(): int
+    {
+        return (int) $this->variants()->sum('stock_qty');
+    }
+
     public function category()
     {
         return $this->belongsTo(CollectionCategory::class, 'category_id');
