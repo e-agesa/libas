@@ -175,9 +175,21 @@ function deleteCategory(cat) {
                     <tbody class="divide-y divide-gray-100">
                         <tr v-for="item in collections.data" :key="item.id" class="hover:bg-gray-50">
                             <td class="px-6 py-4">
-                                <div>
-                                    <div class="font-medium text-gray-900">{{ item.name }}</div>
-                                    <p v-if="item.description" class="text-xs text-gray-500 mt-0.5 line-clamp-1">{{ item.description }}</p>
+                                <div class="flex items-center gap-3">
+                                    <img
+                                        v-if="item.image_url"
+                                        :src="item.image_url"
+                                        :alt="item.name"
+                                        loading="lazy"
+                                        class="h-12 w-12 shrink-0 rounded-lg object-cover border border-gray-200 bg-gray-50"
+                                    />
+                                    <div v-else class="h-12 w-12 shrink-0 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center text-gray-300">
+                                        <i class="pi pi-image text-sm"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="font-medium text-gray-900">{{ item.name }}</div>
+                                        <p v-if="item.description" class="text-xs text-gray-500 mt-0.5 line-clamp-1">{{ item.description }}</p>
+                                    </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 hidden md:table-cell">

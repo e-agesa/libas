@@ -51,6 +51,15 @@ class ClientController extends Controller
 
         $client = Client::create($validated);
 
+        // A client is a person too. Without this, every new client opened with an
+        // empty Person list on the invoice screen and staff had to re-enter the
+        // same name through "Add New Person" before they could bill anything.
+        $self = $client->contacts()->create([
+            'name' => $client->name,
+            'relationship' => 'self',
+            'phone' => $client->phone,
+        ]);
+
         // Quick-add from the invoice wizard (axios): return the client instead
         // of redirecting, so the in-progress invoice is not lost. The shape must
         // match the wizard's own clients prop, contacts array included.
@@ -60,7 +69,7 @@ class ClientController extends Controller
                 'name' => $client->name,
                 'phone' => $client->phone,
                 'email' => $client->email,
-                'contacts' => [],
+                'contacts' => [$self->only(['id','client_id','name']) + ['measurements' => []]],
             ], 201);
         }
 
