@@ -177,6 +177,20 @@ const garmentBadge = computed(() => {
 
         <!-- Custom item fields -->
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="sm:col-span-2">
+                <label class="text-xs font-medium text-gray-600 mb-1 block">
+                    Item / Product Name
+                    <span class="font-normal text-gray-400">— what the customer is buying; this is what shows on the receipt</span>
+                </label>
+                <input
+                    type="text"
+                    :value="item.description"
+                    @input="update('description', $event.target.value)"
+                    placeholder="e.g. Kanzu, Abaya, Customer Rida"
+                    class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
+                />
+            </div>
+
             <div>
                 <div class="flex items-center justify-between mb-1">
                     <label class="text-xs font-medium text-gray-600 block">Person *</label>
