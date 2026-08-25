@@ -90,7 +90,15 @@ function shareWhatsApp() {
     // Lead with WHAT was sold. The client's own name is already in the header,
     // so repeating it on every line just buried the product.
     const linesSummary = inv.line_items?.map(item => {
-        const qty = parseInt(item.quantity) || 1;
+        // What was actually billed on this line. A ridhaa carries its OWN
+        // quantity and price, and staff leave the garment quantity at 1 — so
+        // when the whole line is a ridhaa, that is the quantity to show.
+        // Printing the garment quantity made every such line read "x1".
+        const tailoring = (parseFloat(item.craftsmanship_fee) || 0) + (parseFloat(item.fabric_cost) || 0);
+        const rQty = parseInt(item.ridhaa_qty) || 0;
+        const rPrice = parseFloat(item.ridhaa_price) || 0;
+        const ridhaaOnly = tailoring === 0 && rQty > 0 && rPrice > 0;
+        const qty = ridhaaOnly ? rQty : (parseInt(item.quantity) || 1);
         let name;
         if (item.item_type === 'collection') {
             name = item.collection?.name || item.description || 'Shelf Item';
@@ -102,7 +110,7 @@ function shareWhatsApp() {
         }
         const parts = [`  - ${name} x${qty}: ${formatCurrency(item.line_total)}`];
         // a ridhaa written onto a garment line is its own item to the customer
-        if (Number(item.ridhaa_qty) > 0 && Number(item.ridhaa_price) > 0 && name !== item.ridhaa_name) {
+        if (!ridhaaOnly && rQty > 0 && rPrice > 0 && name !== item.ridhaa_name) {
             parts.push(`      incl. ${item.ridhaa_name || 'Ridhaa'} x${item.ridhaa_qty}`);
         }
         return parts.join(NL);
@@ -130,7 +138,7 @@ function shareWhatsApp() {
         paid > 0 ? `Paid: ${formatCurrency(paid)}` : '',
         balance > 0 ? `Balance: ${formatCurrency(balance)}` : '',
         '',
-        `Thank you for shopping ${shopName}!`,
+        `Thank you for shopping at ${shopName}!`,
     ].filter(Boolean).join(NL);
 
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');

@@ -142,7 +142,7 @@
                             @if($item->collection?->size) {{ $item->collection->size }} @endif
                             @if($item->collection?->color) &middot; {{ $item->collection->color }} @endif
                         </td>
-                        <td class="text-center">{{ $item->quantity }}</td>
+                        <td class="text-center">{{ ($item->craftsmanship_fee + $item->fabric_cost) == 0 && $item->ridhaa_qty > 0 ? $item->ridhaa_qty : $item->quantity }}</td>
                         <td class="text-right">{{ number_format($item->unit_price, 0) }}</td>
                     @else
                         <td><span class="type-badge type-custom">Custom</span></td>
@@ -156,7 +156,7 @@
                                 <br><span style="font-size:9px;">{{ $item->ridhaa_name ?: 'Ridhaa' }} x{{ $item->ridhaa_qty }} @ {{ number_format($item->ridhaa_price, 0) }}</span>
                             @endif
                         </td>
-                        <td class="text-center">{{ $item->quantity }}</td>
+                        <td class="text-center">{{ ($item->craftsmanship_fee + $item->fabric_cost) == 0 && $item->ridhaa_qty > 0 ? $item->ridhaa_qty : $item->quantity }}</td>
                         <td class="text-right">{{ number_format($item->craftsmanship_fee + $item->fabric_cost, 0) }}</td>
                     @endif
                     <td class="text-right font-bold">{{ number_format($item->line_total, 0) }}</td>
