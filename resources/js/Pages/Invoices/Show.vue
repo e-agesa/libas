@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import Modal from '@/Components/Modal.vue';
 import InputError from '@/Components/InputError.vue';
@@ -82,16 +82,36 @@ function convertToInvoice() {
 }
 
 function shareWhatsApp() {
+    const NL = String.fromCharCode(10);
     const inv = props.invoice;
+    const company = usePage().props.company || {};
+    const shopName = company.business_name || 'Libas ul Anwar';
+
+    // Lead with WHAT was sold. The client's own name is already in the header,
+    // so repeating it on every line just buried the product.
     const linesSummary = inv.line_items?.map(item => {
+        const qty = parseInt(item.quantity) || 1;
+        let name;
         if (item.item_type === 'collection') {
-            const name = item.collection?.name || item.description || 'Shelf Item';
-            return `  - ${name} x${item.quantity}: ${formatCurrency(item.line_total)}`;
+            name = item.collection?.name || item.description || 'Shelf Item';
+        } else {
+            name = item.description
+                || item.measurement?.garment_type
+                || item.ridhaa_name
+                || 'Custom Garment';
         }
-        const garment = item.measurement?.garment_type || 'Item';
-        const person = item.contact?.name || '';
-        return `  - ${garment}${person ? ` (${person})` : ''}: ${formatCurrency(item.line_total)}`;
-    }).join('\n') || '';
+        const parts = [`  - ${name} x${qty}: ${formatCurrency(item.line_total)}`];
+        // a ridhaa written onto a garment line is its own item to the customer
+        if (Number(item.ridhaa_qty) > 0 && Number(item.ridhaa_price) > 0 && name !== item.ridhaa_name) {
+            parts.push(`      incl. ${item.ridhaa_name || 'Ridhaa'} x${item.ridhaa_qty}`);
+        }
+        return parts.join(NL);
+    }).join(NL) || '';
+
+    const discount = Number(inv.discount) || 0;
+    const tax = Number(inv.tax) || 0;
+    const paid = Number(inv.amount_paid) || 0;
+    const balance = Number(inv.balance) || 0;
 
     const text = [
         `*${inv.type === 'quotation' ? 'QUOTATION' : 'INVOICE'}: ${inv.invoice_number}*`,
@@ -102,12 +122,16 @@ function shareWhatsApp() {
         '*Items:*',
         linesSummary,
         '',
+        // show the money working out, so an applied discount is visible
+        (discount > 0 || tax > 0) ? `Subtotal: ${formatCurrency(inv.subtotal)}` : '',
+        discount > 0 ? `Discount: -${formatCurrency(discount)}` : '',
+        tax > 0 ? `Tax: ${formatCurrency(tax)}` : '',
         `*Total: ${formatCurrency(inv.total)}*`,
-        Number(inv.amount_paid) > 0 ? `Paid: ${formatCurrency(inv.amount_paid)}` : '',
-        Number(inv.balance) > 0 ? `Balance: ${formatCurrency(inv.balance)}` : '',
+        paid > 0 ? `Paid: ${formatCurrency(paid)}` : '',
+        balance > 0 ? `Balance: ${formatCurrency(balance)}` : '',
         '',
-        'Thank you for choosing Libas TMS!',
-    ].filter(Boolean).join('\n');
+        `Thank you for shopping ${shopName}!`,
+    ].filter(Boolean).join(NL);
 
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
 }
