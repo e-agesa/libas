@@ -19,7 +19,7 @@ const uploading = ref(false);
 
 const blankRow = () => ({
     id: null, size: '', color: '', design: '',
-    price: '', stock_qty: 0, low_stock_threshold: 5, status: 'active',
+    price: '', stock_qty: 0, low_stock_threshold: '', status: 'active',
     _dirty: false, _saving: false,
 });
 
@@ -68,7 +68,7 @@ function payload(v) {
         design: v.design || null,
         price: v.price === '' || v.price === null ? null : parseFloat(v.price),
         stock_qty: parseInt(v.stock_qty) || 0,
-        low_stock_threshold: parseInt(v.low_stock_threshold) || 0,
+        low_stock_threshold: v.low_stock_threshold === '' || v.low_stock_threshold === null ? null : parseInt(v.low_stock_threshold),
         status: v.status || 'active',
     };
 }

@@ -27,7 +27,7 @@ const form = useForm({
     price: 0,
     cost_price: 0,
     stock_qty: 0,
-    low_stock_threshold: 5,
+    low_stock_threshold: '',   // blank = not set; every product differs
     status: 'active',
 });
 
@@ -52,14 +52,14 @@ watch(() => props.show, (val) => {
         form.price = props.item.price || 0;
         form.cost_price = props.item.cost_price || 0;
         form.stock_qty = props.item.stock_qty || 0;
-        form.low_stock_threshold = props.item.low_stock_threshold || 5;
+        form.low_stock_threshold = props.item.low_stock_threshold ?? '';
         form.status = props.item.status || 'active';
     } else if (val) {
         form.reset();
         form.image = null;
         imagePreview.value = null;
         form.status = 'active';
-        form.low_stock_threshold = 5;
+        form.low_stock_threshold = '';
     }
 });
 
@@ -158,8 +158,9 @@ function submit() {
                 </div>
 
                 <div>
-                    <InputLabel for="c_threshold" value="Low Stock Threshold" />
-                    <TextInput id="c_threshold" v-model.number="form.low_stock_threshold" type="number" min="0" class="mt-1 block w-full" />
+                    <InputLabel for="c_threshold" value="Minimum Stock Alert" />
+                    <TextInput id="c_threshold" v-model="form.low_stock_threshold" type="number" min="0" placeholder="Leave blank" class="mt-1 block w-full" />
+                    <p class="mt-1 text-xs text-gray-500">Blank means no alert for this product. Set it per product — nothing is filled in for you.</p>
                 </div>
 
                 <div>

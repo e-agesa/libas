@@ -86,6 +86,11 @@ class CollectionVariant extends Model
 
     public function isLowStock(): bool
     {
+        // No minimum set for this product: only flag it once it has run out.
+        if ($this->low_stock_threshold === null) {
+            return $this->available_qty <= 0;
+        }
+
         return $this->available_qty <= $this->low_stock_threshold;
     }
 }
