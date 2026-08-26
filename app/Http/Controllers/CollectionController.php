@@ -64,7 +64,22 @@ class CollectionController extends Controller
         }
         unset($validated['image']);
 
-        Collection::create($validated);
+        // These columns do not accept null; the form sends blank for an unknown
+        // cost, which was crashing product creation outright.
+        $validated['cost_price'] = $validated['cost_price'] ?? 0;
+        $validated['stock_qty'] = $validated['stock_qty'] ?? 0;
+
+        $collection = Collection::create($validated);
+
+        // Every product owns at least one variation, so the Variations panel is
+        // never empty and product stock always equals the sum of its variations.
+        $collection->variants()->create([
+            'size' => $collection->size,
+            'color' => $collection->color,
+            'stock_qty' => $collection->stock_qty,
+            'low_stock_threshold' => $collection->low_stock_threshold,
+            'status' => $collection->status,
+        ]);
 
         return redirect()->back()->with('success', 'Collection item added.');
     }
@@ -94,6 +109,9 @@ class CollectionController extends Controller
             $validated['image_path'] = $request->file('image')->store('collections', 'public');
         }
         unset($validated['image']);
+
+        $validated['cost_price'] = $validated['cost_price'] ?? 0;
+        $validated['stock_qty'] = $validated['stock_qty'] ?? $collection->stock_qty;
 
         $collection->update($validated);
 
