@@ -196,10 +196,22 @@ class InvoiceController extends Controller
             foreach ($validated['line_items'] as $item) {
                 $invoice->lineItems()->create($item);
 
-                // Deduct stock for collection items
+                // Deduct stock for collection items.
+                // Guarded atomic decrement, matching POS: the WHERE stock_qty >= qty
+                // refuses to oversell rather than driving stock negative, and closes
+                // the check-then-act race when two people bill the last unit at once.
                 if (($item['item_type'] ?? 'custom') === 'collection' && !empty($item['collection_id'])) {
-                    Collection::where('id', $item['collection_id'])
+                    $sold = Collection::whereKey($item['collection_id'])
+                        ->where('stock_qty', '>=', $item['quantity'])
                         ->decrement('stock_qty', $item['quantity']);
+
+                    if (! $sold) {
+                        $name = Collection::whereKey($item['collection_id'])->value('name') ?? 'that item';
+                        throw ValidationException::withMessages([
+                            'line_items' => "Not enough stock for {$name}. The invoice was not saved.",
+                        ]);
+                    }
+
                     Collection::find($item['collection_id'])?->syncSingleVariantStock();
                 }
             }
