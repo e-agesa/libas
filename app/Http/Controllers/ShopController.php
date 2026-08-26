@@ -204,6 +204,7 @@ class ShopController extends Controller
                 $sold = Collection::whereKey($collection->id)
                     ->where('stock_qty', '>=', $item['quantity'])
                     ->decrement('stock_qty', $item['quantity']);
+                \App\Models\Collection::find($item['collection_id'])?->syncSingleVariantStock();
                 if (! $sold) {
                     throw new \Exception("Insufficient stock for {$collection->name}");
                 }

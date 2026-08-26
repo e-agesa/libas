@@ -138,6 +138,7 @@ class CollectionController extends Controller
         }
 
         $collection->update(['stock_qty' => $newQty]);
+        $collection->syncSingleVariantStock();
 
         StockMovement::record($collection, 'adjustment', $validated['adjustment'], [
             'notes' => $validated['reason'] ?? 'Manual stock adjustment',

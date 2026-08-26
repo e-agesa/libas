@@ -56,6 +56,22 @@ class Collection extends Model
      * Stock held across every variation. While selling still runs off the
      * product-level stock_qty, this is the figure to compare it against.
      */
+    /**
+     * Until the tills sell from variations, the product figure is the source of
+     * truth. When a product has exactly one variation, keep that variation equal
+     * to it so the two never silently disagree after a sale or an adjustment.
+     * Products with several variations are left alone — their stock is managed
+     * per variation.
+     */
+    public function syncSingleVariantStock(): void
+    {
+        if ($this->variants()->count() !== 1) {
+            return;
+        }
+
+        $this->variants()->update(['stock_qty' => (int) $this->stock_qty]);
+    }
+
     public function variantStock(): int
     {
         return (int) $this->variants()->sum('stock_qty');

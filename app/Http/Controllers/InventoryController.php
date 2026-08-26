@@ -117,6 +117,9 @@ class InventoryController extends Controller
         }
 
         $model->increment('stock_qty', $qty);
+        if ($model instanceof \App\Models\Collection) {
+            $model->refresh()->syncSingleVariantStock();
+        }
 
         StockMovement::record($model, $validated['type'], $qty, [
             'unit_cost' => $validated['unit_cost'] ?? null,

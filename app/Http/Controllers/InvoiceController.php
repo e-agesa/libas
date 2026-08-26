@@ -200,6 +200,7 @@ class InvoiceController extends Controller
                 if (($item['item_type'] ?? 'custom') === 'collection' && !empty($item['collection_id'])) {
                     Collection::where('id', $item['collection_id'])
                         ->decrement('stock_qty', $item['quantity']);
+                    Collection::find($item['collection_id'])?->syncSingleVariantStock();
                 }
             }
 
