@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Collection;
 use App\Models\CollectionImage;
 use App\Models\CollectionVariant;
+use App\Support\ProductImage;
 use App\Models\CollectionCategory;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
@@ -49,7 +50,7 @@ class CollectionController extends Controller
             'sku' => 'nullable|string|max:50|unique:collections,sku',
             'category_id' => 'nullable|exists:collection_categories,id',
             'description' => 'nullable|string|max:2000',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:12288',   // 12 MB; larger photos are shrunk on upload
             'size' => 'nullable|string|max:50',
             'color' => 'nullable|string|max:50',
             'price' => 'required|numeric|min:0',
@@ -57,10 +58,13 @@ class CollectionController extends Controller
             'stock_qty' => 'required|integer|min:0',
             'low_stock_threshold' => 'nullable|integer|min:0',
             'status' => 'nullable|in:active,inactive',
+        ], [
+            'image.max' => 'That photo is too large (the limit is 12 MB). Please send a smaller one.',
+            'image.image' => 'That file is not a picture the system can read. Use JPG, PNG or WEBP.',
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image_path'] = $request->file('image')->store('collections', 'public');
+            $validated['image_path'] = ProductImage::store($request->file('image'));
         }
         unset($validated['image']);
 
@@ -91,7 +95,7 @@ class CollectionController extends Controller
             'sku' => 'nullable|string|max:50|unique:collections,sku,' . $collection->id,
             'category_id' => 'nullable|exists:collection_categories,id',
             'description' => 'nullable|string|max:2000',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:12288',   // 12 MB; larger photos are shrunk on upload
             'size' => 'nullable|string|max:50',
             'color' => 'nullable|string|max:50',
             'price' => 'required|numeric|min:0',
@@ -99,6 +103,9 @@ class CollectionController extends Controller
             'stock_qty' => 'required|integer|min:0',
             'low_stock_threshold' => 'nullable|integer|min:0',
             'status' => 'nullable|in:active,inactive',
+        ], [
+            'image.max' => 'That photo is too large (the limit is 12 MB). Please send a smaller one.',
+            'image.image' => 'That file is not a picture the system can read. Use JPG, PNG or WEBP.',
         ]);
 
         if ($request->hasFile('image')) {
@@ -106,7 +113,7 @@ class CollectionController extends Controller
             if ($collection->image_path) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($collection->image_path);
             }
-            $validated['image_path'] = $request->file('image')->store('collections', 'public');
+            $validated['image_path'] = ProductImage::store($request->file('image'));
         }
         unset($validated['image']);
 
@@ -229,8 +236,12 @@ class CollectionController extends Controller
     {
         $request->validate([
             'images' => 'required|array|min:1|max:10',
-            'images.*' => 'image|max:5120',
+            'images.*' => 'image|max:12288',
             'collection_variant_id' => 'nullable|exists:collection_variants,id',
+        ], [
+            'images.*.max' => 'One of those photos is too large (the limit is 12 MB each). Please send a smaller one.',
+            'images.*.image' => 'One of those files is not a picture the system can read. Use JPG, PNG or WEBP.',
+            'images.max' => 'Please upload up to 10 photos at a time.',
         ]);
 
         $variantId = $request->input('collection_variant_id') ?: null;
@@ -240,7 +251,7 @@ class CollectionController extends Controller
         foreach ($request->file('images') as $file) {
             $created[] = $collection->images()->create([
                 'collection_variant_id' => $variantId,
-                'path' => $file->store('collections', 'public'),
+                'path' => ProductImage::store($file),
                 'alt' => $collection->name,
                 'is_primary' => !$collection->images()->exists(),
                 'sort_order' => ++$next,
