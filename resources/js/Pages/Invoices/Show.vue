@@ -81,6 +81,13 @@ function convertToInvoice() {
     }
 }
 
+// 2.5 rather than 2.50, and 3 rather than 3.00
+function qtyLabel(q) {
+    const n = parseFloat(q);
+    if (!isFinite(n)) return q;
+    return String(parseFloat(n.toFixed(2)));
+}
+
 function shareWhatsApp() {
     const NL = String.fromCharCode(10);
     const inv = props.invoice;
@@ -95,10 +102,10 @@ function shareWhatsApp() {
         // when the whole line is a ridhaa, that is the quantity to show.
         // Printing the garment quantity made every such line read "x1".
         const tailoring = (parseFloat(item.craftsmanship_fee) || 0) + (parseFloat(item.fabric_cost) || 0);
-        const rQty = parseInt(item.ridhaa_qty) || 0;
+        const rQty = parseFloat(item.ridhaa_qty) || 0;
         const rPrice = parseFloat(item.ridhaa_price) || 0;
         const ridhaaOnly = tailoring === 0 && rQty > 0 && rPrice > 0;
-        const qty = ridhaaOnly ? rQty : (parseInt(item.quantity) || 1);
+        const qty = qtyLabel(ridhaaOnly ? rQty : (parseFloat(item.quantity) || 1));
         let name;
         if (item.item_type === 'collection') {
             name = item.collection?.name || item.description || 'Shelf Item';
@@ -111,7 +118,7 @@ function shareWhatsApp() {
         const parts = [`  - ${name} x${qty}: ${formatCurrency(item.line_total)}`];
         // a ridhaa written onto a garment line is its own item to the customer
         if (!ridhaaOnly && rQty > 0 && rPrice > 0 && name !== item.ridhaa_name) {
-            parts.push(`      incl. ${item.ridhaa_name || 'Ridhaa'} x${item.ridhaa_qty}`);
+            parts.push(`      incl. ${item.ridhaa_name || 'Ridhaa'} x${qtyLabel(rQty)}`);
         }
         return parts.join(NL);
     }).join(NL) || '';
@@ -246,7 +253,7 @@ function shareWhatsApp() {
                                     <span v-if="item.collection?.size">{{ item.collection.size }}</span>
                                     <span v-if="item.collection?.color"> · {{ item.collection.color }}</span>
                                 </td>
-                                <td class="px-6 py-3 text-center text-gray-600">{{ item.quantity }}</td>
+                                <td class="px-6 py-3 text-center text-gray-600">{{ qtyLabel(item.quantity) }}</td>
                                 <td class="px-6 py-3 text-right text-gray-900">{{ formatCurrency(item.unit_price) }}</td>
                                 <td class="px-6 py-3 text-right font-medium text-gray-900">{{ formatCurrency(item.line_total) }}</td>
                             </template>
@@ -271,7 +278,7 @@ function shareWhatsApp() {
                                     <span v-if="item.fabric" class="text-xs text-gray-500 ml-1">· {{ item.fabric.name }}</span>
                                     <span v-if="!item.measurement && !item.fabric" class="text-gray-400">—</span>
                                 </td>
-                                <td class="px-6 py-3 text-center text-gray-600">{{ item.quantity }}</td>
+                                <td class="px-6 py-3 text-center text-gray-600">{{ qtyLabel(item.quantity) }}</td>
                                 <td class="px-6 py-3 text-right text-gray-900 text-xs">
                                     <div>Fee: {{ formatCurrency(item.craftsmanship_fee) }}</div>
                                     <div v-if="Number(item.fabric_cost) > 0" class="text-gray-500">Fabric: {{ formatCurrency(item.fabric_cost) }}</div>

@@ -8,14 +8,14 @@
  * quantity: it is a separate item written onto the line at invoice time.
  */
 export function ridhaaTotal(item) {
-    const qty = parseInt(item?.ridhaa_qty) || 0;
+    const qty = parseFloat(item?.ridhaa_qty) || 0;
     const price = parseFloat(item?.ridhaa_price) || 0;
     return qty * price;
 }
 
 export function lineItemTotal(item) {
     if (!item) return 0;
-    const qty = parseInt(item.quantity) || 1;
+    const qty = parseFloat(item.quantity) || 1;
 
     if (item.item_type === 'collection') {
         return (parseFloat(item.unit_price) || 0) * qty;

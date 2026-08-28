@@ -96,13 +96,23 @@ class InvoiceController extends Controller
             'line_items.*.collection_id' => 'nullable|exists:collections,id',
             'line_items.*.description' => 'nullable|string|max:255',
             'line_items.*.unit_price' => 'nullable|numeric|min:0',
-            'line_items.*.quantity' => 'required|integer|min:1',
+            'line_items.*.quantity' => 'required|numeric|min:0.01',   // fabric sells by the metre
             'line_items.*.craftsmanship_fee' => 'nullable|numeric|min:0',
             'line_items.*.fabric_cost' => 'nullable|numeric|min:0',
             'line_items.*.ridhaa_name' => 'nullable|string|max:255',
-            'line_items.*.ridhaa_qty' => 'nullable|integer|min:0',
+            'line_items.*.ridhaa_qty' => 'nullable|numeric|min:0',
             'line_items.*.ridhaa_price' => 'nullable|numeric|min:0',
         ]);
+
+        // Shelf items come out of counted stock, so they stay whole units.
+        foreach ($validated['line_items'] as $i => $li) {
+            if (($li['item_type'] ?? 'custom') === 'collection'
+                && floor((float) $li['quantity']) != (float) $li['quantity']) {
+                throw ValidationException::withMessages([
+                    "line_items.{$i}.quantity" => 'Shelf items are sold in whole units.',
+                ]);
+            }
+        }
 
         // A line item may only reference people — and their measurements —
         // belonging to this invoice's own client. Without this, a stale

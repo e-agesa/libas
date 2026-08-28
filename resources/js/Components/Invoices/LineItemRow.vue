@@ -77,6 +77,13 @@ function onMeasurementChange(e) {
     update('measurement_id', v ? parseInt(v) : null);
 }
 
+// The name carries the code (e.g. "AL MAS FABRIC AM01"); colour and type are
+// what tell two otherwise identical fabrics apart in the list.
+function fabricLabel(f) {
+    const detail = [f.color, f.type].filter(Boolean).join(" · ");
+    return `${f.name}${detail ? " — " + detail : ""} (KES ${Number(f.price_per_unit).toLocaleString()})`;
+}
+
 function onFabricChange(fabricId) {
     const fabric = props.fabrics.find(f => f.id === parseInt(fabricId));
     const updates = { ...props.item, fabric_id: fabricId ? parseInt(fabricId) : null };
@@ -263,7 +270,7 @@ const garmentBadge = computed(() => {
                     class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                 >
                     <option value="">No fabric</option>
-                    <option v-for="f in fabrics" :key="f.id" :value="f.id">{{ f.name }} (KES {{ Number(f.price_per_unit).toLocaleString() }})</option>
+                    <option v-for="f in fabrics" :key="f.id" :value="f.id">{{ fabricLabel(f) }}</option>
                 </select>
             </div>
 
@@ -272,8 +279,9 @@ const garmentBadge = computed(() => {
                 <input
                     type="number"
                     :value="item.quantity"
-                    @input="update('quantity', parseInt($event.target.value) || 1)"
-                    min="1"
+                    @input="update('quantity', parseFloat($event.target.value) || 0)"
+                    min="0"
+                    step="any"
                     class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600"
                 />
             </div>
@@ -332,8 +340,9 @@ const garmentBadge = computed(() => {
                         <input
                             type="number"
                             :value="item.ridhaa_qty"
-                            @input="update('ridhaa_qty', parseInt($event.target.value) || 0)"
+                            @input="update('ridhaa_qty', parseFloat($event.target.value) || 0)"
                             min="0"
+                            step="any"
                             class="w-full rounded-md border-gray-300 text-sm focus:border-amber-500 focus:ring-amber-500"
                         />
                     </div>

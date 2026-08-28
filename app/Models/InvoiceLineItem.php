@@ -30,6 +30,8 @@ class InvoiceLineItem extends Model
     protected function casts(): array
     {
         return [
+            'quantity' => 'decimal:2',
+            'ridhaa_qty' => 'decimal:2',
             'unit_price' => 'decimal:2',
             'craftsmanship_fee' => 'decimal:2',
             'fabric_cost' => 'decimal:2',

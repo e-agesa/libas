@@ -38,7 +38,10 @@ function getContactName(id) {
 }
 
 function getFabricName(id) {
-    return props.fabrics?.find(f => f.id === id)?.name || '—';
+    const f = props.fabrics?.find(x => x.id === id);
+    if (!f) return '—';
+    const detail = [f.color, f.type].filter(Boolean).join(' · ');
+    return detail ? `${f.name} — ${detail}` : f.name;
 }
 
 function formatCurrency(amount) {
