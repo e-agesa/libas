@@ -16,7 +16,8 @@ class FabricController extends Controller
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
+                $q->where('code', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%")
                   ->orWhere('type', 'like', "%{$search}%")
                   ->orWhere('color', 'like', "%{$search}%")
                   ->orWhere('supplier', 'like', "%{$search}%");
@@ -43,6 +44,7 @@ class FabricController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'code' => 'nullable|string|max:50',
             'name' => 'required|string|max:255',
             'type' => 'nullable|string|max:100',
             'color' => 'nullable|string|max:100',
@@ -64,6 +66,7 @@ class FabricController extends Controller
     public function update(Request $request, Fabric $fabric)
     {
         $validated = $request->validate([
+            'code' => 'nullable|string|max:50',
             'name' => 'required|string|max:255',
             'type' => 'nullable|string|max:100',
             'color' => 'nullable|string|max:100',

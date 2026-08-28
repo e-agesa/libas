@@ -74,7 +74,7 @@ function formatCurrency(amount) {
             <div class="flex flex-1 gap-3">
                 <div class="relative flex-1 max-w-md">
                     <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                    <input v-model="search" type="text" placeholder="Search by name, type, color, supplier..." class="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-4 text-sm focus:border-brand-600 focus:ring-brand-600" />
+                    <input v-model="search" type="text" placeholder="Search by code, name, type, color, supplier..." class="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-4 text-sm focus:border-brand-600 focus:ring-brand-600" />
                 </div>
                 <select v-model="status" class="rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-brand-600 focus:ring-brand-600">
                     <option value="">All Status</option>
@@ -91,6 +91,7 @@ function formatCurrency(amount) {
                 <table class="w-full text-sm">
                     <thead class="bg-gray-50 text-left">
                         <tr>
+                            <th class="px-6 py-3 font-medium text-gray-500 uppercase text-xs">Code</th>
                             <th class="px-6 py-3 font-medium text-gray-500 uppercase text-xs">Fabric</th>
                             <th class="px-6 py-3 font-medium text-gray-500 uppercase text-xs hidden md:table-cell">Type</th>
                             <th class="px-6 py-3 font-medium text-gray-500 uppercase text-xs hidden md:table-cell">Color</th>
@@ -103,6 +104,10 @@ function formatCurrency(amount) {
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         <tr v-for="fabric in fabrics.data" :key="fabric.id" class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <span v-if="fabric.code" class="inline-flex rounded bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-700">{{ fabric.code }}</span>
+                                <span v-else class="text-gray-300">—</span>
+                            </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
                                     <div class="font-medium text-gray-900">{{ fabric.name }}</div>

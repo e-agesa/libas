@@ -81,7 +81,8 @@ function onMeasurementChange(e) {
 // what tell two otherwise identical fabrics apart in the list.
 function fabricLabel(f) {
     const detail = [f.color, f.type].filter(Boolean).join(" · ");
-    return `${f.name}${detail ? " — " + detail : ""} (KES ${Number(f.price_per_unit).toLocaleString()})`;
+    const code = f.code ? `${f.code} · ` : "";
+    return `${code}${f.name}${detail ? " — " + detail : ""} (KES ${Number(f.price_per_unit).toLocaleString()})`;
 }
 
 function onFabricChange(fabricId) {

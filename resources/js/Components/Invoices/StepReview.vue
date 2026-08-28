@@ -41,7 +41,8 @@ function getFabricName(id) {
     const f = props.fabrics?.find(x => x.id === id);
     if (!f) return '—';
     const detail = [f.color, f.type].filter(Boolean).join(' · ');
-    return detail ? `${f.name} — ${detail}` : f.name;
+    const name = f.code ? `${f.code} · ${f.name}` : f.name;
+    return detail ? `${name} — ${detail}` : name;
 }
 
 function formatCurrency(amount) {

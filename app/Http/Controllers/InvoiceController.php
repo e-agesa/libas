@@ -62,7 +62,7 @@ class InvoiceController extends Controller
                 // without them, search-by-phone silently matched nothing.
             ])->select('id', 'name', 'phone', 'email')->orderBy('name')->get(),
             'fabrics' => fn () => Fabric::where('status', 'active')
-                ->select('id', 'name', 'type', 'color', 'price_per_unit')
+                ->select('id', 'code', 'name', 'type', 'color', 'price_per_unit')
                 ->orderBy('name')->get(),
             'collections' => fn () => Collection::active()->inStock()
                 ->with('category:id,name')

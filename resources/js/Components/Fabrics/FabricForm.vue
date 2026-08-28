@@ -14,6 +14,7 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 
 const form = useForm({
+    code: '',
     name: '',
     type: '',
     color: '',
@@ -26,6 +27,7 @@ const form = useForm({
 
 watch(() => props.show, (val) => {
     if (val && props.fabric) {
+        form.code = props.fabric.code || '';
         form.name = props.fabric.name || '';
         form.type = props.fabric.type || '';
         form.color = props.fabric.color || '';
@@ -62,6 +64,13 @@ function submit() {
 
             <div class="space-y-4">
                 <!-- Name -->
+                <div>
+                    <InputLabel for="fab_code" value="Code" />
+                    <TextInput id="fab_code" v-model="form.code" type="text" class="mt-1 block w-full" placeholder="e.g. AM01" />
+                    <p class="mt-1 text-xs text-gray-500">Your own reference for this fabric — searchable, and shown when picking fabric on an invoice.</p>
+                    <InputError :message="form.errors.code" class="mt-1" />
+                </div>
+
                 <div>
                     <InputLabel for="fab_name" value="Fabric Name *" />
                     <TextInput id="fab_name" v-model="form.name" type="text" class="mt-1 block w-full" required autofocus placeholder="e.g. White Cotton Poplin" />
