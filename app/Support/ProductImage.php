@@ -26,6 +26,14 @@ class ProductImage
     public const QUALITY = 82;
 
     /**
+     * Re-encode anything heavier than this even when its dimensions are fine.
+     * Phone and design-tool exports arrive at maximum quality — 1024x1024 JPEGs
+     * of nearly 5 MB were being served untouched because only the pixel size
+     * was checked. At 1600px a photo has no business being over half a megabyte.
+     */
+    public const MAX_BYTES = 600000;
+
+    /**
      * @return string the stored path, relative to the public disk
      */
     public static function store(UploadedFile $file, string $directory = 'collections'): string
@@ -62,8 +70,11 @@ class ProductImage
         [$width, $height] = $info;
         $mime = $info['mime'] ?? '';
 
-        if ($width <= self::MAX_EDGE && $height <= self::MAX_EDGE) {
-            return false; // already a sensible size
+        $tooWide = $width > self::MAX_EDGE || $height > self::MAX_EDGE;
+        $tooHeavy = filesize($path) > self::MAX_BYTES;
+
+        if (!$tooWide && !$tooHeavy) {
+            return false; // already a sensible size and weight
         }
 
         $source = match ($mime) {
@@ -78,7 +89,7 @@ class ProductImage
             return false;
         }
 
-        $scale = self::MAX_EDGE / max($width, $height);
+        $scale = $tooWide ? self::MAX_EDGE / max($width, $height) : 1.0;
         $newWidth = max(1, (int) round($width * $scale));
         $newHeight = max(1, (int) round($height * $scale));
 
@@ -96,7 +107,7 @@ class ProductImage
 
         $written = match ($mime) {
             'image/jpeg' => imagejpeg($target, $path, self::QUALITY),
-            'image/png'  => imagepng($target, $path, 6),
+            'image/png'  => imagepng($target, $path, 9),
             'image/webp' => imagewebp($target, $path, self::QUALITY),
             'image/gif'  => imagegif($target, $path),
             default      => false,
