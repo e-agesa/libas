@@ -23,7 +23,8 @@ class ReportController extends Controller
         // Revenue summary
         $invoicesInRange = Invoice::whereBetween('date', [$from, $to]);
         $totalRevenue = (clone $invoicesInRange)->where('status', 'paid')->sum('total');
-        $totalInvoiced = (clone $invoicesInRange)->sum('total');
+        // A voided invoice is a cancelled sale — it must not count as invoiced.
+        $totalInvoiced = (clone $invoicesInRange)->where('status', '!=', 'voided')->sum('total');
         $totalOutstanding = (clone $invoicesInRange)->whereIn('status', ['issued', 'overdue'])->sum('balance');
         $invoiceCount = (clone $invoicesInRange)->count();
 

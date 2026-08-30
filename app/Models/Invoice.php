@@ -17,6 +17,7 @@ class Invoice extends Model
         'type',
         'date',
         'status',
+        'stock_restored_at',
         'subtotal',
         'discount',
         'discount_type',
@@ -32,6 +33,7 @@ class Invoice extends Model
     protected function casts(): array
     {
         return [
+            'stock_restored_at' => 'datetime',
             'date' => 'date',
             'due_date' => 'date',
             'subtotal' => 'decimal:2',
@@ -51,6 +53,74 @@ class Invoice extends Model
     public function lineItems()
     {
         return $this->hasMany(InvoiceLineItem::class);
+    }
+
+    /**
+     * Give this invoice's stock back to the shelf.
+     *
+     * Selling a shelf item takes it out of stock; cancelling that sale has to
+     * put it back, or the shop reorders against a figure short by everything
+     * it ever voided. This runs once per invoice — stock_restored_at is the
+     * guard, so voiding and then deleting cannot return the same units twice —
+     * and it writes a return movement per product, so the change shows up in
+     * the stock history instead of appearing from nowhere.
+     *
+     * Returns the number of products whose stock moved.
+     */
+    public function restoreStock(): int
+    {
+        if ($this->stock_restored_at !== null) {
+            return 0;
+        }
+
+        $moved = 0;
+
+        DB::transaction(function () use (&$moved) {
+            $fresh = static::whereKey($this->getKey())->lockForUpdate()->first();
+
+            // Another request may have restored it while we waited for the lock.
+            if (!$fresh || $fresh->stock_restored_at !== null) {
+                return;
+            }
+
+            $lines = $this->lineItems()
+                ->where('item_type', 'collection')
+                ->whereNotNull('collection_id')
+                ->get();
+
+            foreach ($lines as $line) {
+                $collection = Collection::find($line->collection_id);
+
+                // The product may have been deleted since the sale.
+                if (!$collection) {
+                    continue;
+                }
+
+                $qty = (int) round((float) $line->quantity);
+                if ($qty <= 0) {
+                    continue;
+                }
+
+                $collection->increment('stock_qty', $qty);
+                $collection->refresh();
+                $collection->syncSingleVariantStock();
+
+                // Positive quantity = stock coming in, matching how POS and the
+                // shop record a sale going out.
+                StockMovement::record($collection, 'return', $qty, [
+                    'invoice_id' => $this->id,
+                    'reference' => $this->invoice_number,
+                    'notes' => "Returned to stock from {$this->invoice_number}: {$collection->name} x{$qty}",
+                ]);
+
+                $moved++;
+            }
+
+            $fresh->forceFill(['stock_restored_at' => now()])->save();
+            $this->stock_restored_at = $fresh->stock_restored_at;
+        }, 3);
+
+        return $moved;
     }
 
     public function payments()

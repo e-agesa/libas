@@ -9,6 +9,7 @@ use App\Models\Contact;
 use App\Models\Fabric;
 use App\Models\Invoice;
 use App\Models\Measurement;
+use App\Models\StockMovement;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -222,7 +223,18 @@ class InvoiceController extends Controller
                         ]);
                     }
 
-                    Collection::find($item['collection_id'])?->syncSingleVariantStock();
+                    $sold = Collection::find($item['collection_id']);
+                    if ($sold) {
+                        $sold->syncSingleVariantStock();
+                        // POS and the shop log every sale; invoices never did, so
+                        // anything sold on an invoice was missing from the history.
+                        StockMovement::record($sold, 'sale', -$item['quantity'], [
+                            'invoice_id' => $invoice->id,
+                            'reference' => $invoice->invoice_number,
+                            'unit_cost' => $item['unit_price'] ?? 0,
+                            'notes' => "Invoice sale: {$sold->name} x{$item['quantity']}",
+                        ]);
+                    }
                 }
             }
 
@@ -318,6 +330,11 @@ class InvoiceController extends Controller
                 ->with('success', 'Quotation converted to invoice.');
         }
 
+        // Voiding cancels the sale, so the stock goes back on the shelf.
+        if ($validated['status'] === 'voided' && $invoice->status !== 'voided') {
+            $invoice->restoreStock();
+        }
+
         $invoice->update(['status' => $validated['status']]);
 
         return redirect()->back()
@@ -330,6 +347,11 @@ class InvoiceController extends Controller
             return redirect()->back()
                 ->with('error', 'Cannot delete a paid invoice.');
         }
+
+        // Same reasoning as voiding: the sale is going away, so its stock must
+        // come back. restoreStock() is idempotent, so voiding first then
+        // deleting does not return the same units twice.
+        $invoice->restoreStock();
 
         $invoice->delete();
 

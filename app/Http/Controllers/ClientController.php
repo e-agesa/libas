@@ -127,7 +127,7 @@ class ClientController extends Controller
             'invoices' => fn ($q) => $q->orderBy('date'),
         ]);
 
-        $totalInvoiced = $client->invoices->sum('total');
+        $totalInvoiced = $client->invoices->where('status', '!=', 'voided')->sum('total');
         $totalPaid = $client->invoices->sum('amount_paid');
         $totalBalance = $client->invoices->sum('balance');
 
@@ -158,7 +158,7 @@ class ClientController extends Controller
         ]);
 
         $company = CompanySetting::get();
-        $totalInvoiced = $client->invoices->sum('total');
+        $totalInvoiced = $client->invoices->where('status', '!=', 'voided')->sum('total');
         $totalPaid = $client->invoices->sum('amount_paid');
         $totalBalance = $client->invoices->sum('balance');
 
