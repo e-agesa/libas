@@ -66,7 +66,7 @@ class InvoiceController extends Controller
                 ->orderBy('name')->get(),
             'collections' => fn () => Collection::active()->inStock()
                 ->with('category:id,name')
-                ->select('id', 'category_id', 'name', 'sku', 'size', 'color', 'price', 'stock_qty')
+                ->select('id', 'category_id', 'name', 'sku', 'size', 'color', 'price', 'stock_qty', 'image_path')
                 ->orderBy('name')->get(),
             'invoiceNumber' => fn () => Invoice::generateInvoiceNumber(),
             'quoteNumber' => fn () => Invoice::generateQuoteNumber(),
@@ -335,6 +335,26 @@ class InvoiceController extends Controller
 
         return redirect()->route('invoices.index')
             ->with('success', 'Invoice deleted successfully.');
+    }
+
+    /**
+     * The same invoice on an 80mm thermal roll. The A4 PDF does not fit a
+     * receipt printer, so the shop had nothing to hand a customer.
+     */
+    public function thermal(Invoice $invoice)
+    {
+        $invoice->load([
+            'client', 'lineItems.contact', 'lineItems.measurement',
+            'lineItems.fabric', 'lineItems.collection', 'payments',
+        ]);
+
+        $company = CompanySetting::first() ?? new CompanySetting();
+
+        $pdf = Pdf::loadView('pdf.thermal-receipt', compact('invoice', 'company'));
+        // 226.77pt = 80mm. The height grows with the content.
+        $pdf->setPaper([0, 0, 226.77, 1200], 'portrait');
+
+        return $pdf->stream("receipt-{$invoice->invoice_number}.pdf");
     }
 
     public function pdf(Invoice $invoice)

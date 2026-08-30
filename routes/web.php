@@ -169,6 +169,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
     Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
     Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+    Route::get('/invoices/{invoice}/thermal', [InvoiceController::class, 'thermal'])->name('invoices.thermal');
 
     // Payments
     Route::post('/invoices/{invoice}/payments', [PaymentController::class, 'store'])->name('payments.store');

@@ -224,11 +224,11 @@ class PosController extends Controller
 
     public function receipt(Invoice $invoice)
     {
-        $invoice->load(['client', 'lineItems.collection', 'payments']);
+        $invoice->load(['client', 'lineItems.contact', 'lineItems.measurement', 'lineItems.fabric', 'lineItems.collection', 'payments']);
 
         $company = \App\Models\CompanySetting::first() ?? new \App\Models\CompanySetting();
 
-        $pdf = Pdf::loadView('pdf.pos-receipt', compact('invoice', 'company'));
+        $pdf = Pdf::loadView('pdf.thermal-receipt', compact('invoice', 'company'));
         $pdf->setPaper([0, 0, 226.77, 600], 'portrait'); // ~80mm thermal receipt width
 
         return $pdf->stream("receipt-{$invoice->invoice_number}.pdf");

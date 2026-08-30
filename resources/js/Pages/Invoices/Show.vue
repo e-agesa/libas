@@ -187,6 +187,9 @@ function shareWhatsApp() {
                         <button @click="openStatusModal" class="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                             <i class="pi pi-sync text-xs"></i> Status
                         </button>
+                        <a :href="route('invoices.thermal', invoice.id)" target="_blank" class="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50" title="80mm receipt for the thermal printer">
+                            <i class="pi pi-print text-xs"></i> Thermal
+                        </a>
                         <a :href="route('invoices.pdf', invoice.id)" class="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                             <i class="pi pi-file-pdf text-xs"></i> PDF
                         </a>

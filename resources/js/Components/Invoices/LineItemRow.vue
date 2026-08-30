@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useGarmentTypes } from '@/composables/useGarmentTypes';
 import { lineItemTotal, ridhaaTotal } from '@/composables/useLineTotal';
+import CollectionPicker from './CollectionPicker.vue';
 
 const props = defineProps({
     item: Object,
@@ -32,6 +33,15 @@ const ridhaaLineTotal = computed(() => ridhaaTotal(props.item));
 
 function update(field, value) {
     emit('update', props.index, { ...props.item, [field]: value });
+}
+
+function onCollectionPicked(col) {
+    emit('update', props.index, {
+        ...props.item,
+        collection_id: col ? col.id : null,
+        description: col ? `${col.name}${col.size ? ' — ' + col.size : ''}${col.color ? ' (' + col.color + ')' : ''}` : '',
+        unit_price: col ? parseFloat(col.price) : 0,
+    });
 }
 
 function onCollectionChange(collectionId) {
@@ -128,21 +138,11 @@ const garmentBadge = computed(() => {
         <div v-if="isCollection" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="sm:col-span-2">
                 <label class="text-xs font-medium text-gray-600 mb-1 block">Collection Item *</label>
-                <select
-                    :value="item.collection_id"
-                    @change="onCollectionChange($event.target.value)"
-                    class="w-full rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
-                    required
-                >
-                    <option value="">Select item...</option>
-                    <option v-for="col in collections" :key="col.id" :value="col.id">
-                        {{ col.name }}
-                        <template v-if="col.size"> — {{ col.size }}</template>
-                        <template v-if="col.color"> ({{ col.color }})</template>
-                        · KES {{ Number(col.price).toLocaleString() }}
-                        · Stock: {{ col.stock_qty }}
-                    </option>
-                </select>
+                <CollectionPicker
+                    :collections="collections"
+                    :model-value="item.collection_id"
+                    @select="onCollectionPicked"
+                />
             </div>
 
             <div>
