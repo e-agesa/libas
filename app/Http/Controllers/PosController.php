@@ -152,7 +152,17 @@ class PosController extends Controller
             $includedTotal = 0;
             $includedNotes = [];
             foreach ($includeInvoices as $pendingId) {
-                $pending = Invoice::findOrFail($pendingId);
+                // Under a row lock, and re-read after taking it. Settling an
+                // order here used to compute the balance from an unlocked read:
+                // a cashier settling at the till while someone recorded a
+                // payment on the invoice screen would overwrite the other's
+                // figure, and the payment would vanish from the amount paid.
+                $pending = Invoice::whereKey($pendingId)->lockForUpdate()->first();
+
+                if (! $pending) {
+                    continue;
+                }
+
                 $balance = $pending->balance ?? ($pending->total - ($pending->amount_paid ?? 0));
 
                 if ($balance <= 0) continue;

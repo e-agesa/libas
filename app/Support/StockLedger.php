@@ -155,7 +155,14 @@ class StockLedger
      */
     protected static function drawDown(Collection $collection, int $qty): bool
     {
-        $variants = $collection->variants()->orderBy('sort_order')->orderBy('id')->get();
+        // Locked for the life of the transaction. Without this the sum below is
+        // read outside any guard, so two callers could both find enough stock
+        // and both take it — the very oversell the named-variation path was
+        // written to prevent. The web shop always lands here, because its pages
+        // do not offer variations to choose from.
+        $variants = $collection->variants()
+            ->orderBy('sort_order')->orderBy('id')
+            ->lockForUpdate()->get();
 
         if ($variants->sum('stock_qty') < $qty) {
             return false;
@@ -170,10 +177,22 @@ class StockLedger
 
             $take = min($left, (int) $v->stock_qty);
 
-            if ($take > 0) {
-                CollectionVariant::whereKey($v->id)->decrement('stock_qty', $take);
-                $left -= $take;
+            if ($take <= 0) {
+                continue;
             }
+
+            // Guarded, like every other decrement here, so the lock is a
+            // performance nicety rather than the only thing standing between
+            // this and negative stock.
+            $taken = CollectionVariant::whereKey($v->id)
+                ->where('stock_qty', '>=', $take)
+                ->decrement('stock_qty', $take);
+
+            if (! $taken) {
+                return false;
+            }
+
+            $left -= $take;
         }
 
         return $left <= 0;
