@@ -58,7 +58,9 @@ const entries = computed(() => {
                 sku: c.sku, size: c.size, color: c.color, design: null,
                 price: c.price,
                 stock_qty: c.stock_qty,
-                image_url: c.image_url,
+                // A lone unnamed variation is still what is being sold, so its
+                // own photograph wins over the product's.
+                image_url: (variants.length === 1 ? variants[0].image_url : null) || c.image_url,
                 category: c.category,
             });
         }

@@ -253,8 +253,28 @@ class CollectionController extends Controller
     public function destroyVariant(CollectionVariant $variant)
     {
         $collection = $variant->collection;
+
+        // The photographs belonged to this variation, not to the product. The
+        // foreign key only nulls the link, so without this a deleted Navy
+        // variation leaves its navy photo behind as a photo of the product —
+        // and, if it happened to be the primary, as the product's headline.
+        foreach ($variant->images()->get() as $image) {
+            if ($image->path && ! str_starts_with($image->path, 'http')) {
+                Storage::disk('public')->delete($image->path);
+            }
+            $image->delete();
+        }
+
         $variant->delete();
         $this->syncProductStock($collection);
+
+        if ($collection) {
+            // Never leave the product with no lead photograph.
+            if (! $collection->images()->where('is_primary', true)->exists()) {
+                $collection->images()->orderBy('sort_order')->first()?->update(['is_primary' => true]);
+            }
+            $collection->syncImagePathFromGallery();
+        }
 
         return response()->json(['ok' => true]);
     }
@@ -349,8 +369,12 @@ class CollectionController extends Controller
 
     public function setPrimaryImage(CollectionImage $image)
     {
-        $image->collection->images()->update(['is_primary' => false]);
-        $image->update(['is_primary' => true]);
+        // Exclude the row being promoted from the clear. Clearing it first and
+        // setting it again through the stale route-bound model let Eloquent
+        // decide nothing had changed and skip the write — leaving the product
+        // with no primary photograph at all.
+        $image->collection->images()->whereKeyNot($image->getKey())->update(['is_primary' => false]);
+        $image->forceFill(['is_primary' => true])->save();
         $image->collection->syncImagePathFromGallery();
         $image->variant?->syncImagePathFromGallery();
 

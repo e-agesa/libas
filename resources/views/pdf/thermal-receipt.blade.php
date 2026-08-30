@@ -20,7 +20,8 @@
         .bold { font-weight: bold; }
         .divider { border-top: 1px dashed #000; margin: 7px 0; }
 
-        .logo-img { max-width: 150px; max-height: 80px; margin-bottom: 6px; }
+        /* Nearly the full printable width — the counter asked for it big. */
+        .logo-img { max-width: 210px; max-height: 110px; margin-bottom: 7px; }
         .brand { font-size: 22px; font-weight: bold; letter-spacing: 1px; margin-bottom: 3px; }
         .brand-sub { font-size: 11px; margin-bottom: 4px; }
 

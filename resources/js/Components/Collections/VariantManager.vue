@@ -156,6 +156,13 @@ async function removeImage(img) {
     try {
         await window.axios.delete(route('collection-images.destroy', img.id));
         images.value = images.value.filter(i => i.id !== img.id);
+
+        // The server promotes the next photo when the main one goes; mirror it
+        // here, or the grid shows no "Main" badge until the modal is reopened.
+        if (img.is_primary && images.value.length && !images.value.some(i => i.is_primary)) {
+            images.value[0].is_primary = true;
+        }
+
         emit('saved');
     } catch (e) {
         error.value = 'Could not delete that photo.';

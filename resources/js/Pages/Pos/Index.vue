@@ -137,7 +137,9 @@ const sellables = computed(() => {
                 sku: c.sku, size: c.size, color: c.color, design: null,
                 price: c.price,
                 stock_qty: c.stock_qty,
-                image_url: c.image_url,
+                // A lone unnamed variation is still what is being sold, so its
+                // own photograph wins over the product's.
+                image_url: (variants.length === 1 ? variants[0].image_url : null) || c.image_url,
                 category: c.category,
                 description: c.description,
             });
@@ -261,23 +263,34 @@ function completeSale() {
 function addOrderItemToCart(lineItem, invoiceNumber) {
     const col = lineItem.collection;
     if (!col) return;
-    const existing = cart.value.find(c => c.collection_id === col.id);
+
+    const v = lineItem.variant;
+    const variantId = v?.id ?? lineItem.collection_variant_id ?? null;
+
+    // Two variations of one product are two cart lines, and settling the order
+    // has to take the stock off the one that was actually ordered.
+    const existing = cart.value.find(c =>
+        c.collection_id === col.id && (c.variant_id ?? null) === variantId);
+
     if (existing) {
         existing.quantity = Math.min(existing.quantity + lineItem.quantity, existing.max_qty);
-    } else {
-        cart.value.push({
-            collection_id: col.id,
-            name: col.name,
-            sku: col.sku || null,
-            size: col.size || null,
-            color: col.color || null,
-            unit_price: parseFloat(lineItem.unit_price || col.price),
-            quantity: lineItem.quantity,
-            max_qty: col.stock_qty || 999,
-            image_url: col.image_path ? `/storage/${col.image_path}` : null,
-            from_invoice: invoiceNumber,
-        });
+        return;
     }
+
+    cart.value.push({
+        collection_id: col.id,
+        variant_id: variantId,
+        name: col.name,
+        variant_label: v ? [v.size, v.color, v.design].filter(Boolean).join(' · ') : '',
+        sku: v?.sku || col.sku || null,
+        size: v?.size ?? col.size ?? null,
+        color: v?.color ?? col.color ?? null,
+        unit_price: parseFloat(lineItem.unit_price || v?.price || col.price),
+        quantity: lineItem.quantity,
+        max_qty: (v ? v.stock_qty : col.stock_qty) || 999,
+        image_url: (v?.image_path || col.image_path) ? `/storage/${v?.image_path || col.image_path}` : null,
+        from_invoice: invoiceNumber,
+    });
 }
 
 function printReceipt() {

@@ -223,4 +223,60 @@ class VariationPhotoTest extends TestCase
         $this->assertNull($listed->image_url,
             'so the screen can fall back to the product photo it already holds');
     }
+public function test_deleting_a_variation_takes_its_photographs_with_it(): void
+    {
+        $product = $this->createProductWithPhoto();
+        $original = $product->image_path;
+
+        $variant = CollectionVariant::create([
+            'collection_id' => $product->id,
+            'size' => '21.5', 'color' => 'Navy',
+            'stock_qty' => 3, 'status' => 'active',
+        ]);
+
+        $this->actingAs($this->staff)
+            ->post("/collections/{$product->id}/images", [
+                'images' => [$this->photo('navy.jpg')],
+                'collection_variant_id' => $variant->id,
+            ])->assertSuccessful();
+
+        $navy = CollectionImage::where('collection_variant_id', $variant->id)->firstOrFail();
+
+        $this->actingAs($this->staff)
+            ->delete("/collection-variants/{$variant->id}")
+            ->assertSuccessful();
+
+        $this->assertDatabaseMissing('collection_images', ['id' => $navy->id]);
+        Storage::disk('public')->assertMissing($navy->path);
+        $this->assertSame($original, $product->fresh()->image_path,
+            "the product should still show its own photo, not the deleted variation's");
+    }
+
+    public function test_the_product_always_keeps_a_main_photo(): void
+    {
+        $product = $this->createProductWithPhoto();
+
+        $variant = CollectionVariant::create([
+            'collection_id' => $product->id,
+            'size' => '22', 'color' => 'Gold',
+            'stock_qty' => 1, 'status' => 'active',
+        ]);
+
+        $this->actingAs($this->staff)
+            ->post("/collections/{$product->id}/images", [
+                'images' => [$this->photo('gold.jpg')],
+                'collection_variant_id' => $variant->id,
+            ])->assertSuccessful();
+
+        $gold = CollectionImage::where('collection_variant_id', $variant->id)->firstOrFail();
+
+        // Promoting a photo must never leave the product with none promoted.
+        $this->actingAs($this->staff)->post("/collection-images/{$gold->id}/primary")->assertSuccessful();
+        $this->assertSame(1, CollectionImage::where('collection_id', $product->id)->where('is_primary', true)->count());
+        $this->assertTrue($gold->fresh()->is_primary);
+
+        // Promoting the same one again is a no-op, not a way to lose the flag.
+        $this->actingAs($this->staff)->post("/collection-images/{$gold->id}/primary")->assertSuccessful();
+        $this->assertSame(1, CollectionImage::where('collection_id', $product->id)->where('is_primary', true)->count());
+    }
 }
