@@ -138,7 +138,18 @@ class CollectionController extends Controller
         $validated['cost_price'] = $validated['cost_price'] ?? 0;
         $validated['stock_qty'] = $validated['stock_qty'] ?? $collection->stock_qty;
 
+        // A product sold by size holds no stock of its own. The form's Stock
+        // Quantity box would otherwise overwrite the roll-up while every
+        // variation kept its units — and since the roll-up is what the till
+        // filters on, saving 0 there made the whole product disappear from sale
+        // with no way for it to recover.
+        if ($collection->variants()->count() > 1) {
+            unset($validated['stock_qty']);
+        }
+
         $collection->update($validated);
+
+        $collection->recalcStockFromVariants();
 
         if ($request->hasFile('image')) {
             $this->rememberProductPhoto($collection, $validated['image_path'], $replacedPath);
@@ -197,18 +208,52 @@ class CollectionController extends Controller
         $validated = $request->validate([
             'adjustment' => 'required|integer',
             'reason' => 'nullable|string|max:255',
+            'collection_variant_id' => 'nullable|exists:collection_variants,id',
         ]);
 
-        $newQty = $collection->stock_qty + $validated['adjustment'];
-        if ($newQty < 0) {
-            return redirect()->back()->with('error', 'Stock cannot go below zero.');
+        $variants = $collection->variants()->orderBy('sort_order')->orderBy('id')->get();
+        $variantId = $validated['collection_variant_id'] ?? null;
+
+        // A product that is sold by size holds no stock of its own — its figure
+        // is the sum of its variations. Adding to the product row alone put the
+        // units nowhere sellable, and the next sale recomputed the roll-up and
+        // erased them. So the delivery has to say which variation it is for.
+        if ($variants->count() > 1 && ! $variantId) {
+            return redirect()->back()->with(
+                'error',
+                'This product is sold by size, colour or design. Choose which variation the stock is for.'
+            );
         }
 
-        $collection->update(['stock_qty' => $newQty]);
-        $collection->syncSingleVariantStock();
+        $variant = $variantId ? $variants->firstWhere('id', (int) $variantId) : $variants->first();
+
+        if ($variantId && ! $variant) {
+            return redirect()->back()->with('error', 'That variation does not belong to this product.');
+        }
+
+        if ($variant) {
+            $newQty = (int) $variant->stock_qty + $validated['adjustment'];
+
+            if ($newQty < 0) {
+                return redirect()->back()->with('error', 'Stock cannot go below zero.');
+            }
+
+            $variant->update(['stock_qty' => $newQty]);
+            $collection->recalcStockFromVariants();
+            $collection->refresh();
+        } else {
+            $newQty = $collection->stock_qty + $validated['adjustment'];
+
+            if ($newQty < 0) {
+                return redirect()->back()->with('error', 'Stock cannot go below zero.');
+            }
+
+            $collection->update(['stock_qty' => $newQty]);
+        }
 
         StockMovement::record($collection, 'adjustment', $validated['adjustment'], [
-            'notes' => $validated['reason'] ?? 'Manual stock adjustment',
+            'notes' => trim(($validated['reason'] ?? 'Manual stock adjustment')
+                . ($variant && $variants->count() > 1 ? " [{$variant->label}]" : '')),
         ]);
 
         return redirect()->back()->with('success', 'Stock adjusted.');

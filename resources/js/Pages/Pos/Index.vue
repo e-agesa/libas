@@ -135,10 +135,12 @@ const sellables = computed(() => {
                 name: c.name,
                 variant_label: '',
                 sku: c.sku, size: c.size, color: c.color, design: null,
-                price: c.price,
-                stock_qty: c.stock_qty,
-                // A lone unnamed variation is still what is being sold, so its
-                // own photograph wins over the product's.
+                // A lone unnamed variation is still the thing being sold, so its
+                // own price, stock and photograph are the ones that count. The
+                // tile used to take its id, stock and photo but bill the
+                // product's price — which undercharges wherever they differ.
+                price: (variants.length === 1 && variants[0].price != null) ? variants[0].price : c.price,
+                stock_qty: variants.length === 1 ? variants[0].stock_qty : c.stock_qty,
                 image_url: (variants.length === 1 ? variants[0].image_url : null) || c.image_url,
                 category: c.category,
                 description: c.description,

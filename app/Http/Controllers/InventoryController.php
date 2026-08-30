@@ -116,6 +116,16 @@ class InventoryController extends Controller
             $qty = -$qty;
         }
 
+        if ($model instanceof \App\Models\Collection && $model->variants()->count() > 1) {
+            // Its stock lives on its variations and the product figure is only
+            // their sum, so adding here would put the units nowhere sellable
+            // and the next sale would recompute the total and erase them.
+            return redirect()->back()->with(
+                'error',
+                "\"{$model->name}\" is sold by size, colour or design. Add the stock under Collections → Variations so it lands on the right one."
+            );
+        }
+
         $model->increment('stock_qty', $qty);
         if ($model instanceof \App\Models\Collection) {
             $model->refresh()->syncSingleVariantStock();

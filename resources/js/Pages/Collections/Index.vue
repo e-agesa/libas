@@ -2,7 +2,7 @@
 import VariantManager from '@/Components/Collections/VariantManager.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import CollectionForm from '@/Components/Collections/CollectionForm.vue';
 import CategoryForm from '@/Components/Collections/CategoryForm.vue';
 
@@ -23,6 +23,9 @@ const showStockModal = ref(false);
 const stockItem = ref(null);
 const stockAdjustment = ref(0);
 const stockReason = ref('');
+const stockVariants = ref([]);
+const stockVariantId = ref(null);
+const loadingStockVariants = ref(false);
 
 let searchTimeout = null;
 watch(search, (value) => {
@@ -86,17 +89,50 @@ function openStockAdjust(item) {
     stockAdjustment.value = 0;
     stockReason.value = '';
     showStockModal.value = true;
+    loadStockVariants(item);
 }
 
 function submitStockAdjust() {
     router.post(route('collections.adjust-stock', stockItem.value.id), {
         adjustment: stockAdjustment.value,
         reason: stockReason.value,
+        collection_variant_id: stockVariantId.value || null,
     }, {
         preserveScroll: true,
         onSuccess: () => { showStockModal.value = false; },
     });
 }
+
+// A product sold by size holds its stock on the variations, so a delivery has
+// to say which one it is for — otherwise the units land on the product's
+// roll-up, where nothing can sell them and the next sale wipes them out.
+async function loadStockVariants(item) {
+    stockVariants.value = [];
+    stockVariantId.value = null;
+
+    if (!item?.variants_count || item.variants_count < 2) return;
+
+    loadingStockVariants.value = true;
+    try {
+        const { data } = await window.axios.get(route('collections.variants', item.id));
+        stockVariants.value = (data.variants || []).filter(v => v.status !== 'inactive');
+    } catch (e) {
+        stockVariants.value = [];
+    }
+    loadingStockVariants.value = false;
+}
+
+const chosenStockVariant = computed(() =>
+    stockVariants.value.find(v => v.id === stockVariantId.value) || null
+);
+
+// What the figure being changed actually is: the variation's, or the product's.
+const stockBaseQty = computed(() => {
+    if (stockVariants.value.length > 1) {
+        return chosenStockVariant.value ? Number(chosenStockVariant.value.stock_qty) : null;
+    }
+    return Number(stockItem.value?.stock_qty || 0);
+});
 
 function stockBadge(item) {
     const qty = Number(item.stock_qty);
@@ -260,7 +296,25 @@ function deleteCategory(cat) {
             <div v-if="showStockModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showStockModal = false">
                 <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
                     <h3 class="text-lg font-semibold mb-4">Adjust Stock — {{ stockItem?.name }}</h3>
-                    <p class="text-sm text-gray-500 mb-3">Current: <strong>{{ stockItem?.stock_qty }}</strong></p>
+                    <p v-if="stockVariants.length < 2" class="text-sm text-gray-500 mb-3">Current: <strong>{{ stockItem?.stock_qty }}</strong></p>
+
+                    <!-- Sold by size: the delivery has to land on one variation,
+                         not on the product's roll-up, where nothing can sell it. -->
+                    <div v-else class="mb-3">
+                        <label class="mb-1 block text-sm font-medium text-gray-700">Which variation?</label>
+                        <select v-model.number="stockVariantId" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600">
+                            <option :value="null">Choose a variation…</option>
+                            <option v-for="v in stockVariants" :key="v.id" :value="v.id">
+                                {{ v.label }} — {{ v.stock_qty }} in stock
+                            </option>
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">
+                            This product is sold by size, colour or design, so each one keeps its own stock.
+                            The product total ({{ stockItem?.stock_qty }}) is the sum of them.
+                        </p>
+                    </div>
+
+                    <p v-if="loadingStockVariants" class="mb-3 text-xs text-gray-400">Loading variations…</p>
                     <div class="mb-3">
                         <label class="text-xs font-medium text-gray-600 mb-1 block">Adjustment (+/-)</label>
                         <input v-model.number="stockAdjustment" type="number" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" placeholder="e.g. +5 or -2" />
@@ -270,11 +324,15 @@ function deleteCategory(cat) {
                         <input v-model="stockReason" type="text" class="w-full rounded-md border-gray-300 text-sm focus:border-brand-600 focus:ring-brand-600" placeholder="e.g. New shipment, Damaged, etc." />
                     </div>
                     <p class="text-sm mb-4">
-                        New stock: <strong :class="(stockItem?.stock_qty || 0) + stockAdjustment < 0 ? 'text-red-600' : 'text-green-600'">{{ (stockItem?.stock_qty || 0) + stockAdjustment }}</strong>
+                        <span v-if="stockBaseQty === null" class="text-gray-500">Choose a variation to see the new figure.</span>
+                        <span v-else>
+                            New stock<span v-if="chosenStockVariant"> for {{ chosenStockVariant.label }}</span>:
+                            <strong :class="stockBaseQty + stockAdjustment < 0 ? 'text-red-600' : 'text-green-600'">{{ stockBaseQty + stockAdjustment }}</strong>
+                        </span>
                     </p>
                     <div class="flex justify-end gap-3">
                         <button @click="showStockModal = false" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                        <button @click="submitStockAdjust" :disabled="stockAdjustment === 0" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">Adjust</button>
+                        <button @click="submitStockAdjust" :disabled="stockAdjustment === 0 || stockBaseQty === null" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">Adjust</button>
                     </div>
                 </div>
             </div>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\Collection;
 use App\Models\CollectionCategory;
+use App\Models\CollectionVariant;
 use App\Models\CompanySetting;
 use App\Models\Contact;
 use App\Models\Fabric;
@@ -45,7 +46,16 @@ class ShopController extends Controller
             'collections' => Collection::where('status', 'active')
                 ->where('stock_qty', '>', 0)
                 ->where('show_on_shop', true)
-                ->with('category:id,name')
+                ->with([
+                    'category:id,name',
+                    // The sizes and colours a customer chooses between. Explicit
+                    // columns again — a variation carries no cost, but there is
+                    // no reason to ship reserved or threshold figures either.
+                    'variants' => fn ($q) => $q->where('status', 'active')
+                        ->where('stock_qty', '>', 0)
+                        ->orderBy('sort_order')->orderBy('id')
+                        ->select('id', 'collection_id', 'size', 'color', 'design', 'sku', 'price', 'stock_qty', 'image_path'),
+                ])
                 ->orderBy('name')
                 // Explicit columns: never expose cost_price / low_stock_threshold on the public shop.
                 ->get(['id', 'category_id', 'name', 'sku', 'description', 'image_path', 'size', 'color', 'price', 'stock_qty']),
@@ -66,24 +76,63 @@ class ShopController extends Controller
 
     public function checkout(Request $request)
     {
-        $cartIds = $request->input('items', []);
+        $cart = $request->input('items', []);
 
-        $collections = [];
-        if (!empty($cartIds)) {
-            $ids = collect($cartIds)->pluck('id');
-            $collections = Collection::whereIn('id', $ids)
+        // One entry per cart line, not per product: the same product may be in
+        // the basket twice in two different sizes, and each has its own price,
+        // its own stock and its own photograph. Everything shown is re-read from
+        // the database — the price the browser sends is never trusted.
+        $cartItems = [];
+
+        if (! empty($cart)) {
+            $products = Collection::whereIn('id', collect($cart)->pluck('id')->filter())
                 ->where('status', 'active')
                 ->with('category:id,name')
                 ->get()
-                ->map(function ($item) use ($cartIds) {
-                    $cartItem = collect($cartIds)->firstWhere('id', $item->id);
-                    $item->cart_qty = $cartItem ? min($cartItem['qty'], $item->stock_qty) : 1;
-                    return $item;
-                });
+                ->keyBy('id');
+
+            $variants = CollectionVariant::whereIn('id', collect($cart)->pluck('variant_id')->filter())
+                ->get()
+                ->keyBy('id');
+
+            foreach ($cart as $line) {
+                $product = $products->get($line['id'] ?? null);
+
+                if (! $product) {
+                    continue;
+                }
+
+                // A variation only counts if it really belongs to this product.
+                $variant = $variants->get($line['variant_id'] ?? null);
+                if ($variant && $variant->collection_id !== $product->id) {
+                    $variant = null;
+                }
+
+                $available = (int) ($variant ? $variant->stock_qty : $product->stock_qty);
+
+                if ($available < 1) {
+                    continue;
+                }
+
+                $cartItems[] = [
+                    'id' => $product->id,
+                    'variant_id' => $variant?->id,
+                    'name' => $product->name,
+                    'variant_label' => $variant?->label,
+                    'sku' => $variant?->sku ?: $product->sku,
+                    'category' => $product->category ? ['name' => $product->category->name] : null,
+                    'size' => $variant?->size ?? $product->size,
+                    'color' => $variant?->color ?? $product->color,
+                    'price' => (float) ($variant?->price ?? $product->price),
+                    'stock_qty' => $available,
+                    'image_url' => $variant?->image_url ?: $product->image_url,
+                    'cart_qty' => max(1, min((int) ($line['qty'] ?? 1), $available)),
+                ];
+            }
         }
 
         return Inertia::render('Shop/Checkout', [
-            'cartItems' => $collections,
+            'cartItems' => $cartItems,
             'garmentTypes' => GarmentType::where('is_active', true)
                 ->get(['id', 'name', 'slug', 'color', 'base_price']),
             'fabrics' => Fabric::where('status', 'active')
@@ -128,7 +177,10 @@ class ShopController extends Controller
                 $client = Client::create([
                     'name' => $validated['name'],
                     'phone' => $validated['phone'],
-                    'email' => $validated['email'],
+                    // Nullable rules leave the key absent when the field is not
+                    // sent at all, so reading it directly 500s an order from a
+                    // customer who gave only a telephone number.
+                    'email' => $validated['email'] ?? null,
                     'type' => 'individual',
                     'status' => 'active',
                 ]);
@@ -180,16 +232,19 @@ class ShopController extends Controller
             // --- Collection (off-the-shelf) items ---
             foreach ($items as $item) {
                 $collection = Collection::findOrFail($item['collection_id']);
+                $variantId = $item['collection_variant_id'] ?? null;
 
-                if ($collection->stock_qty < $item['quantity']) {
-                    throw new \Exception("Insufficient stock for {$collection->name}");
+                // Against the variation ordered, not the product as a whole:
+                // one size may be out of stock while the product still shows
+                // plenty, and a larger size may cost more.
+                if (StockLedger::available($collection, $variantId) < $item['quantity']) {
+                    throw new \Exception('Insufficient stock for ' . StockLedger::describe($collection, $variantId));
                 }
 
-                $unitPrice = $collection->price;
+                $unitPrice = StockLedger::priceFor($collection, $variantId);
                 $lineTotal = $unitPrice * $item['quantity'];
                 $subtotal += $lineTotal;
 
-                $variantId = $item['collection_variant_id'] ?? null;
                 $what = StockLedger::describe($collection, $variantId);
 
                 InvoiceLineItem::create([

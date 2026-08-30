@@ -26,6 +26,9 @@ const form = useForm({
     preferred_date: '',
     items: (props.cartItems || []).map(item => ({
         collection_id: item.id,
+        // Which size or colour was ordered. The price is re-read on the server
+        // from this, so it is the variation that decides what is charged.
+        collection_variant_id: item.variant_id ?? null,
         quantity: item.cart_qty || 1,
         unit_price: Number(item.price),
     })),
@@ -115,8 +118,11 @@ function checkoutWhatsApp() {
 
     displayItems.value.forEach((item) => {
         msg += `${num++}. ${item.name}`;
-        if (item.size) msg += ` (${item.size})`;
-        if (item.color) msg += ` - ${item.color}`;
+        if (item.variant_label) msg += ` (${item.variant_label})`;
+        else {
+            if (item.size) msg += ` (${item.size})`;
+            if (item.color) msg += ` - ${item.color}`;
+        }
         msg += ` x${item.qty} @ ${formatCurrency(item.price)}\n`;
     });
 
@@ -194,7 +200,7 @@ const minDate = new Date().toISOString().split('T')[0];
                             <h2 class="text-sm font-semibold text-gray-900"><i class="pi pi-shopping-cart mr-2 text-brand-600"></i>Ready-Made Items ({{ displayItems.length }})</h2>
                         </div>
                         <div class="divide-y divide-gray-100">
-                            <div v-for="(item, idx) in displayItems" :key="item.id" class="flex gap-3 p-4">
+                            <div v-for="(item, idx) in displayItems" :key="item.id + '-' + (item.variant_id || 0)" class="flex gap-3 p-4">
                                 <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden flex-none bg-gray-100">
                                     <img v-if="item.image_url" :src="item.image_url" :alt="item.name" class="w-full h-full object-cover"/>
                                     <div v-else class="w-full h-full flex items-center justify-center">
@@ -204,8 +210,11 @@ const minDate = new Date().toISOString().split('T')[0];
                                 <div class="flex-1 min-w-0">
                                     <h4 class="text-sm font-semibold text-gray-900">{{ item.name }}</h4>
                                     <div class="text-xs text-gray-500 mt-0.5">
-                                        <span v-if="item.size">{{ item.size }}</span>
-                                        <span v-if="item.color"> · {{ item.color }}</span>
+                                        <span v-if="item.variant_label" class="font-medium text-brand-600">{{ item.variant_label }}</span>
+                                        <template v-else>
+                                            <span v-if="item.size">{{ item.size }}</span>
+                                            <span v-if="item.color"> · {{ item.color }}</span>
+                                        </template>
                                         <span v-if="item.category"> · {{ item.category.name }}</span>
                                     </div>
                                     <div class="flex items-center justify-between mt-2">
@@ -319,7 +328,7 @@ const minDate = new Date().toISOString().split('T')[0];
                         </div>
                         <div class="p-4 sm:p-6 space-y-3">
                             <!-- Collection items -->
-                            <div v-for="item in displayItems" :key="item.id" class="flex justify-between text-sm">
+                            <div v-for="item in displayItems" :key="item.id + '-' + (item.variant_id || 0)" class="flex justify-between text-sm">
                                 <span class="text-gray-600 truncate mr-2">{{ item.name }} x{{ item.qty }}</span>
                                 <span class="font-medium text-gray-900 flex-none">{{ formatCurrency(item.price * item.qty) }}</span>
                             </div>

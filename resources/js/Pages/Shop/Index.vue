@@ -19,6 +19,7 @@ const cart = ref([]);
 const showCart = ref(false);
 const showMobileMenu = ref(false);
 const quickViewItem = ref(null);
+const chosenVariantId = ref(null);
 const showCustomBuilder = ref(false);
 
 // Load cart from localStorage
@@ -39,7 +40,12 @@ const filteredItems = computed(() => {
         items = items.filter(c =>
             c.name.toLowerCase().includes(q) ||
             c.sku?.toLowerCase().includes(q) ||
-            c.description?.toLowerCase().includes(q)
+            c.description?.toLowerCase().includes(q) ||
+            // The size and colour live on the variations, so searching "21.5"
+            // would otherwise find nothing at all.
+            (c.variants || []).some(v =>
+                [v.size, v.color, v.design, v.sku].filter(Boolean)
+                    .some(x => String(x).toLowerCase().includes(q)))
         );
     }
     if (selectedCategory.value) {
@@ -65,20 +71,99 @@ function formatCurrency(v) {
     return 'KES ' + Number(v).toLocaleString('en-KE', { minimumFractionDigits: 0 });
 }
 
-function addToCart(item) {
-    const existing = cart.value.find(c => c.type !== 'custom' && c.id === item.id);
+/**
+ * The sizes, colours or designs a customer can choose between.
+ * A product with only one, unnamed, has nothing to choose — it is just itself.
+ */
+function variantsOf(item) {
+    return (item.variants || []).filter(v => Number(v.stock_qty) > 0);
+}
+
+/** Which option the customer has picked in the quick view, if any. */
+const chosenVariant = computed(() => {
+    if (!quickViewItem.value || !chosenVariantId.value) return null;
+    return variantsOf(quickViewItem.value).find(v => v.id === chosenVariantId.value) || null;
+});
+
+const quickViewImage = computed(() =>
+    (chosenVariant.value && chosenVariant.value.image_url) || quickViewItem.value?.image_url || null
+);
+
+const quickViewPrice = computed(() => {
+    if (!quickViewItem.value) return 0;
+    if (chosenVariant.value) return variantPrice(quickViewItem.value, chosenVariant.value);
+    return priceRange(quickViewItem.value).from;
+});
+
+// Null while a choice is still owed, so the panel does not promise stock of
+// something the customer has not picked yet.
+const quickViewStock = computed(() => {
+    if (!quickViewItem.value) return null;
+    if (chosenVariant.value) return Number(chosenVariant.value.stock_qty);
+    if (hasChoices(quickViewItem.value)) return null;
+    const only = variantsOf(quickViewItem.value)[0];
+    return Number(only ? only.stock_qty : quickViewItem.value.stock_qty);
+});
+
+function hasChoices(item) {
+    const vs = variantsOf(item);
+    return vs.length > 1 || vs.some(v => v.size || v.color || v.design);
+}
+
+function variantLabel(v) {
+    return [v.size, v.color, v.design].filter(Boolean).join(' · ') || 'Standard';
+}
+
+function variantPrice(item, v) {
+    return Number(v && v.price != null ? v.price : item.price);
+}
+
+/** What the card shows when the options are not all the same money. */
+function priceRange(item) {
+    const vs = variantsOf(item);
+    if (!vs.length) return { from: Number(item.price), varies: false };
+    const prices = vs.map(v => variantPrice(item, v));
+    const from = Math.min(...prices);
+    return { from, varies: Math.max(...prices) !== from };
+}
+
+/** One cart line per product-and-variation, so two sizes are two lines. */
+function cartLineFor(itemId, variantId) {
+    return cart.value.find(c => c.type !== 'custom'
+        && c.id === itemId
+        && (c.variant_id ?? null) === (variantId ?? null));
+}
+
+function addToCart(item, variant = null) {
+    // A lone unnamed variation is still what is being sold, so it carries the
+    // price and the stock even though the customer was never asked to pick it.
+    const only = variantsOf(item).length === 1 ? variantsOf(item)[0] : null;
+    const v = variant || (hasChoices(item) ? null : only);
+
+    if (hasChoices(item) && !variant) {
+        // Nothing chosen yet — open the product so they can pick.
+        quickViewItem.value = item;
+        chosenVariantId.value = null;
+        return;
+    }
+
+    const stock = Number(v ? v.stock_qty : item.stock_qty);
+    const existing = cartLineFor(item.id, v?.id ?? null);
+
     if (existing) {
-        if (existing.qty < item.stock_qty) existing.qty++;
+        if (existing.qty < stock) existing.qty++;
     } else {
         cart.value.push({
             type: 'collection',
             id: item.id,
+            variant_id: v?.id ?? null,
             name: item.name,
-            price: Number(item.price),
-            image_url: item.image_url,
-            size: item.size,
-            color: item.color,
-            stock_qty: item.stock_qty,
+            variant_label: v ? variantLabel(v) : '',
+            price: variantPrice(item, v),
+            image_url: (v && v.image_url) || item.image_url,
+            size: v?.size ?? item.size,
+            color: v?.color ?? item.color,
+            stock_qty: stock,
             qty: 1,
         });
     }
@@ -107,13 +192,26 @@ function clearCart() {
     cart.value = [];
 }
 
-function isInCart(itemId) {
-    return cart.value.some(c => c.type !== 'custom' && c.id === itemId);
+function isInCart(itemId, variantId = null) {
+    return !!cartLineFor(itemId, variantId);
 }
 
-function cartQtyFor(itemId) {
-    const c = cart.value.find(c => c.type !== 'custom' && c.id === itemId);
+function cartQtyFor(itemId, variantId = null) {
+    const c = cartLineFor(itemId, variantId);
     return c ? c.qty : 0;
+}
+
+/** How many of this product are in the basket across all its variations. */
+function cartQtyForProduct(itemId) {
+    return cart.value
+        .filter(c => c.type !== 'custom' && c.id === itemId)
+        .reduce((n, c) => n + c.qty, 0);
+}
+
+function cartIndexFor(itemId, variantId = null) {
+    return cart.value.findIndex(c => c.type !== 'custom'
+        && c.id === itemId
+        && (c.variant_id ?? null) === (variantId ?? null));
 }
 
 function checkoutWhatsApp() {
@@ -126,8 +224,12 @@ function checkoutWhatsApp() {
 
     collectionCartItems.value.forEach((item) => {
         msg += `${num++}. ${item.name}`;
-        if (item.size) msg += ` (${item.size})`;
-        if (item.color) msg += ` - ${item.color}`;
+        // The variation is the whole point of the order — say which one.
+        if (item.variant_label) msg += ` (${item.variant_label})`;
+        else {
+            if (item.size) msg += ` (${item.size})`;
+            if (item.color) msg += ` - ${item.color}`;
+        }
         msg += ` x${item.qty} @ ${formatCurrency(item.price)}\n`;
     });
 
@@ -149,7 +251,7 @@ function checkoutWhatsApp() {
 function checkoutOnline() {
     if (cart.value.length === 0) return;
     router.post(route('shop.checkout'), {
-        items: collectionCartItems.value.map(c => ({ id: c.id, qty: c.qty })),
+        items: collectionCartItems.value.map(c => ({ id: c.id, variant_id: c.variant_id ?? null, qty: c.qty })),
     });
 }
 
@@ -295,20 +397,38 @@ function getPlaceholderIcon(seed) {
                         </div>
                         <p v-if="item.description" class="text-[10px] sm:text-xs text-gray-500 mt-1 line-clamp-2">{{ item.description }}</p>
                         <div class="mt-2 sm:mt-3 flex items-center justify-between">
-                            <span class="text-sm sm:text-lg font-bold text-brand-700">{{ formatCurrency(item.price) }}</span>
+                            <span class="text-sm sm:text-lg font-bold text-brand-700">
+                                <span v-if="priceRange(item).varies" class="text-[10px] sm:text-xs font-medium text-gray-400">from </span>{{ formatCurrency(priceRange(item).from) }}
+                            </span>
+                            <span v-if="hasChoices(item)" class="text-[10px] sm:text-xs text-gray-400">{{ variantsOf(item).length }} options</span>
                         </div>
+
+                        <!-- A product sold in sizes or colours needs the customer
+                             to choose one, so the card opens it rather than
+                             guessing on their behalf. -->
                         <button
-                            v-if="!isInCart(item.id)"
+                            v-if="hasChoices(item)"
+                            @click="quickViewItem = item; chosenVariantId = null"
+                            class="mt-2 w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 text-white py-2 sm:py-2.5 text-xs sm:text-sm font-medium hover:from-brand-600 hover:to-brand-800 transition-all shadow-sm hover:shadow-md active:scale-95"
+                        >
+                            <i class="pi pi-sliders-h mr-1"></i>
+                            {{ cartQtyForProduct(item.id) ? 'Add another option' : 'Choose an option' }}
+                        </button>
+                        <button
+                            v-else-if="!isInCart(item.id, variantsOf(item)[0]?.id ?? null)"
                             @click="addToCart(item)"
                             class="mt-2 w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 text-white py-2 sm:py-2.5 text-xs sm:text-sm font-medium hover:from-brand-600 hover:to-brand-800 transition-all shadow-sm hover:shadow-md active:scale-95"
                         >
                             <i class="pi pi-shopping-cart mr-1"></i> Add to Cart
                         </button>
                         <div v-else class="mt-2 flex items-center gap-1">
-                            <button @click="updateQty(cart.findIndex(c => c.type !== 'custom' && c.id === item.id), -1)" class="flex-none w-8 h-8 rounded-lg bg-red-50 text-red-600 font-bold hover:bg-red-100 transition-colors text-sm">−</button>
-                            <span class="flex-1 text-center text-sm font-bold text-brand-700">{{ cartQtyFor(item.id) }} in cart</span>
-                            <button @click="updateQty(cart.findIndex(c => c.type !== 'custom' && c.id === item.id), 1)" class="flex-none w-8 h-8 rounded-lg bg-brand-50 text-brand-600 font-bold hover:bg-brand-100 transition-colors text-sm">+</button>
+                            <button @click="updateQty(cartIndexFor(item.id, variantsOf(item)[0]?.id ?? null), -1)" class="flex-none w-8 h-8 rounded-lg bg-red-50 text-red-600 font-bold hover:bg-red-100 transition-colors text-sm">−</button>
+                            <span class="flex-1 text-center text-sm font-bold text-brand-700">{{ cartQtyFor(item.id, variantsOf(item)[0]?.id ?? null) }} in cart</span>
+                            <button @click="updateQty(cartIndexFor(item.id, variantsOf(item)[0]?.id ?? null), 1)" class="flex-none w-8 h-8 rounded-lg bg-brand-50 text-brand-600 font-bold hover:bg-brand-100 transition-colors text-sm">+</button>
                         </div>
+                        <p v-if="hasChoices(item) && cartQtyForProduct(item.id)" class="mt-1 text-center text-[10px] sm:text-xs text-brand-600 font-medium">
+                            {{ cartQtyForProduct(item.id) }} in cart
+                        </p>
                     </div>
                 </div>
             </div>
@@ -381,8 +501,11 @@ function getPlaceholderIcon(seed) {
                                         {{ item.fabric_name }} · {{ item.fabric_qty }}m
                                     </template>
                                     <template v-else>
-                                        <span v-if="item.size">{{ item.size }}</span>
-                                        <span v-if="item.color"> · {{ item.color }}</span>
+                                        <span v-if="item.variant_label" class="font-medium text-brand-600">{{ item.variant_label }}</span>
+                                        <template v-else>
+                                            <span v-if="item.size">{{ item.size }}</span>
+                                            <span v-if="item.color"> · {{ item.color }}</span>
+                                        </template>
                                     </template>
                                 </div>
                                 <div class="flex items-center justify-between mt-1.5">
@@ -428,7 +551,7 @@ function getPlaceholderIcon(seed) {
                 <div v-if="quickViewItem" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" @click.self="quickViewItem = null">
                     <div class="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto">
                         <div class="relative aspect-square bg-gray-100">
-                            <img v-if="quickViewItem.image_url" :src="quickViewItem.image_url" :alt="quickViewItem.name" class="w-full h-full object-cover"/>
+                            <img v-if="quickViewImage" :src="quickViewImage" :alt="quickViewItem.name" class="w-full h-full object-cover"/>
                             <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-50 to-brand-50">
                                 <i class="pi pi-image text-6xl text-gray-300"></i>
                             </div>
@@ -445,13 +568,44 @@ function getPlaceholderIcon(seed) {
                                 <span v-if="quickViewItem.color">{{ quickViewItem.color }}</span>
                             </div>
                             <p v-if="quickViewItem.description" class="text-sm text-gray-600 mt-3">{{ quickViewItem.description }}</p>
-                            <div class="flex items-center justify-between mt-4">
-                                <span class="text-2xl font-bold text-brand-700">{{ formatCurrency(quickViewItem.price) }}</span>
-                                <span v-if="quickViewItem.stock_qty <= 5" class="text-sm text-red-500 font-medium">Only {{ quickViewItem.stock_qty }} left!</span>
-                                <span v-else class="text-sm text-brand-600"><i class="pi pi-check-circle mr-1"></i>In Stock</span>
+
+                            <!-- Choosing the size, colour or design. Each one has
+                                 its own price, its own stock and its own photo. -->
+                            <div v-if="hasChoices(quickViewItem)" class="mt-4">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Choose an option</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <button
+                                        v-for="v in variantsOf(quickViewItem)"
+                                        :key="v.id"
+                                        type="button"
+                                        @click="chosenVariantId = v.id"
+                                        class="rounded-xl border px-3 py-2 text-left transition-all"
+                                        :class="chosenVariantId === v.id
+                                            ? 'border-brand-600 bg-brand-50 ring-1 ring-brand-600'
+                                            : 'border-gray-200 hover:border-brand-300'"
+                                    >
+                                        <span class="block text-xs font-semibold text-gray-900">{{ variantLabel(v) }}</span>
+                                        <span class="block text-[11px] text-gray-500">
+                                            {{ formatCurrency(variantPrice(quickViewItem, v)) }}
+                                            <span v-if="Number(v.stock_qty) <= 5" class="text-red-500"> · only {{ v.stock_qty }} left</span>
+                                        </span>
+                                    </button>
+                                </div>
                             </div>
-                            <button @click="addToCart(quickViewItem); quickViewItem = null;" class="mt-4 w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 text-white py-3 text-sm font-semibold hover:from-brand-600 hover:to-brand-800 transition-all shadow-sm active:scale-95">
-                                <i class="pi pi-shopping-cart mr-1"></i> Add to Cart
+
+                            <div class="flex items-center justify-between mt-4">
+                                <span class="text-2xl font-bold text-brand-700">{{ formatCurrency(quickViewPrice) }}</span>
+                                <span v-if="quickViewStock !== null && quickViewStock <= 5" class="text-sm text-red-500 font-medium">Only {{ quickViewStock }} left!</span>
+                                <span v-else-if="quickViewStock !== null" class="text-sm text-brand-600"><i class="pi pi-check-circle mr-1"></i>In Stock</span>
+                            </div>
+
+                            <button
+                                @click="addToCart(quickViewItem, chosenVariant); if (!hasChoices(quickViewItem) || chosenVariant) quickViewItem = null;"
+                                :disabled="hasChoices(quickViewItem) && !chosenVariant"
+                                class="mt-4 w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 text-white py-3 text-sm font-semibold hover:from-brand-600 hover:to-brand-800 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <i class="pi pi-shopping-cart mr-1"></i>
+                                {{ hasChoices(quickViewItem) && !chosenVariant ? 'Choose an option first' : 'Add to Cart' }}
                             </button>
                         </div>
                     </div>

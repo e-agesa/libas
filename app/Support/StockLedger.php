@@ -126,6 +126,23 @@ class StockLedger
     }
 
     /**
+     * What this actually costs — the variation's own price where it has one.
+     *
+     * Always read here rather than taken from the browser, so a customer cannot
+     * order a dearer size at the cheaper product price.
+     */
+    public static function priceFor(Collection $collection, ?int $variantId): float
+    {
+        $variant = self::variantFor($collection, $variantId);
+
+        if ($variant && $variant->price !== null) {
+            return (float) $variant->price;
+        }
+
+        return (float) $collection->price;
+    }
+
+    /**
      * What to call this line in an error message: "White Topi (21.5 · White)".
      */
     public static function describe(Collection $collection, ?int $variantId): string
