@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(C:/xampp/mysql/bin/mysql.exe -u root --port=3307 -e \"CREATE DATABASE IF NOT EXISTS libas_tms_test;\")",
+      "Bash(C:/xampp/php/php.exe -r \"echo 'base64:' . base64_encode\\(random_bytes\\(32\\)\\);\")",
+      "Bash(C:/xampp/php/php.exe -r ':*)",
+      "Bash(curl -s -T c:/xampp/htdocs/libas/public/fix-env.php \"ftp://saifypos.org/public_html/fix-env.php\" --user \"saifyposorg:Tw1nFusion2026\" --ftp-create-dirs)",
+      "Bash(curl -s \"ftp://saifypos.org/\" --user \"saifyposorg:Tw1nFusion2026\" --list-only)",
+      "Bash(curl -s \"ftp://saifypos.org/libas.saifypos.org/\" --user \"saifyposorg:Tw1nFusion2026\" --list-only)",
+      "Bash(curl -s \"ftp://saifypos.org/libas.saifypos.org/\" --user \"saifyposorg:Tw1nFusion2026\" -l)",
+      "Bash(curl -v \"ftp://saifypos.org/libas.saifypos.org/\" --user \"saifyposorg:Tw1nFusion2026\" --list-only)",
+      "Bash(curl --ftp-pasv \"ftp://saifypos.org/libas.saifypos.org/\" --user \"saifyposorg:Tw1nFusion2026\" --list-only)",
+      "Bash(curl --ftp-pasv -T c:/xampp/htdocs/libas/public/fix-env.php \"ftp://saifypos.org/libas.saifypos.org/public/fix-env.php\" --user \"saifyposorg:Tw1nFusion2026\")",
+      "Bash(curl --ftp-pasv -T c:/xampp/htdocs/libas/public/logo.jpeg \"ftp://saifypos.org/libas.saifypos.org/public/logo.jpeg\" --user \"saifyposorg:Tw1nFusion2026\")",
+      "Bash(curl -s -k \"https://libas.saifypos.org/fix-env.php?key=libas2026deploy\")",
+      "Bash(curl -s -k -o /dev/null -w \"%{http_code}\" \"https://libas.saifypos.org/\")",
+      "Bash(curl -s -k --connect-timeout 10 \"https://libas.saifypos.org/\")",
+      "Bash(curl -s -k \"https://libas.saifypos.org/clear-cache.php?key=libas2026deploy\")",
+      "Bash(npx vite:*)",
+      "Bash(ls public/build/assets/*.js)",
+      "Bash(curl -s \"https://libas.saifypos.org/\")",
+      "Bash(curl -s \"https://libas.saifypos.org/setup-db.php?step=finish\")",
+      "Bash(curl -s \"https://libas.saifypos.org/bootstrap-deploy.php\")",
+      "Bash(C:/xampp/php/php.exe c:/tmp/make-patch6.php)",
+      "Bash(curl -s --ftp-ssl -u \"saifyposorg:Tw1nFusion2026\" ftp://saifypos.org/ --list-only)",
+      "Bash(curl -u \"saifyposorg:Tw1nFusion2026\" ftp://saifypos.org/ --list-only)",
+      "Bash(curl -u \"saifyposorg:Tw1nFusion2026\" ftp://saifypos.org/libas.saifypos.org/ --list-only)",
+      "Bash(curl -u \"saifyposorg:Tw1nFusion2026\" ftp://saifypos.org/libas.saifypos.org/app/Models/ --list-only)",
+      "Bash(curl -u \"saifyposorg:Tw1nFusion2026\" -T \"c:/xampp/htdocs/libas/app/Models/Collection.php\" \"ftp://saifypos.org/libas.saifypos.org/app/Models/Collection.php\")",
+      "Bash(curl -u \"saifyposorg:Tw1nFusion2026\" -T \"c:/xampp/htdocs/libas/public/build/manifest.json\" \"ftp://saifypos.org/libas.saifypos.org/public/build/manifest.json\")",
+      "Bash(curl -u \"saifyposorg:Tw1nFusion2026\" -T \"c:/xampp/htdocs/libas/public/build/assets/app-BcahqISq.js\" \"ftp://saifypos.org/libas.saifypos.org/public/build/assets/app-BcahqISq.js\")",
+      "Bash(curl -s \"https://libas.saifypos.org/collections\" -o /dev/null -w \"%{http_code}\")",
+      "Bash(curl -s -u \"saifyposorg:Tw1nFusion2026\" -T \"app/Http/Middleware/HandleInertiaRequests.php\" \"ftp://saifypos.org/libas.saifypos.org/app/Http/Middleware/HandleInertiaRequests.php\")",
+      "Bash(curl -s -u \"saifyposorg:Tw1nFusion2026\" -T \"app/Models/Collection.php\" \"ftp://saifypos.org/libas.saifypos.org/app/Models/Collection.php\")"
+    ]
+  }
+}

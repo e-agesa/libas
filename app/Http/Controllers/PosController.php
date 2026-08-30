@@ -7,6 +7,7 @@ use App\Models\Collection;
 use App\Models\Invoice;
 use App\Models\InvoiceLineItem;
 use App\Models\StockMovement;
+use App\Support\StockLedger;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -29,7 +30,7 @@ class PosController extends Controller
         return Inertia::render('Pos/Index', [
             'collections' => Collection::where('status', 'active')
                 ->where('stock_qty', '>', 0)
-                ->with('category:id,name')
+                ->with(['category:id,name', 'variants' => fn ($q) => $q->where('status', 'active')->orderBy('sort_order')])
                 ->orderBy('name')
                 ->get(),
             'clients' => Client::where('status', 'active')
@@ -49,6 +50,7 @@ class PosController extends Controller
             'payment_method' => 'required|in:cash,mpesa,bank_transfer,credit',
             'items' => 'nullable|array',
             'items.*.collection_id' => 'required|exists:collections,id',
+            'items.*.collection_variant_id' => 'nullable|exists:collection_variants,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'include_invoices' => 'nullable|array',
@@ -69,9 +71,18 @@ class PosController extends Controller
         // the transaction is the concurrency backstop that actually prevents oversell).
         foreach ($items as $item) {
             $collection = Collection::find($item['collection_id']);
-            if ($collection && $collection->stock_qty < $item['quantity']) {
+            if (! $collection) {
+                continue;
+            }
+
+            $variantId = $item['collection_variant_id'] ?? null;
+            $have = StockLedger::available($collection, $variantId);
+
+            if ($have < $item['quantity']) {
+                $what = StockLedger::describe($collection, $variantId);
+
                 return redirect()->back()->withErrors([
-                    'items' => "Insufficient stock for {$collection->name} (have {$collection->stock_qty}, need {$item['quantity']}).",
+                    'items' => "Insufficient stock for {$what} (have {$have}, need {$item['quantity']}).",
                 ]);
             }
         }
@@ -81,7 +92,9 @@ class PosController extends Controller
             $invoiceNumber = Invoice::nextNumber('POS', 5);
 
             $invoice = Invoice::create([
-                'client_id' => $validated['client_id'],
+                // Nullable rules leave the key absent when the field is not
+                // sent at all, so reading it directly 500s a walk-in sale.
+                'client_id' => $validated['client_id'] ?? null,
                 'invoice_number' => $invoiceNumber,
                 'type' => 'invoice',
                 'date' => now()->toDateString(),
@@ -90,7 +103,7 @@ class PosController extends Controller
                 'discount' => $validated['discount'] ?? 0,
                 'discount_type' => 'flat',
                 'tax' => 0,
-                'notes' => trim(($validated['walk_in_name'] ? "Walk-in: {$validated['walk_in_name']}\n" : '') . ($validated['notes'] ?? '')),
+                'notes' => trim((($validated['walk_in_name'] ?? null) ? "Walk-in: {$validated['walk_in_name']}\n" : '') . ($validated['notes'] ?? '')),
             ]);
 
             $subtotal = 0;
@@ -101,11 +114,15 @@ class PosController extends Controller
                 $lineTotal = $item['unit_price'] * $item['quantity'];
                 $subtotal += $lineTotal;
 
+                $variantId = $item['collection_variant_id'] ?? null;
+                $what = StockLedger::describe($collection, $variantId);
+
                 InvoiceLineItem::create([
                     'invoice_id' => $invoice->id,
                     'item_type' => 'collection',
                     'collection_id' => $item['collection_id'],
-                    'description' => $collection->name,
+                    'collection_variant_id' => $variantId,
+                    'description' => $what,
                     'unit_price' => $item['unit_price'],
                     'quantity' => $item['quantity'],
                     'craftsmanship_fee' => 0,
@@ -113,23 +130,19 @@ class PosController extends Controller
                     'line_total' => $lineTotal,
                 ]);
 
-                // Guarded atomic decrement — the WHERE stock_qty >= qty makes it
-                // refuse to oversell even if two terminals sell the last unit at once.
-                $sold = Collection::whereKey($collection->id)
-                    ->where('stock_qty', '>=', $item['quantity'])
-                    ->decrement('stock_qty', $item['quantity']);
-                \App\Models\Collection::find($item['collection_id'])?->syncSingleVariantStock();
-                if (! $sold) {
-                    throw new \Exception("Insufficient stock for {$collection->name}");
-                }
-                $collection->refresh();
-
-                StockMovement::record($collection, 'sale', -$item['quantity'], [
+                // Takes the units off the exact variation sold, refuses to
+                // oversell even if two terminals sell the last one at once, and
+                // writes the movement naming that variation.
+                $sold = StockLedger::take($collection, $variantId, (int) $item['quantity'], [
                     'invoice_id' => $invoice->id,
                     'reference' => $invoiceNumber,
                     'unit_cost' => $item['unit_price'],
                     'notes' => "POS sale: {$collection->name} x{$item['quantity']}",
                 ]);
+
+                if (! $sold) {
+                    throw new \Exception("Insufficient stock for {$what}");
+                }
             }
 
             // Process included pending invoices — mark them as paid

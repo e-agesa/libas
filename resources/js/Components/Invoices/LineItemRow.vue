@@ -35,12 +35,21 @@ function update(field, value) {
     emit('update', props.index, { ...props.item, [field]: value });
 }
 
-function onCollectionPicked(col) {
+function onCollectionPicked(entry) {
+    // The picker hands back a variation wherever the product has any, so the
+    // price billed and the stock that moves both belong to the exact one chosen.
+    const described = entry
+        ? entry.name + (entry.variant_label
+            ? ' — ' + entry.variant_label
+            : (entry.size ? ' — ' + entry.size : '') + (entry.color ? ' (' + entry.color + ')' : ''))
+        : '';
+
     emit('update', props.index, {
         ...props.item,
-        collection_id: col ? col.id : null,
-        description: col ? `${col.name}${col.size ? ' — ' + col.size : ''}${col.color ? ' (' + col.color + ')' : ''}` : '',
-        unit_price: col ? parseFloat(col.price) : 0,
+        collection_id: entry ? entry.id : null,
+        collection_variant_id: entry ? (entry.variant_id ?? null) : null,
+        description: described,
+        unit_price: entry ? parseFloat(entry.price) : 0,
     });
 }
 
@@ -141,6 +150,7 @@ const garmentBadge = computed(() => {
                 <CollectionPicker
                     :collections="collections"
                     :model-value="item.collection_id"
+                    :variant-id="item.collection_variant_id"
                     @select="onCollectionPicked"
                 />
             </div>

@@ -13,6 +13,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceLineItem;
 use App\Models\Measurement;
 use App\Models\StockMovement;
+use App\Support\StockLedger;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -101,6 +102,7 @@ class ShopController extends Controller
             'preferred_date' => 'nullable|date|after_or_equal:today',
             'items' => 'nullable|array',
             'items.*.collection_id' => 'required|exists:collections,id',
+            'items.*.collection_variant_id' => 'nullable|exists:collection_variants,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'custom_items' => 'nullable|array',
@@ -187,11 +189,15 @@ class ShopController extends Controller
                 $lineTotal = $unitPrice * $item['quantity'];
                 $subtotal += $lineTotal;
 
+                $variantId = $item['collection_variant_id'] ?? null;
+                $what = StockLedger::describe($collection, $variantId);
+
                 InvoiceLineItem::create([
                     'invoice_id' => $invoice->id,
                     'item_type' => 'collection',
                     'collection_id' => $item['collection_id'],
-                    'description' => $collection->name,
+                    'collection_variant_id' => $variantId,
+                    'description' => $what,
                     'unit_price' => $unitPrice,
                     'quantity' => $item['quantity'],
                     'craftsmanship_fee' => 0,
@@ -199,23 +205,19 @@ class ShopController extends Controller
                     'line_total' => $lineTotal,
                 ]);
 
-                // Guarded atomic decrement closes the check-then-act race with a
-                // concurrent POS/web sale of the same item.
-                $sold = Collection::whereKey($collection->id)
-                    ->where('stock_qty', '>=', $item['quantity'])
-                    ->decrement('stock_qty', $item['quantity']);
-                \App\Models\Collection::find($item['collection_id'])?->syncSingleVariantStock();
-                if (! $sold) {
-                    throw new \Exception("Insufficient stock for {$collection->name}");
-                }
-                $collection->refresh();
-
-                StockMovement::record($collection, 'sale', -$item['quantity'], [
+                // Same path as the till: the units come off the variation
+                // ordered, and the guard closes the check-then-act race with a
+                // concurrent counter sale of the same one.
+                $sold = StockLedger::take($collection, $variantId, (int) $item['quantity'], [
                     'invoice_id' => $invoice->id,
                     'reference' => $invoice->invoice_number,
                     'unit_cost' => $unitPrice,
                     'notes' => "Web order: {$collection->name} x{$item['quantity']}",
                 ]);
+
+                if (! $sold) {
+                    throw new \Exception("Insufficient stock for {$what}");
+                }
             }
 
             // --- Custom tailored items ---

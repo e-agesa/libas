@@ -10,6 +10,7 @@ use App\Models\Fabric;
 use App\Models\Invoice;
 use App\Models\Measurement;
 use App\Models\StockMovement;
+use App\Support\StockLedger;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -66,7 +67,12 @@ class InvoiceController extends Controller
                 ->select('id', 'code', 'name', 'type', 'color', 'price_per_unit')
                 ->orderBy('name')->get(),
             'collections' => fn () => Collection::active()->inStock()
-                ->with('category:id,name')
+                ->with([
+                    'category:id,name',
+                    // Without these the picker can only offer the product as a
+                    // whole, and a size that costs more is billed at the wrong price.
+                    'variants' => fn ($q) => $q->where('status', 'active')->orderBy('sort_order'),
+                ])
                 ->select('id', 'category_id', 'name', 'sku', 'size', 'color', 'price', 'stock_qty', 'image_path')
                 ->orderBy('name')->get(),
             'invoiceNumber' => fn () => Invoice::generateInvoiceNumber(),
@@ -95,6 +101,7 @@ class InvoiceController extends Controller
             'line_items.*.measurement_id' => 'nullable|exists:measurements,id',
             'line_items.*.fabric_id' => 'nullable|exists:fabrics,id',
             'line_items.*.collection_id' => 'nullable|exists:collections,id',
+            'line_items.*.collection_variant_id' => 'nullable|exists:collection_variants,id',
             'line_items.*.description' => 'nullable|string|max:255',
             'line_items.*.unit_price' => 'nullable|numeric|min:0',
             'line_items.*.quantity' => 'required|numeric|min:0.01',   // fabric sells by the metre
@@ -212,28 +219,27 @@ class InvoiceController extends Controller
                 // refuses to oversell rather than driving stock negative, and closes
                 // the check-then-act race when two people bill the last unit at once.
                 if (($item['item_type'] ?? 'custom') === 'collection' && !empty($item['collection_id'])) {
-                    $sold = Collection::whereKey($item['collection_id'])
-                        ->where('stock_qty', '>=', $item['quantity'])
-                        ->decrement('stock_qty', $item['quantity']);
+                    $collection = Collection::find($item['collection_id']);
 
-                    if (! $sold) {
-                        $name = Collection::whereKey($item['collection_id'])->value('name') ?? 'that item';
-                        throw ValidationException::withMessages([
-                            'line_items' => "Not enough stock for {$name}. The invoice was not saved.",
-                        ]);
-                    }
+                    if ($collection) {
+                        $variantId = $item['collection_variant_id'] ?? null;
 
-                    $sold = Collection::find($item['collection_id']);
-                    if ($sold) {
-                        $sold->syncSingleVariantStock();
-                        // POS and the shop log every sale; invoices never did, so
-                        // anything sold on an invoice was missing from the history.
-                        StockMovement::record($sold, 'sale', -$item['quantity'], [
+                        // Takes it off the exact variation billed, refuses to
+                        // oversell, and logs the sale — invoices never used to
+                        // appear in the stock history at all.
+                        $sold = StockLedger::take($collection, $variantId, (int) $item['quantity'], [
                             'invoice_id' => $invoice->id,
                             'reference' => $invoice->invoice_number,
                             'unit_cost' => $item['unit_price'] ?? 0,
-                            'notes' => "Invoice sale: {$sold->name} x{$item['quantity']}",
+                            'notes' => "Invoice sale: {$collection->name} x{$item['quantity']}",
                         ]);
+
+                        if (! $sold) {
+                            $what = StockLedger::describe($collection, $variantId);
+                            throw ValidationException::withMessages([
+                                'line_items' => "Not enough stock for {$what}. The invoice was not saved.",
+                            ]);
+                        }
                     }
                 }
             }

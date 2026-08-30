@@ -29,7 +29,41 @@ class Collection extends Model
 
     public function getImageUrlAttribute(): ?string
     {
+        // image_path is kept in step with the gallery (see syncImagePathFromGallery),
+        // so every screen keeps reading one cheap column instead of a join.
         return $this->image_path ? asset('storage/' . $this->image_path) : null;
+    }
+
+    /**
+     * Keep the product's headline photo equal to its primary gallery image.
+     *
+     * Photos uploaded through Variations & Photos land in collection_images,
+     * but every listing (POS, shop, inventory, invoices) reads image_path — so
+     * without this, a photo could be uploaded and appear nowhere.
+     */
+    public function syncImagePathFromGallery(): void
+    {
+        $primary = $this->images()->orderByDesc('is_primary')->orderBy('sort_order')->first();
+
+        if ($primary && $primary->path !== $this->image_path) {
+            $this->forceFill(['image_path' => $primary->path])->save();
+        } elseif (!$primary && $this->image_path && $this->images()->count() === 0) {
+            // every gallery photo was deleted
+            $this->forceFill(['image_path' => null])->save();
+        }
+    }
+
+    /**
+     * A product holding several variations owns no stock of its own: its figure
+     * is the sum of theirs. Used after a variation is sold or returned.
+     */
+    public function recalcStockFromVariants(): void
+    {
+        if ($this->variants()->count() === 0) {
+            return;
+        }
+
+        $this->forceFill(['stock_qty' => (int) $this->variants()->sum('stock_qty')])->save();
     }
 
     protected function casts(): array

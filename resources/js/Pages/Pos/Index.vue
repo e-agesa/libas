@@ -95,13 +95,63 @@ const categories = computed(() => {
     return [...cats].sort();
 });
 
+// A product with variations is not one thing to sell — it is several. Each
+// variation becomes its own tile carrying its own price, stock and photo, so
+// the till can charge the right amount and take stock off the right one.
+const sellables = computed(() => {
+    const out = [];
+    for (const c of (props.collections || [])) {
+        const variants = (c.variants || []).filter(v => v.status !== 'inactive');
+        const meaningful = variants.filter(v => v.size || v.color || v.design);
+
+        if (variants.length > 1 || meaningful.length) {
+            for (const v of variants) {
+                const label = [v.size, v.color, v.design].filter(Boolean).join(' · ');
+                out.push({
+                    key: 'v' + v.id,
+                    collection_id: c.id,
+                    variant_id: v.id,
+                    name: c.name,
+                    variant_label: label || 'Standard',
+                    sku: v.sku || c.sku,
+                    size: v.size, color: v.color, design: v.design,
+                    price: v.price != null ? v.price : c.price,
+                    stock_qty: v.stock_qty,
+                    image_url: v.image_url || c.image_url,
+                    category: c.category,
+                    description: c.description,
+                });
+            }
+        } else {
+            out.push({
+                key: 'c' + c.id,
+                collection_id: c.id,
+                variant_id: variants.length === 1 ? variants[0].id : null,
+                name: c.name,
+                variant_label: '',
+                sku: c.sku, size: c.size, color: c.color, design: null,
+                price: c.price,
+                stock_qty: c.stock_qty,
+                image_url: c.image_url,
+                category: c.category,
+                description: c.description,
+            });
+        }
+    }
+    return out.filter(x => Number(x.stock_qty) > 0);
+});
+
 const filteredCollections = computed(() => {
-    let items = props.collections || [];
+    let items = sellables.value;
     if (searchTerm.value) {
         const q = searchTerm.value.toLowerCase();
         items = items.filter(c =>
             c.name.toLowerCase().includes(q) ||
             c.sku?.toLowerCase().includes(q) ||
+            c.variant_label?.toLowerCase().includes(q) ||
+            c.size?.toLowerCase?.().includes(q) ||
+            c.color?.toLowerCase?.().includes(q) ||
+            c.design?.toLowerCase?.().includes(q) ||
             c.description?.toLowerCase().includes(q)
         );
     }
@@ -111,25 +161,31 @@ const filteredCollections = computed(() => {
     return items;
 });
 
-function addToCart(collection) {
-    const existing = cart.value.find(c => c.collection_id === collection.id);
+function addToCart(item) {
+    // Two variations of one product are two different lines in the cart.
+    const existing = cart.value.find(c =>
+        c.collection_id === item.collection_id && c.variant_id === (item.variant_id ?? null));
+
     if (existing) {
-        if (existing.quantity < collection.stock_qty) {
+        if (existing.quantity < item.stock_qty) {
             existing.quantity++;
         }
-    } else {
-        cart.value.push({
-            collection_id: collection.id,
-            name: collection.name,
-            sku: collection.sku,
-            size: collection.size,
-            color: collection.color,
-            unit_price: parseFloat(collection.price),
-            quantity: 1,
-            max_qty: collection.stock_qty,
-            image_url: collection.image_url,
-        });
+        return;
     }
+
+    cart.value.push({
+        collection_id: item.collection_id,
+        variant_id: item.variant_id ?? null,
+        name: item.name,
+        variant_label: item.variant_label,
+        sku: item.sku,
+        size: item.size,
+        color: item.color,
+        unit_price: parseFloat(item.price),
+        quantity: 1,
+        max_qty: item.stock_qty,
+        image_url: item.image_url,
+    });
 }
 
 function removeFromCart(index) {
@@ -181,6 +237,7 @@ function completeSale() {
         notes: notes.value || null,
         items: cart.value.map(i => ({
             collection_id: i.collection_id,
+            collection_variant_id: i.variant_id ?? null,
             quantity: i.quantity,
             unit_price: i.unit_price,
         })),
@@ -267,7 +324,7 @@ function formatCurrency(v) {
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                     <button
                         v-for="item in filteredCollections"
-                        :key="item.id"
+                        :key="item.key"
                         @click="addToCart(item)"
                         class="rounded-xl border border-gray-200 bg-white p-3 text-left hover:border-brand-300 hover:shadow-md transition-all group"
                         :class="{ 'opacity-50 cursor-not-allowed': item.stock_qty <= 0 }"
@@ -278,7 +335,8 @@ function formatCurrency(v) {
                             <i v-else class="pi pi-image text-3xl text-gray-300 group-hover:text-brand-400 transition-colors"></i>
                         </div>
                         <p class="text-sm font-medium text-gray-900 truncate">{{ item.name }}</p>
-                        <div class="flex items-center gap-1 mt-0.5">
+                        <p v-if="item.variant_label" class="text-xs font-medium text-brand-600 truncate mt-0.5">{{ item.variant_label }}</p>
+                        <div v-else class="flex items-center gap-1 mt-0.5">
                             <span v-if="item.size" class="text-xs text-gray-400">{{ item.size }}</span>
                             <span v-if="item.color" class="text-xs text-gray-400">· {{ item.color }}</span>
                         </div>
@@ -316,13 +374,14 @@ function formatCurrency(v) {
 
                     <!-- Cart items -->
                     <div class="max-h-[40vh] overflow-y-auto divide-y divide-gray-100">
-                        <div v-for="(item, i) in cart" :key="item.collection_id" class="px-4 py-3 flex items-start gap-3" :class="item.from_invoice ? 'bg-amber-50/50' : ''">
+                        <div v-for="(item, i) in cart" :key="(item.collection_id) + '-' + (item.variant_id ?? 0)" class="px-4 py-3 flex items-start gap-3" :class="item.from_invoice ? 'bg-amber-50/50' : ''">
                             <div class="w-10 h-10 rounded bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
                                 <img v-if="item.image_url" :src="item.image_url" class="w-full h-full object-cover rounded" />
                                 <i v-else class="pi pi-box text-gray-300 text-sm"></i>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-medium text-gray-900 truncate">{{ item.name }}</p>
+                                <p v-if="item.variant_label" class="text-xs text-brand-600 truncate">{{ item.variant_label }}</p>
                                 <p class="text-xs text-gray-500">{{ formatCurrency(item.unit_price) }} each</p>
                                 <span v-if="item.from_invoice" class="text-[10px] text-amber-600"><i class="pi pi-link text-[8px]"></i> from {{ item.from_invoice }}</span>
                                 <div class="flex items-center gap-2 mt-1">

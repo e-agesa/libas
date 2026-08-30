@@ -16,6 +16,7 @@ class InvoiceLineItem extends Model
         'measurement_id',
         'fabric_id',
         'collection_id',
+        'collection_variant_id',
         'description',
         'unit_price',
         'quantity',
@@ -58,6 +59,11 @@ class InvoiceLineItem extends Model
     public function fabric()
     {
         return $this->belongsTo(Fabric::class);
+    }
+
+    public function variant()
+    {
+        return $this->belongsTo(CollectionVariant::class, 'collection_variant_id');
     }
 
     public function collection()

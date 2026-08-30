@@ -15,13 +15,21 @@ class CollectionController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Collection::with('category:id,name');
+        $query = Collection::with('category:id,name')->withCount('variants');
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('sku', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                  ->orWhere('description', 'like', "%{$search}%")
+                  // A size or colour only exists on the variations, so without
+                  // this, searching "21.5" finds nothing at all.
+                  ->orWhereHas('variants', function ($v) use ($search) {
+                      $v->where('size', 'like', "%{$search}%")
+                        ->orWhere('color', 'like', "%{$search}%")
+                        ->orWhere('design', 'like', "%{$search}%")
+                        ->orWhere('sku', 'like', "%{$search}%");
+                  });
             });
         }
 
@@ -216,9 +224,9 @@ class CollectionController extends Controller
     }
 
     /**
-     * Selling still runs off the product-level stock figure, so keep it equal to
-     * the sum of its variations. Until the tills read variant stock directly,
-     * this is what stops the two disagreeing.
+     * The tills take stock off the variation sold, but every listing and report
+     * still reads the product-level figure, so keep it equal to the sum of its
+     * variations. This is what stops the two disagreeing.
      */
     protected function syncProductStock(Collection $collection): void
     {
@@ -258,6 +266,11 @@ class CollectionController extends Controller
             ]);
         }
 
+        $collection->syncImagePathFromGallery();
+        if ($variantId) {
+            CollectionVariant::find($variantId)?->syncImagePathFromGallery();
+        }
+
         return response()->json($created, 201);
     }
 
@@ -268,12 +281,16 @@ class CollectionController extends Controller
         }
         $wasPrimary = $image->is_primary;
         $collection = $image->collection;
+        $variant = $image->variant;
         $image->delete();
 
         // Never leave a product without a lead photograph.
         if ($wasPrimary && $collection) {
             $collection->images()->orderBy('sort_order')->first()?->update(['is_primary' => true]);
         }
+
+        $collection?->syncImagePathFromGallery();
+        $variant?->syncImagePathFromGallery();
 
         return response()->json(['ok' => true]);
     }
@@ -282,6 +299,8 @@ class CollectionController extends Controller
     {
         $image->collection->images()->update(['is_primary' => false]);
         $image->update(['is_primary' => true]);
+        $image->collection->syncImagePathFromGallery();
+        $image->variant?->syncImagePathFromGallery();
 
         return response()->json(['ok' => true]);
     }

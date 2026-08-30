@@ -19,6 +19,7 @@ class CollectionVariant extends Model
         'color',
         'design',
         'sku',
+        'image_path',
         'price',
         'stock_qty',
         'reserved_qty',
@@ -37,7 +38,7 @@ class CollectionVariant extends Model
         ];
     }
 
-    protected $appends = ['label', 'effective_price', 'available_qty'];
+    protected $appends = ['label', 'effective_price', 'available_qty', 'image_url'];
 
     public function collection()
     {
@@ -47,6 +48,35 @@ class CollectionVariant extends Model
     public function images()
     {
         return $this->hasMany(CollectionImage::class)->orderBy('sort_order');
+    }
+
+    /**
+     * The variation's own photograph, falling back to the product's. Three
+     * designs of one product are three different things to look at, so the
+     * till and the picker must not show all of them the same picture.
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        if ($this->image_path) {
+            return asset('storage/' . $this->image_path);
+        }
+
+        return $this->relationLoaded('collection') ? $this->collection?->image_url : null;
+    }
+
+    /**
+     * Keep image_path in step with this variation's gallery, so every listing
+     * can keep reading one cheap column instead of joining.
+     */
+    public function syncImagePathFromGallery(): void
+    {
+        $primary = $this->images()->orderByDesc('is_primary')->orderBy('sort_order')->first();
+
+        if ($primary && $primary->path !== $this->image_path) {
+            $this->forceFill(['image_path' => $primary->path])->save();
+        } elseif (! $primary && $this->image_path) {
+            $this->forceFill(['image_path' => null])->save();
+        }
     }
 
     public function scopeActive($query)

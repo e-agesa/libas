@@ -74,6 +74,13 @@ function onVariantsSaved() {
     router.reload({ only: ['collections', 'stats'], preserveScroll: true });
 }
 
+function closeVariants() {
+    showVariants.value = false;
+    // Photos and variations are saved as you go, not on a Save button, so the
+    // row's thumbnail and count would otherwise stay stale until a full reload.
+    onVariantsSaved();
+}
+
 function openStockAdjust(item) {
     stockItem.value = item;
     stockAdjustment.value = 0;
@@ -187,7 +194,19 @@ function deleteCategory(cat) {
                                         <i class="pi pi-image text-sm"></i>
                                     </div>
                                     <div class="min-w-0">
-                                        <div class="font-medium text-gray-900">{{ item.name }}</div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="font-medium text-gray-900">{{ item.name }}</span>
+                                            <button
+                                                v-if="item.variants_count"
+                                                type="button"
+                                                @click="openVariants(item)"
+                                                class="inline-flex items-center gap-1 rounded-full bg-brand-50 px-1.5 py-0.5 text-[10px] font-medium text-brand-700 hover:bg-brand-100"
+                                                :title="'Manage this product\'s ' + item.variants_count + ' variations'"
+                                            >
+                                                <i class="pi pi-clone text-[8px]"></i>
+                                                {{ item.variants_count }} variation{{ item.variants_count === 1 ? '' : 's' }}
+                                            </button>
+                                        </div>
                                         <p v-if="item.description" class="text-xs text-gray-500 mt-0.5 line-clamp-1">{{ item.description }}</p>
                                     </div>
                                 </div>
@@ -269,7 +288,7 @@ function deleteCategory(cat) {
 
             :collection="variantTarget"
 
-            @close="showVariants = false"
+            @close="closeVariants"
 
             @saved="onVariantsSaved"
 

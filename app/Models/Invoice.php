@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\StockLedger;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -101,13 +102,11 @@ class Invoice extends Model
                     continue;
                 }
 
-                $collection->increment('stock_qty', $qty);
-                $collection->refresh();
-                $collection->syncSingleVariantStock();
-
-                // Positive quantity = stock coming in, matching how POS and the
-                // shop record a sale going out.
-                StockMovement::record($collection, 'return', $qty, [
+                // Back to the exact variation it left from, not to the product
+                // as a whole — otherwise the roll-up looks right while every
+                // size underneath it is wrong. Positive quantity = stock coming
+                // in, matching how a sale going out is recorded.
+                StockLedger::give($collection, $line->collection_variant_id, $qty, [
                     'invoice_id' => $this->id,
                     'reference' => $this->invoice_number,
                     'notes' => "Returned to stock from {$this->invoice_number}: {$collection->name} x{$qty}",

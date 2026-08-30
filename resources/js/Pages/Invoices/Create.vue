@@ -42,6 +42,7 @@ const form = useForm({
         measurement_id: null,
         fabric_id: null,
         collection_id: null,
+        collection_variant_id: null,
         description: '',
         unit_price: 0,
         quantity: 1,
