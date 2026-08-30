@@ -21,6 +21,9 @@ class PosController extends Controller
             $preloadInvoice = Invoice::with([
                 'client:id,name,phone',
                 'lineItems.collection:id,name,price,stock_qty,sku,size,color,image_path',
+                // Without the variation the cart rebuilds against the product,
+                // and settling the order takes stock off the wrong one.
+                'lineItems.variant:id,collection_id,size,color,design,sku,price,stock_qty,image_path',
                 'lineItems.contact:id,name',
                 'lineItems.measurement:id,garment_type,label',
                 'lineItems.fabric:id,name',

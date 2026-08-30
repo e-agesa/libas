@@ -58,7 +58,7 @@ class CollectionVariant extends Model
     public function getImageUrlAttribute(): ?string
     {
         if ($this->image_path) {
-            return asset('storage/' . $this->image_path);
+            return Collection::photoUrl($this->image_path);
         }
 
         return $this->relationLoaded('collection') ? $this->collection?->image_url : null;
@@ -101,12 +101,25 @@ class CollectionVariant extends Model
 
     /**
      * A variation priced the same as its product leaves price null.
+     *
+     * Falls back to the product only when that product is already in memory.
+     * Reaching for it otherwise fires a query per variation — hundreds on the
+     * till — and, worse, attaches a full copy of the product to every variation
+     * in the response, cost price included. Callers that need the resolved
+     * figure should eager-load `collection`; the till and the picker do their
+     * own fallback from the product they already hold.
      */
-    public function getEffectivePriceAttribute()
+    public function getEffectivePriceAttribute(): ?float
     {
-        return $this->price !== null
-            ? (float) $this->price
-            : (float) ($this->collection?->price ?? 0);
+        if ($this->price !== null) {
+            return (float) $this->price;
+        }
+
+        if (! $this->relationLoaded('collection')) {
+            return null;
+        }
+
+        return (float) ($this->collection?->price ?? 0);
     }
 
     public function getAvailableQtyAttribute(): int

@@ -28,6 +28,11 @@ class CollectionImage extends Model
         return [
             'is_primary' => 'boolean',
             'sort_order' => 'integer',
+            // A multipart upload sends the variation id as text. Without this
+            // the freshly-created row came back as "12", and the modal — which
+            // matches on identity — filed the photo under no variation at all
+            // until the page was reloaded.
+            'collection_variant_id' => 'integer',
         ];
     }
 

@@ -43,16 +43,21 @@ if (props.preloadInvoice) {
     inv.line_items?.forEach(item => {
         if (item.item_type === 'collection' && item.collection) {
             const col = item.collection;
+            const v = item.variant;
             cart.value.push({
                 collection_id: col.id,
+                // Carry the variation across, or settling the order takes the
+                // stock off whichever variation happened to be first.
+                variant_id: v?.id ?? item.collection_variant_id ?? null,
                 name: col.name,
-                sku: col.sku,
-                size: col.size,
-                color: col.color,
+                variant_label: v ? [v.size, v.color, v.design].filter(Boolean).join(' · ') : '',
+                sku: v?.sku || col.sku,
+                size: v?.size ?? col.size,
+                color: v?.color ?? col.color,
                 unit_price: parseFloat(item.unit_price),
                 quantity: item.quantity,
-                max_qty: col.stock_qty + item.quantity,
-                image_url: col.image_path ? `/storage/${col.image_path}` : null,
+                max_qty: (v ? v.stock_qty : col.stock_qty) + item.quantity,
+                image_url: (v?.image_path || col.image_path) ? `/storage/${v?.image_path || col.image_path}` : null,
                 from_invoice: inv.invoice_number,
             });
         }

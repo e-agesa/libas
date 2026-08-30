@@ -31,7 +31,26 @@ class Collection extends Model
     {
         // image_path is kept in step with the gallery (see syncImagePathFromGallery),
         // so every screen keeps reading one cheap column instead of a join.
-        return $this->image_path ? asset('storage/' . $this->image_path) : null;
+        return static::photoUrl($this->image_path);
+    }
+
+    /**
+     * Turn a stored photo path into something a browser can fetch.
+     *
+     * Some older rows hold a path that is already web-visible; prefixing those
+     * with "storage/" turns a working picture into a 404.
+     */
+    public static function photoUrl(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http') || str_starts_with($path, '/')) {
+            return $path;
+        }
+
+        return asset('storage/' . $path);
     }
 
     /**

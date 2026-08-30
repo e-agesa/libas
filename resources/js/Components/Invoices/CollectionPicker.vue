@@ -72,9 +72,14 @@ const selected = computed(() => {
     const cid = parseInt(props.modelValue);
     const vid = props.variantId ? parseInt(props.variantId) : null;
 
-    return entries.value.find(e => e.id === cid && (e.variant_id ?? null) === vid)
-        || entries.value.find(e => e.id === cid)
-        || null;
+    const exact = entries.value.find(e => e.id === cid && (e.variant_id ?? null) === vid);
+    if (exact) return exact;
+
+    // A saved variation that is no longer offered (deactivated, deleted) must
+    // not silently show a different one's label and price in its place.
+    if (vid) return null;
+
+    return entries.value.find(e => e.id === cid) || null;
 });
 
 function haystack(e) {

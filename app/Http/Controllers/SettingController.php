@@ -74,13 +74,15 @@ class SettingController extends Controller
 
         $company = CompanySetting::get();
 
-        // Delete old logo
-        if ($company->logo_path && Storage::exists($company->logo_path)) {
-            Storage::delete($company->logo_path);
-        }
+        // The file goes to the public disk, so the old one has to be deleted
+        // from the public disk too — the default disk was being asked, so it
+        // never matched and every logo ever uploaded was left behind.
+        $this->deleteLogoFile($company);
 
+        // Stored bare, exactly as it sits on the disk. The old "public/" prefix
+        // was a Laravel 5 habit that made Storage::exists() miss the file.
         $path = $request->file('logo')->store('logos', 'public');
-        $company->update(['logo_path' => 'public/' . $path]);
+        $company->update(['logo_path' => $path]);
 
         return redirect()->back()
             ->with('success', 'Logo uploaded successfully.');
@@ -90,14 +92,31 @@ class SettingController extends Controller
     {
         $company = CompanySetting::get();
 
-        if ($company->logo_path && Storage::exists($company->logo_path)) {
-            Storage::delete($company->logo_path);
-        }
+        $this->deleteLogoFile($company);
 
         $company->update(['logo_path' => null]);
 
         return redirect()->back()
             ->with('success', 'Logo removed.');
+    }
+
+    /**
+     * Remove the logo file itself from the public disk.
+     *
+     * Tolerates the legacy "public/" prefix that older rows still carry, so
+     * replacing one of those logos cleans up after itself too.
+     */
+    protected function deleteLogoFile(CompanySetting $company): void
+    {
+        if (! $company->logo_path) {
+            return;
+        }
+
+        $path = ltrim(preg_replace('#^public/#', '', $company->logo_path), '/');
+
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
     }
 
     // ── Website / Shop Settings ────────────────────────────────────────────────

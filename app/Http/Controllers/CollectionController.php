@@ -9,6 +9,7 @@ use App\Support\ProductImage;
 use App\Models\CollectionCategory;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class CollectionController extends Controller
@@ -83,6 +84,14 @@ class CollectionController extends Controller
 
         $collection = Collection::create($validated);
 
+        // The photo from this form has to become a gallery row too. Every image
+        // operation re-derives image_path from the gallery, so a photo that
+        // exists only in the column is overwritten by the first variation photo
+        // uploaded and erased entirely when that one is deleted.
+        if (! empty($validated['image_path'])) {
+            $this->rememberProductPhoto($collection, $validated['image_path']);
+        }
+
         // Every product owns at least one variation, so the Variations panel is
         // never empty and product stock always equals the sum of its variations.
         $collection->variants()->create([
@@ -116,12 +125,13 @@ class CollectionController extends Controller
             'image.image' => 'That file is not a picture the system can read. Use JPG, PNG or WEBP.',
         ]);
 
+        $replacedPath = null;
+
         if ($request->hasFile('image')) {
-            // Delete old image
-            if ($collection->image_path) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($collection->image_path);
-            }
+            // Store the new photo BEFORE parting with the old one, so a failed
+            // upload cannot leave the product with no picture at all.
             $validated['image_path'] = ProductImage::store($request->file('image'));
+            $replacedPath = $collection->image_path;
         }
         unset($validated['image']);
 
@@ -130,7 +140,49 @@ class CollectionController extends Controller
 
         $collection->update($validated);
 
+        if ($request->hasFile('image')) {
+            $this->rememberProductPhoto($collection, $validated['image_path'], $replacedPath);
+        }
+
         return redirect()->back()->with('success', 'Collection item updated.');
+    }
+
+    /**
+     * File the product form's own photo in the gallery, as the product's
+     * headline picture.
+     *
+     * The gallery is what every image operation re-derives image_path from, so
+     * a photo that never gets a row here is not really the product's photo —
+     * it is a value waiting to be overwritten. The old file is deleted only
+     * once nothing points at it any more, which is why the replacement is
+     * stored first and the old path passed in.
+     */
+    protected function rememberProductPhoto(Collection $collection, string $path, ?string $replacedPath = null): void
+    {
+        $row = $collection->images()->whereNull('collection_variant_id')->orderBy('sort_order')->first();
+
+        if ($row) {
+            $row->update(['path' => $path, 'alt' => $collection->name]);
+        } else {
+            $collection->images()->create([
+                'collection_variant_id' => null,
+                'path' => $path,
+                'alt' => $collection->name,
+                // Only claim the headline slot if no variation already holds it.
+                'is_primary' => ! $collection->images()->where('is_primary', true)->exists(),
+                'sort_order' => 0,
+            ]);
+        }
+
+        $collection->syncImagePathFromGallery();
+
+        // Now, and only now, is the old file certainly unreferenced.
+        if ($replacedPath
+            && $replacedPath !== $path
+            && ! str_starts_with($replacedPath, 'http')
+            && ! CollectionImage::where('path', $replacedPath)->exists()) {
+            Storage::disk('public')->delete($replacedPath);
+        }
     }
 
     public function destroy(Collection $collection)

@@ -59,6 +59,13 @@ const totalStock = computed(() =>
 function imagesFor(variantId) {
     return images.value.filter(i => i.collection_variant_id === variantId);
 }
+
+// The picture this variation leads with: its primary, else its first.
+function thumbFor(variantId) {
+    const own = imagesFor(variantId);
+    if (!own.length) return null;
+    return (own.find(i => i.is_primary) || own[0]).url;
+}
 const productImages = computed(() => images.value.filter(i => !i.collection_variant_id));
 
 function payload(v) {
@@ -215,7 +222,28 @@ function label(v) {
                                 <td class="py-2 pr-2"><input v-model="v.design" @input="v._dirty = true" type="text" placeholder="Design 1" class="w-full rounded-md border-gray-300 text-sm" /></td>
                                 <td class="py-2 pr-2"><input v-model="v.price" @input="v._dirty = true" type="number" min="0" step="any" :placeholder="collection?.price" class="w-full rounded-md border-gray-300 text-sm" /></td>
                                 <td class="py-2 pr-2"><input v-model="v.stock_qty" @input="v._dirty = true" type="number" min="0" class="w-full rounded-md border-gray-300 text-sm" /></td>
-                                <td class="py-2 pr-2 text-gray-500">{{ imagesFor(v.id).length }}</td>
+                                <td class="py-2 pr-2">
+                                    <!-- Its own photo, read from the gallery below so it
+                                         appears the moment one is uploaded. -->
+                                    <div class="flex items-center gap-1.5">
+                                        <img
+                                            v-if="thumbFor(v.id)"
+                                            :src="thumbFor(v.id)"
+                                            :alt="label(v)"
+                                            class="h-9 w-9 shrink-0 rounded object-cover border border-gray-200"
+                                        />
+                                        <button
+                                            v-else
+                                            type="button"
+                                            @click="uploadTarget = v.id"
+                                            class="h-9 w-9 shrink-0 rounded border border-dashed border-gray-300 text-gray-300 hover:border-brand-400 hover:text-brand-500"
+                                            title="No photo yet — pick this variation below, then upload"
+                                        >
+                                            <i class="pi pi-image text-xs"></i>
+                                        </button>
+                                        <span v-if="imagesFor(v.id).length > 1" class="text-[11px] text-gray-400">+{{ imagesFor(v.id).length - 1 }}</span>
+                                    </div>
+                                </td>
                                 <td class="py-2 text-right whitespace-nowrap">
                                     <button v-if="v._dirty" @click="saveVariant(v)" :disabled="v._saving"
                                         class="rounded-md bg-brand-600 px-2 py-1 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-50">
