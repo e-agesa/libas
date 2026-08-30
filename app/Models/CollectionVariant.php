@@ -70,7 +70,9 @@ class CollectionVariant extends Model
      */
     public function syncImagePathFromGallery(): void
     {
-        $primary = $this->images()->orderByDesc('is_primary')->orderBy('sort_order')->first();
+        // reorder() first — see the note on Collection::syncImagePathFromGallery().
+        $primary = $this->images()->reorder()
+            ->orderByDesc('is_primary')->orderBy('sort_order')->orderBy('id')->first();
 
         if ($primary && $primary->path !== $this->image_path) {
             $this->forceFill(['image_path' => $primary->path])->save();

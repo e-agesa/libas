@@ -29,7 +29,7 @@ return new class extends Migration
         }
 
         if (blank($row->phone ?? null)) {
-            $fill['phone'] = '+234752716818';
+            $fill['phone'] = '+254752716818';
         }
 
         if ($fill) {

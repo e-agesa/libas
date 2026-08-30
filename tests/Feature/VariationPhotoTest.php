@@ -279,4 +279,58 @@ public function test_deleting_a_variation_takes_its_photographs_with_it(): void
         $this->actingAs($this->staff)->post("/collection-images/{$gold->id}/primary")->assertSuccessful();
         $this->assertSame(1, CollectionImage::where('collection_id', $product->id)->where('is_primary', true)->count());
     }
+public function test_choosing_a_main_photo_actually_changes_the_headline(): void
+    {
+        $product = $this->createProductWithPhoto();
+
+        // A second product photo, later in the running order.
+        $this->actingAs($this->staff)
+            ->post("/collections/{$product->id}/images", [
+                'images' => [$this->photo('second.jpg')],
+            ])->assertSuccessful();
+
+        $second = CollectionImage::where('collection_id', $product->id)
+            ->orderByDesc('sort_order')->firstOrFail();
+
+        $this->assertNotSame($second->path, $product->fresh()->image_path,
+            'the newer photo should not lead yet');
+
+        $this->actingAs($this->staff)
+            ->post("/collection-images/{$second->id}/primary")
+            ->assertSuccessful();
+
+        // images() carries its own orderBy(sort_order); an ordering added after
+        // it is appended, not applied, so the primary flag used to be ignored
+        // and this stayed on the first photo however often it was chosen.
+        $this->assertSame($second->path, $product->fresh()->image_path,
+            'the photo chosen as main should become the headline');
+    }
+
+    public function test_a_variation_leads_with_the_photo_chosen_as_its_main(): void
+    {
+        $product = $this->createProductWithPhoto();
+
+        $variant = CollectionVariant::create([
+            'collection_id' => $product->id,
+            'size' => '21.5', 'color' => 'Navy',
+            'stock_qty' => 2, 'status' => 'active',
+        ]);
+
+        foreach (['navy-a.jpg', 'navy-b.jpg'] as $file) {
+            $this->actingAs($this->staff)
+                ->post("/collections/{$product->id}/images", [
+                    'images' => [$this->photo($file)],
+                    'collection_variant_id' => $variant->id,
+                ])->assertSuccessful();
+        }
+
+        $later = CollectionImage::where('collection_variant_id', $variant->id)
+            ->orderByDesc('sort_order')->firstOrFail();
+
+        $this->actingAs($this->staff)
+            ->post("/collection-images/{$later->id}/primary")
+            ->assertSuccessful();
+
+        $this->assertSame($later->path, $variant->fresh()->image_path);
+    }
 }

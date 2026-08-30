@@ -62,7 +62,12 @@ class Collection extends Model
      */
     public function syncImagePathFromGallery(): void
     {
-        $primary = $this->images()->orderByDesc('is_primary')->orderBy('sort_order')->first();
+        // reorder() first: images() already sorts by sort_order, and an ordering
+        // added afterwards is appended, not applied — so without this the query
+        // reads "sort_order, is_primary, sort_order" and the primary flag never
+        // decides anything. "Make main photo" appeared to do nothing at all.
+        $primary = $this->images()->reorder()
+            ->orderByDesc('is_primary')->orderBy('sort_order')->orderBy('id')->first();
 
         if ($primary && $primary->path !== $this->image_path) {
             $this->forceFill(['image_path' => $primary->path])->save();
