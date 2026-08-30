@@ -550,10 +550,13 @@ function getPlaceholderIcon(seed) {
             <transition name="fade">
                 <div v-if="quickViewItem" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" @click.self="quickViewItem = null">
                     <div class="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto">
-                        <div class="relative aspect-square bg-gray-100">
+                        <!-- A product with no photograph gets a short band rather
+                             than a square of nothing filling the whole panel. -->
+                        <div class="relative bg-gray-100" :class="quickViewImage ? 'aspect-square' : 'h-28'">
                             <img v-if="quickViewImage" :src="quickViewImage" :alt="quickViewItem.name" class="w-full h-full object-cover"/>
-                            <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-50 to-brand-50">
-                                <i class="pi pi-image text-6xl text-gray-300"></i>
+                            <div v-else class="w-full h-full flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-brand-50 to-white">
+                                <i class="pi pi-image text-2xl text-brand-200"></i>
+                                <span class="text-[11px] text-gray-400">No photo yet</span>
                             </div>
                             <button @click="quickViewItem = null" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-gray-600 hover:bg-white shadow">
                                 <i class="pi pi-times text-sm"></i>

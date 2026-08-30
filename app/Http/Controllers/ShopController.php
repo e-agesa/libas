@@ -25,7 +25,10 @@ class ShopController extends Controller
         $company = CompanySetting::first() ?? new CompanySetting();
         return [
             'name' => $company->business_name ?? 'Libas TMS',
-            'tagline' => $company->tagline ?? 'Tailoring Management System',
+            // No invented fallback: an empty tagline shows nothing. The old one
+            // described the software, and it was printing under the shop's name
+            // on its own storefront.
+            'tagline' => $company->tagline,
             'phone' => $company->whatsapp_number ?: $company->phone,
             'email' => $company->email,
             'address' => $company->address,
