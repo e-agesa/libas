@@ -65,6 +65,8 @@ watch(() => props.show, (val) => {
 
 function submit() {
     if (props.item?.id) {
+        // Editing sends multipart, which cannot carry a real PUT, so the method
+        // is spoofed. An update is still POSTed to the update route.
         form.transform(data => ({ ...data, _method: 'PUT' }))
             .post(route('collections.update', props.item.id), {
                 onSuccess: () => emit('close'),
@@ -72,10 +74,16 @@ function submit() {
                 forceFormData: true,
             });
     } else {
-        form.post(route('collections.store'), {
-            onSuccess: () => emit('close'),
-            forceFormData: true,
-        });
+        // Clear the transform explicitly. Inertia keeps the last one installed
+        // on the form for good, so after editing a product once, saving a NEW
+        // one still carried _method: PUT — which Laravel honoured, turning the
+        // create into PUT /collections, a route that does not exist. The result
+        // was a bare "405 Method Not Allowed" on a perfectly ordinary save.
+        form.transform(data => data)
+            .post(route('collections.store'), {
+                onSuccess: () => emit('close'),
+                forceFormData: true,
+            });
     }
 }
 </script>
@@ -124,7 +132,7 @@ function submit() {
                         </div>
                         <div class="flex-1">
                             <input id="c_image" type="file" accept="image/*" @change="onImageChange" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100" />
-                            <p class="text-xs text-gray-400 mt-1">JPG, PNG up to 2MB</p>
+                            <p class="text-xs text-gray-400 mt-1">JPG, PNG or WEBP, up to 12MB — a photo straight off a phone is fine, it is resized automatically.</p>
                         </div>
                     </div>
                     <InputError :message="form.errors.image" class="mt-1" />
