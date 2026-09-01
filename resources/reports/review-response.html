@@ -7,12 +7,12 @@
       <div class="kicker">Issue Resolution Report</div>
     </div>
     <h1>Your feedback, answered — round three</h1>
-    <p class="sub">A running record of what you have reported and what has been done about it. <b>Round three</b> covers everything raised since 25 August — product variations, photographs per design, the thermal receipt, stock returning when an invoice is cancelled — all of it now live. <b>Round two</b> (24 August) and <b>round one</b> (your written review of 16 August) follow further down, unchanged.</p>
+    <p class="sub">A running record of what you have reported and what has been done about it. <b>Round three</b> covers everything raised since 25 August — product variations, photographs per design, the thermal receipt, stock returning when an invoice is cancelled, and now the public website selling by size too. <b>Round two</b> (24 August) and <b>round one</b> (your written review of 16 August) follow further down, unchanged.</p>
     <div class="meta">
-      <div><span class="k">Last updated</span><span class="v">30 August 2026</span></div>
-      <div><span class="k">Covering</span><span class="v">Three rounds · 26 items</span></div>
+      <div><span class="k">Last updated</span><span class="v">31 August 2026</span></div>
+      <div><span class="k">Covering</span><span class="v">Three rounds · 31 items</span></div>
       <div><span class="k">System</span><span class="v">libasulanwar.com</span></div>
-      <div><span class="k">Overall status</span><span class="v" style="color:var(--band-gold)">23 fixed and live · 3 still open</span></div>
+      <div><span class="k">Overall status</span><span class="v" style="color:var(--band-gold)">29 fixed and live · 2 still open</span></div>
     </div>
   </div>
 </header>
@@ -20,23 +20,23 @@
 <div class="wrap">
   <div class="summary">
     <div class="eyebrow">Where things stand</div>
-    <p class="lede"><b>Product variations are live.</b> The two items left scheduled in round two are done: one product can now be sold as many sizes, colours and designs, each holding its own stock, its own price and its own photograph — and the till and the invoice both sell the exact variation rather than the product in general. Your 468 products carry <b>509 variations</b> between them.</p>
+    <p class="lede"><b>Product variations are live, everywhere you sell.</b> One product can now be sold as many sizes, colours and designs, each holding its own stock, its own price and its own photograph — and the till, the invoice screen <i>and the public website</i> all sell the exact variation rather than the product in general. Your <b>490 products</b> carry <b>561 variations</b> between them, and stock is taken off the one that was actually bought.</p>
     <p>Everything else raised since 25 August is also live: photographs no longer refused at 2 MB, the fabric code and colour visible when choosing a fabric, decimal quantities, an 80mm thermal receipt carrying your logo and address, searching a line item by any part of its name or code, and stock returning to the shelf when an invoice is voided or deleted.</p>
-    <p><b>Six faults we found ourselves</b> were fixed without being reported — including one that was quietly destroying product photographs, and one that meant your logo had never printed on any document. <b>Three things remain open</b>, listed plainly further down: editing a saved invoice, variations on the public website, and fabric not being deducted by tailoring work.</p>
+    <p><b>Eleven faults we found ourselves</b> were fixed without being reported. Two of them were losing stock as your team worked and are worth reading about below: adding stock to a product sold by size put the units somewhere nothing could sell them, and saving the product form could make a product vanish from sale altogether. <b>Two things remain open</b>, listed plainly further down: editing a saved invoice, and fabric not being deducted by tailoring work.</p>
   </div>
 
   <div class="metrics">
-    <div class="metric"><div class="n">23</div><div class="l">Fixed &amp; live</div></div>
-    <div class="metric"><div class="n">9</div><div class="l">Found by us, unreported</div></div>
-    <div class="metric"><div class="n">509</div><div class="l">Variations now sellable</div></div>
-    <div class="metric flag"><div class="n">3</div><div class="l">Still open</div></div>
+    <div class="metric"><div class="n">29</div><div class="l">Fixed &amp; live</div></div>
+    <div class="metric"><div class="n">11</div><div class="l">Found by us, unreported</div></div>
+    <div class="metric"><div class="n">561</div><div class="l">Variations now sellable</div></div>
+    <div class="metric flag"><div class="n">2</div><div class="l">Still open</div></div>
   </div>
 
   <section class="block">
     <div class="h-lead">
       <span class="eyebrow">Round three — everything raised since 25 August</span>
-      <span class="pill ok"><span class="dot"></span>11 fixed &amp; live</span>
-      <span class="pill warn"><span class="dot"></span>3 open</span>
+      <span class="pill ok"><span class="dot"></span>13 fixed &amp; live</span>
+      <span class="pill warn"><span class="dot"></span>1 open</span>
     </div>
     <h2>What you asked for, and where it stands</h2>
     <p class="muted" style="margin-top:12px">As before, every item was reproduced on the live system before being changed and checked again on the live system afterwards. The screenshots in this section are from libasulanwar.com.</p>
@@ -101,6 +101,21 @@
             <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
           </tr>
           <tr>
+            <td><div class="item">"Oops! An Error Occurred — the server returned a 405 Method Not Allowed" when saving a new product <span class="muted">(reported with a screenshot, 31 August)</span></div></td>
+            <td><div class="why">Real, and now fixed. It only struck staff who had <b>edited a product earlier in the same visit</b>, which is why it seemed to come and go. Editing has to send the form a particular way, and the screen was still doing that on the <i>next</i> save — so a brand-new product was submitted as though it were an edit, and the server had nowhere to put it. Nothing was ever saved when this happened, so no half-finished products are sitting in your catalogue. A fresh page reload was the workaround; none is needed now.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">The photo box still said "up to 2MB"</div></td>
+            <td><div class="why">The limit that had your stock entry on hold. The system has accepted <b>12 MB</b> and resized photos itself since that fix, but the wording under the upload box never changed — so your team was still being told the old rule. It now says what actually happens.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">Variations on the public website <span class="muted">(listed as scheduled in the last version of this report)</span></div></td>
+            <td><div class="why">Done. A customer on <b>libasulanwar.com</b> now picks the size, colour or design before adding to the basket — each option showing its own price, its own photograph and how many are left, with a sold-out size not offered at all. Two sizes of one product are two separate basket lines, right through to the order. The order is priced from the option chosen and the stock comes off that one.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
+          <tr>
             <td><div class="item">"Edit option to be there on invoices."</div></td>
             <td><div class="why"><b>Not done yet.</b> An invoice's status can be changed, a payment recorded, a quotation turned into an invoice, and an unpaid invoice deleted — but the <b>items on a saved invoice cannot yet be changed</b>. Correcting a billed item today means deleting the invoice and entering it again, which uses up the invoice number. This is the largest of the three open items and we would like to agree the rules with you before building it.</div></td>
             <td><span class="pill warn"><span class="dot"></span>Open</span></td>
@@ -113,15 +128,25 @@
   <section class="block">
     <div class="h-lead">
       <span class="eyebrow">Found by us — not reported, fixed anyway</span>
-      <span class="pill ok"><span class="dot"></span>6 fixed</span>
+      <span class="pill ok"><span class="dot"></span>11 fixed</span>
     </div>
     <h2>Faults nobody had noticed</h2>
-    <p class="muted" style="margin-top:12px">These were found while working on the items above. Two of them were losing your data quietly, which is the worst kind of fault: nothing appears to go wrong at the time.</p>
+    <p class="muted" style="margin-top:12px">These were found while working on the items above. Several were losing your data quietly, which is the worst kind of fault: nothing appears to go wrong at the time. <b>The first two below matter most</b> — they were affecting stock entry, which is exactly what your team has been doing this week.</p>
 
     <div class="tablewrap" style="margin-top:18px">
       <table>
         <thead><tr><th>What we found</th><th>Why it mattered</th><th>Status</th></tr></thead>
         <tbody>
+          <tr>
+            <td><div class="item">Adding stock to a product sold by size put the units where nothing could sell them</div></td>
+            <td><div class="why">A product with sizes holds no stock of its own — its number is simply the total of its sizes. The <b>Adjust Stock</b> box and the Inventory screen were both adding to that total instead of to a size, so a delivery of ten went somewhere no sale could reach, and the next sale of that product recalculated the total and <b>erased them</b> — while the stock history still showed a delivery of ten. The stock box now <b>asks which variation</b>, listing each with its current count; the Inventory screen says where to do it rather than swallowing the delivery. <b>Worth checking any stock you entered before 31 August on a product that has sizes.</b></div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">Saving the product form could make a product vanish from sale</div></td>
+            <td><div class="why">On a product sold by size, the <b>Stock Quantity</b> box on the edit form still wrote to the product's own total. Editing anything at all — even just the price — and saving with that box showing 0 set the total to nought, and because the till lists what has stock, the product <b>disappeared from sale entirely</b> while every size underneath it was still full. It could not recover on its own. The form now leaves that figure to the sizes.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
           <tr>
             <td><div class="item">A product's own photograph was being destroyed by ordinary use of the Variations &amp; Photos panel</div></td>
             <td><div class="why">Uploading a photograph for one variation <b>replaced the product's own picture</b>; deleting that photograph again <b>erased it altogether</b>. The file was never deleted, only the link to it — but the product would show a grey placeholder with no explanation. <b>If any product lost its picture in the last few days, this is why.</b> Those will need re-uploading; it cannot happen again.</div></td>
@@ -152,6 +177,26 @@
             <td><div class="why">Pulling a customer's unpaid order into the till rebuilt it from the product rather than the variation ordered, so the stock came off the wrong size. It now carries the variation through.</div></td>
             <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
           </tr>
+          <tr>
+            <td><div class="item">A web order from a customer who left the email box empty crashed</div></td>
+            <td><div class="why">The order form asks for a telephone number and treats the email as optional — but the system then expected one anyway and failed outright. Any customer ordering with a phone number alone lost their basket at the last step.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">The website described itself as "Tailoring Management System"</div></td>
+            <td><div class="why">Under your own name, in the footer of your own shop — the software's description standing in wherever no tagline of your own was set. It shows nothing now, and you can type your own line under Settings whenever you like.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">A single-option product could be billed at the wrong price</div></td>
+            <td><div class="why">Where a product had exactly one option and that option carried its own price, the till used the option's stock and photograph but the <i>product's</i> price — undercharging wherever the two differed.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
+          <tr>
+            <td><div class="item">Two web orders could still sell the same last item</div></td>
+            <td><div class="why">The protection added for the counter and the invoice screen did not cover the path web orders take. Two customers buying the last one at the same moment could both succeed, taking stock below zero. Closed on that path too.</div></td>
+            <td><span class="pill ok"><span class="dot"></span>Fixed</span></td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -160,7 +205,7 @@
   <section class="block">
     <div class="h-lead">
       <span class="eyebrow">Open — and things worth knowing</span>
-      <span class="pill warn"><span class="dot"></span>3 open</span>
+      <span class="pill warn"><span class="dot"></span>2 open</span>
     </div>
     <h2>What is not done, stated plainly</h2>
     <p class="muted" style="margin-top:12px">We would rather you read these here than discover them at the counter. Nothing below is a surprise to us; each is either awaiting a decision from you or scheduled.</p>
@@ -173,11 +218,6 @@
             <td><div class="item">A saved invoice's items cannot be edited</div></td>
             <td><div class="why">To correct a billed item you must delete the invoice and enter it again, which uses up the invoice number. A <b>paid</b> invoice cannot be deleted at all — it has to be voided first. We want to agree with you which invoices should be editable (unpaid drafts only, or any unpaid invoice) before building this, because it decides how your numbering and your books behave.</div></td>
             <td><span class="pill warn"><span class="dot"></span>Needs your decision</span></td>
-          </tr>
-          <tr>
-            <td><div class="item">The public website does not yet offer variations</div></td>
-            <td><div class="why">Your own screens — the till, invoices, Collections — all sell by variation. The customer-facing shop still lists products only, so a web customer cannot pick a size or colour, and the order comes off your variations in listed order rather than the one they wanted. Everything needed for it is now in place; it is a screen-building job.</div></td>
-            <td><span class="pill warn"><span class="dot"></span>Scheduled</span></td>
           </tr>
           <tr>
             <td><div class="item">Tailoring work does not deduct fabric</div></td>
@@ -237,6 +277,16 @@
         <div class="bar"><i></i><i></i><i></i></div>
         <img src="r3-fabric-code.png" alt="The fabrics module with a dedicated code column" loading="lazy">
         <figcaption><b>The fabric code, its own column.</b> Searchable on its own, and shown with the colour and type wherever a fabric is chosen.</figcaption>
+      </figure>
+      <figure class="shot" style="margin:0">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <img src="r4-shop-options.png" alt="A customer on the public website choosing between four options before adding to the basket" loading="lazy">
+        <figcaption><b>Your website, as a customer sees it.</b> The option must be chosen before the basket will take it — each with its own price and how many are left. Add to Cart stays greyed out until one is picked.</figcaption>
+      </figure>
+      <figure class="shot" style="margin:0">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <img src="r4-stock-variation.png" alt="The Adjust Stock dialog asking which variation the stock is for" loading="lazy">
+        <figcaption><b>Stock goes to the right size.</b> On a product sold by size the dialog now asks which one, showing each with its current count — instead of adding to a total that no sale could reach.</figcaption>
       </figure>
     </div>
 
