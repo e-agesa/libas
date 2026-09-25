@@ -97,6 +97,9 @@ class Collection extends Model
             'cost_price' => 'decimal:2',
             'stock_qty' => 'integer',
             'low_stock_threshold' => 'integer',
+            // Reaches the forms as a real true/false rather than 1/0, so the
+            // website-visibility switch shows the right position.
+            'show_on_shop' => 'boolean',
         ];
     }
 

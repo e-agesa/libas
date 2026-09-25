@@ -29,6 +29,7 @@ const form = useForm({
     stock_qty: 0,
     low_stock_threshold: '',   // blank = not set; every product differs
     status: 'active',
+    show_on_shop: true,
 });
 
 function onImageChange(e) {
@@ -54,12 +55,14 @@ watch(() => props.show, (val) => {
         form.stock_qty = props.item.stock_qty || 0;
         form.low_stock_threshold = props.item.low_stock_threshold ?? '';
         form.status = props.item.status || 'active';
+        form.show_on_shop = props.item.show_on_shop ?? true;
     } else if (val) {
         form.reset();
         form.image = null;
         imagePreview.value = null;
         form.status = 'active';
         form.low_stock_threshold = '';
+        form.show_on_shop = true;
     }
 });
 
@@ -177,6 +180,19 @@ function submit() {
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                     </select>
+                </div>
+
+                <!-- Until now this lived only in Settings, and defaulted to off,
+                     so products added here never reached the website. -->
+                <div class="sm:col-span-2">
+                    <label class="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 cursor-pointer hover:border-brand-300">
+                        <input type="checkbox" v-model="form.show_on_shop" class="mt-0.5 rounded border-gray-300 text-brand-600 focus:ring-brand-600" />
+                        <span>
+                            <span class="block text-sm font-medium text-gray-900">Show on the website</span>
+                            <span class="block text-xs text-gray-500">Customers can see and order this on libasulanwar.com. It still needs stock to appear.</span>
+                        </span>
+                    </label>
+                    <InputError :message="form.errors.show_on_shop" class="mt-1" />
                 </div>
             </div>
 

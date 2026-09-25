@@ -67,6 +67,7 @@ class CollectionController extends Controller
             'stock_qty' => 'required|integer|min:0',
             'low_stock_threshold' => 'nullable|integer|min:0',
             'status' => 'nullable|in:active,inactive',
+            'show_on_shop' => 'nullable|boolean',
         ], [
             'image.max' => 'That photo is too large (the limit is 12 MB). Please send a smaller one.',
             'image.image' => 'That file is not a picture the system can read. Use JPG, PNG or WEBP.',
@@ -76,6 +77,12 @@ class CollectionController extends Controller
             $validated['image_path'] = ProductImage::store($request->file('image'));
         }
         unset($validated['image']);
+
+        // A product nobody has said anything about belongs on the website. The
+        // column defaults to false and this form never set it, so every product
+        // added here was invisible to customers until somebody found the toggle
+        // buried in Settings - which is why whole categories were missing.
+        $validated['show_on_shop'] = $request->boolean('show_on_shop', true);
 
         // These columns do not accept null; the form sends blank for an unknown
         // cost, which was crashing product creation outright.
@@ -120,6 +127,7 @@ class CollectionController extends Controller
             'stock_qty' => 'required|integer|min:0',
             'low_stock_threshold' => 'nullable|integer|min:0',
             'status' => 'nullable|in:active,inactive',
+            'show_on_shop' => 'nullable|boolean',
         ], [
             'image.max' => 'That photo is too large (the limit is 12 MB). Please send a smaller one.',
             'image.image' => 'That file is not a picture the system can read. Use JPG, PNG or WEBP.',
@@ -137,6 +145,12 @@ class CollectionController extends Controller
 
         $validated['cost_price'] = $validated['cost_price'] ?? 0;
         $validated['stock_qty'] = $validated['stock_qty'] ?? $collection->stock_qty;
+
+        // Only when the form actually sent it, so a caller that omits the field
+        // leaves the product's current visibility alone.
+        if ($request->has('show_on_shop')) {
+            $validated['show_on_shop'] = $request->boolean('show_on_shop');
+        }
 
         // A product sold by size holds no stock of its own. The form's Stock
         // Quantity box would otherwise overwrite the roll-up while every
