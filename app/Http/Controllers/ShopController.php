@@ -46,8 +46,12 @@ class ShopController extends Controller
     public function index()
     {
         return Inertia::render('Shop/Index', [
+            // The whole catalogue, including what has run out. A shop that hides
+            // a sold-out line also hides that the shop carries it at all — the
+            // customer cannot ask after it or wait for it. The page marks those
+            // plainly and refuses to put them in a basket, which is what stops
+            // an order for something there is none of.
             'collections' => Collection::where('status', 'active')
-                ->where('stock_qty', '>', 0)
                 ->where('show_on_shop', true)
                 ->with([
                     'category:id,name',
@@ -55,7 +59,6 @@ class ShopController extends Controller
                     // columns again — a variation carries no cost, but there is
                     // no reason to ship reserved or threshold figures either.
                     'variants' => fn ($q) => $q->where('status', 'active')
-                        ->where('stock_qty', '>', 0)
                         ->orderBy('sort_order')->orderBy('id')
                         ->select('id', 'collection_id', 'size', 'color', 'design', 'sku', 'price', 'stock_qty', 'image_path'),
                 ])

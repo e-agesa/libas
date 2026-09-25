@@ -72,11 +72,28 @@ function formatCurrency(v) {
 }
 
 /**
- * The sizes, colours or designs a customer can choose between.
- * A product with only one, unnamed, has nothing to choose — it is just itself.
+ * Every size, colour or design this product comes in — including the ones that
+ * have run out. The shop lists the whole catalogue; a sold-out option is shown
+ * and clearly marked rather than quietly removed, so a customer can see it
+ * exists and ask about it.
  */
 function variantsOf(item) {
-    return (item.variants || []).filter(v => Number(v.stock_qty) > 0);
+    return item.variants || [];
+}
+
+/** The options that can actually be bought right now. */
+function inStockVariantsOf(item) {
+    return variantsOf(item).filter(v => Number(v.stock_qty) > 0);
+}
+
+function variantSoldOut(v) {
+    return Number(v.stock_qty) <= 0;
+}
+
+/** Nothing left anywhere on this product. */
+function soldOut(item) {
+    const vs = variantsOf(item);
+    return vs.length ? !vs.some(v => Number(v.stock_qty) > 0) : Number(item.stock_qty) <= 0;
 }
 
 /** Which option the customer has picked in the quick view, if any. */
@@ -120,7 +137,8 @@ function variantPrice(item, v) {
 
 /** What the card shows when the options are not all the same money. */
 function priceRange(item) {
-    const vs = variantsOf(item);
+    // Price from what is buyable; if nothing is, show the range anyway.
+    const vs = inStockVariantsOf(item).length ? inStockVariantsOf(item) : variantsOf(item);
     if (!vs.length) return { from: Number(item.price), varies: false };
     const prices = vs.map(v => variantPrice(item, v));
     const from = Math.min(...prices);
@@ -135,6 +153,9 @@ function cartLineFor(itemId, variantId) {
 }
 
 function addToCart(item, variant = null) {
+    if (variant && variantSoldOut(variant)) return;
+    if (soldOut(item)) return;
+
     // A lone unnamed variation is still what is being sold, so it carries the
     // price and the stock even though the customer was never asked to pick it.
     const only = variantsOf(item).length === 1 ? variantsOf(item)[0] : null;
@@ -382,7 +403,8 @@ function getPlaceholderIcon(seed) {
                             <i :class="['pi', getPlaceholderIcon(item.id), 'text-5xl sm:text-6xl opacity-30']" :style="{ color: '#C41E2A' }"></i>
                             <span class="text-xs text-gray-400 mt-2">{{ item.name }}</span>
                         </div>
-                        <span v-if="item.stock_qty <= 5" class="absolute top-2 left-2 inline-flex rounded-full bg-red-500 text-white px-2 py-0.5 text-[10px] font-bold shadow">Only {{ item.stock_qty }} left</span>
+                        <span v-if="soldOut(item)" class="absolute top-2 left-2 inline-flex rounded-full bg-gray-700 text-white px-2 py-0.5 text-[10px] font-bold shadow">Sold out</span>
+                        <span v-else-if="item.stock_qty <= 5" class="absolute top-2 left-2 inline-flex rounded-full bg-red-500 text-white px-2 py-0.5 text-[10px] font-bold shadow">Only {{ item.stock_qty }} left</span>
                         <span v-else class="absolute top-2 left-2 inline-flex rounded-full bg-brand-600 text-white px-2 py-0.5 text-[10px] font-bold shadow">In Stock</span>
                         <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <span class="text-white text-xs font-medium bg-white/20 backdrop-blur rounded-full px-3 py-1.5"><i class="pi pi-eye mr-1"></i>Quick View</span>
@@ -400,14 +422,22 @@ function getPlaceholderIcon(seed) {
                             <span class="text-sm sm:text-lg font-bold text-brand-700">
                                 <span v-if="priceRange(item).varies" class="text-[10px] sm:text-xs font-medium text-gray-400">from </span>{{ formatCurrency(priceRange(item).from) }}
                             </span>
-                            <span v-if="hasChoices(item)" class="text-[10px] sm:text-xs text-gray-400">{{ variantsOf(item).length }} options</span>
+                            <span v-if="hasChoices(item)" class="text-[10px] sm:text-xs text-gray-400">{{ inStockVariantsOf(item).length || variantsOf(item).length }} options</span>
                         </div>
 
                         <!-- A product sold in sizes or colours needs the customer
                              to choose one, so the card opens it rather than
                              guessing on their behalf. -->
                         <button
-                            v-if="hasChoices(item)"
+                            v-if="soldOut(item)"
+                            type="button"
+                            disabled
+                            class="mt-2 w-full rounded-xl bg-gray-100 text-gray-400 py-2 sm:py-2.5 text-xs sm:text-sm font-medium cursor-not-allowed"
+                        >
+                            Sold out — ask us about it
+                        </button>
+                        <button
+                            v-else-if="hasChoices(item)"
                             @click="quickViewItem = item; chosenVariantId = null"
                             class="mt-2 w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 text-white py-2 sm:py-2.5 text-xs sm:text-sm font-medium hover:from-brand-600 hover:to-brand-800 transition-all shadow-sm hover:shadow-md active:scale-95"
                         >
@@ -582,15 +612,17 @@ function getPlaceholderIcon(seed) {
                                         :key="v.id"
                                         type="button"
                                         @click="chosenVariantId = v.id"
-                                        class="rounded-xl border px-3 py-2 text-left transition-all"
+                                        :disabled="variantSoldOut(v)"
+                                        class="rounded-xl border px-3 py-2 text-left transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                                         :class="chosenVariantId === v.id
                                             ? 'border-brand-600 bg-brand-50 ring-1 ring-brand-600'
                                             : 'border-gray-200 hover:border-brand-300'"
                                     >
-                                        <span class="block text-xs font-semibold text-gray-900">{{ variantLabel(v) }}</span>
+                                        <span class="block text-xs font-semibold" :class="variantSoldOut(v) ? 'text-gray-400 line-through' : 'text-gray-900'">{{ variantLabel(v) }}</span>
                                         <span class="block text-[11px] text-gray-500">
                                             {{ formatCurrency(variantPrice(quickViewItem, v)) }}
-                                            <span v-if="Number(v.stock_qty) <= 5" class="text-red-500"> · only {{ v.stock_qty }} left</span>
+                                            <span v-if="variantSoldOut(v)" class="text-gray-400"> · sold out</span>
+                                            <span v-else-if="Number(v.stock_qty) <= 5" class="text-red-500"> · only {{ v.stock_qty }} left</span>
                                         </span>
                                     </button>
                                 </div>
@@ -598,17 +630,18 @@ function getPlaceholderIcon(seed) {
 
                             <div class="flex items-center justify-between mt-4">
                                 <span class="text-2xl font-bold text-brand-700">{{ formatCurrency(quickViewPrice) }}</span>
-                                <span v-if="quickViewStock !== null && quickViewStock <= 5" class="text-sm text-red-500 font-medium">Only {{ quickViewStock }} left!</span>
+                                <span v-if="quickViewStock !== null && quickViewStock <= 0" class="text-sm text-gray-500 font-medium">Sold out</span>
+                                <span v-else-if="quickViewStock !== null && quickViewStock <= 5" class="text-sm text-red-500 font-medium">Only {{ quickViewStock }} left!</span>
                                 <span v-else-if="quickViewStock !== null" class="text-sm text-brand-600"><i class="pi pi-check-circle mr-1"></i>In Stock</span>
                             </div>
 
                             <button
                                 @click="addToCart(quickViewItem, chosenVariant); if (!hasChoices(quickViewItem) || chosenVariant) quickViewItem = null;"
-                                :disabled="hasChoices(quickViewItem) && !chosenVariant"
+                                :disabled="soldOut(quickViewItem) || (hasChoices(quickViewItem) && !chosenVariant) || (chosenVariant && variantSoldOut(chosenVariant))"
                                 class="mt-4 w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 text-white py-3 text-sm font-semibold hover:from-brand-600 hover:to-brand-800 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <i class="pi pi-shopping-cart mr-1"></i>
-                                {{ hasChoices(quickViewItem) && !chosenVariant ? 'Choose an option first' : 'Add to Cart' }}
+                                {{ soldOut(quickViewItem) ? 'Sold out' : (hasChoices(quickViewItem) && !chosenVariant ? 'Choose an option first' : 'Add to Cart') }}
                             </button>
                         </div>
                     </div>

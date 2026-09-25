@@ -80,7 +80,7 @@ class ShopVariantOrderTest extends TestCase
         $this->assertSame(3, $dearer['stock_qty']);
     }
 
-    public function test_a_sold_out_variation_is_not_offered(): void
+    public function test_a_sold_out_variation_is_shown_but_cannot_be_bought(): void
     {
         [$product, $small, $large] = $this->shopProduct();
         $large->update(['stock_qty' => 0]);
@@ -89,9 +89,28 @@ class ShopVariantOrderTest extends TestCase
         $listed = collect($this->get('/shop')->viewData('page')['props']['collections'])
             ->firstWhere('id', $product->id);
 
+        // The shop shows the whole range, marking what has run out, so a
+        // customer can see the size exists and ask when it is back.
         $ids = collect($listed['variants'])->pluck('id')->all();
         $this->assertContains($small->id, $ids);
-        $this->assertNotContains($large->id, $ids, 'a size with none left should not be offered');
+        $this->assertContains($large->id, $ids, 'a size with none left is still shown');
+        $this->assertSame(0, collect($listed['variants'])->firstWhere('id', $large->id)['stock_qty'],
+            'and it is shown as having none, which is what greys it out');
+
+        // Showing it must not make it orderable.
+        $this->post('/shop/place-order', [
+            'name' => 'Web Customer',
+            'phone' => '0700111222',
+            'items' => [[
+                'collection_id' => $product->id,
+                'collection_variant_id' => $large->id,
+                'quantity' => 1,
+                'unit_price' => 2400,
+            ]],
+        ]);
+
+        $this->assertSame(0, Invoice::count(), 'a sold-out size cannot be ordered');
+        $this->assertSame(5, $small->fresh()->stock_qty);
     }
 
     public function test_the_checkout_screen_keeps_two_sizes_apart(): void
